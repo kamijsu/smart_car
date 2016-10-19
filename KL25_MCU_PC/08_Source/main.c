@@ -55,7 +55,7 @@ int main(void)
 			//重置时间标志
 			g_time_flag.f_1s = 0;
 			//发送消息
-			uart_send_string(UART_USE, ".");
+
 		}
 
 		//每50ms执行一次的程序
@@ -64,61 +64,8 @@ int main(void)
 			//重置时间标志
 			g_time_flag.f_50ms = 0;
 
-			//如果绿灯开启呼吸效果
-			if (green_light.is_start)
-			{
-				//判断绿灯变化方向
-				if (green_light.dir == 1)
-				{
-					//更改占空比，若超过上限，更改为上限并更改变化方向
-					if ((green_light.duty += green_light.radio)
-							>= BREATHE_LIGHT_MAX_DUTY)
-					{
-						green_light.duty = BREATHE_LIGHT_MAX_DUTY;
-						green_light.dir = 0;
-					}
-				}
-				else
-				{
-					//更改占空比，若低于下限，更改为下限并更改变化方向
-					if ((green_light.duty -= green_light.radio)
-							<= BREATHE_LIGHT_MIN_DUTY)
-					{
-						green_light.duty = BREATHE_LIGHT_MIN_DUTY;
-						green_light.dir = 1;
-					}
-				}
-				//更改绿灯占空比
-				breathe_light_set(BREATHE_LIGHT_GREEN, green_light.duty);
-			}
 
-			//如果红灯开启呼吸效果
-			if (red_light.is_start)
-			{
-				//判断红灯变化方向
-				if (red_light.dir == 1)
-				{
-					//更改占空比，若超过上限，更改为上限并更改变化方向
-					if ((red_light.duty += red_light.radio)
-							>= BREATHE_LIGHT_MAX_DUTY)
-					{
-						red_light.duty = BREATHE_LIGHT_MAX_DUTY;
-						red_light.dir = 0;
-					}
-				}
-				else
-				{
-					//更改占空比，若低于下限，更改为下限并更改变化方向
-					if ((red_light.duty -= red_light.radio)
-							<= BREATHE_LIGHT_MIN_DUTY)
-					{
-						red_light.duty = BREATHE_LIGHT_MIN_DUTY;
-						red_light.dir = 1;
-					}
-				}
-				//更改红灯占空比
-				breathe_light_set(BREATHE_LIGHT_RED, red_light.duty);
-			}
+
 		}
 
 		//不断处理消息队列
