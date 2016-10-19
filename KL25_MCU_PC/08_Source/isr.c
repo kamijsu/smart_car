@@ -24,8 +24,9 @@ void UART2_IRQHandler(void)
 	//获取成功
 	if (0 == flag)
 	{
-		//将收到的指令添加至消息队列中
-		g_msg.msg[g_msg.rear++] = ch;
+		//####将收到的指令添加至消息队列中
+
+
 		//防止越界
 		if (g_msg.rear == 16)
 		{
@@ -51,32 +52,13 @@ void PIT_IRQHandler(void)
 
 	DISABLE_INTERRUPTS;
 
-	//中断为PIT_CH0产生的中断
-	if (pit_get_int(PIT_CH0) == 1)
-	{
-		//清中断标志
-		pit_clear_int(PIT_CH0);
+	//####先判断中断源是否为PIT_CH0
 
-		//计数器增加
-		++time_counter.c_50ms;
-		++time_counter.c_1s;
+		//####是的话清中断标志
 
-		//50ms产生一个中断
-		if (time_counter.c_50ms >= 1)
-		{
-			//到达50ms
-			time_counter.c_50ms = 0;
-			g_time_flag.f_50ms = 1;
-		}
+		//####增加时间计数器
 
-		if (time_counter.c_1s >= 20)
-		{
-			//到达1s
-			time_counter.c_1s = 0;
-			g_time_flag.f_1s = 1;
-		}
-
-	}
+		//####由于设置的是50ms一个中断，计数器到达相应的数值后置相应的时间标志为1，并重置计数器
 
 	ENABLE_INTERRUPTS;
 }

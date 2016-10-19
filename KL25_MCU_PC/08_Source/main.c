@@ -61,135 +61,43 @@ int main(void)
 	//======主循环开始======================================================
 	for (;;)
 	{
-		//每1s执行一次的程序
+		//每1s执行一次的程序（完成PIT中断服务程序后有效）
 		if (g_time_flag.f_1s)
 		{
 			//重置时间标志
 			g_time_flag.f_1s = 0;
-			//发送消息
-			uart_send_string(UART_USE, ".");
+
+			//####发送消息
+
 		}
 
-		//每50ms执行一次的程序
+		//每50ms执行一次的程序（完成PIT中断服务程序后有效）
 		if (g_time_flag.f_50ms)
 		{
 			//重置时间标志
 			g_time_flag.f_50ms = 0;
 
-			//如果绿灯开启呼吸效果
-			if (green_light.is_start)
-			{
-				//判断绿灯变化方向
-				if (green_light.dir == 1)
-				{
-					//更改占空比，若超过上限，更改为上限并更改变化方向
-					if ((green_light.duty += green_light.radio)
-							>= BREATHE_LIGHT_MAX_DUTY)
-					{
-						green_light.duty = BREATHE_LIGHT_MAX_DUTY;
-						green_light.dir = 0;
-					}
-				}
-				else
-				{
-					//更改占空比，若低于下限，更改为下限并更改变化方向
-					if ((green_light.duty -= green_light.radio)
-							<= BREATHE_LIGHT_MIN_DUTY)
-					{
-						green_light.duty = BREATHE_LIGHT_MIN_DUTY;
-						green_light.dir = 1;
-					}
-				}
-				//更改绿灯占空比
-				breathe_light_set(BREATHE_LIGHT_GREEN, green_light.duty);
-			}
+			//####在这里完成呼吸灯占空比的变化，即若开启呼吸灯效果时，每50ms更改一次占空比
 
-			//如果红灯开启呼吸效果
-			if (red_light.is_start)
-			{
-				//判断红灯变化方向
-				if (red_light.dir == 1)
-				{
-					//更改占空比，若超过上限，更改为上限并更改变化方向
-					if ((red_light.duty += red_light.radio)
-							>= BREATHE_LIGHT_MAX_DUTY)
-					{
-						red_light.duty = BREATHE_LIGHT_MAX_DUTY;
-						red_light.dir = 0;
-					}
-				}
-				else
-				{
-					//更改占空比，若低于下限，更改为下限并更改变化方向
-					if ((red_light.duty -= red_light.radio)
-							<= BREATHE_LIGHT_MIN_DUTY)
-					{
-						red_light.duty = BREATHE_LIGHT_MIN_DUTY;
-						red_light.dir = 1;
-					}
-				}
-				//更改红灯占空比
-				breathe_light_set(BREATHE_LIGHT_RED, red_light.duty);
-			}
+			//以下为提示
+
+			//####绿灯开启呼吸效果时执行
+
+				//####判断绿灯变化方向
+
+					//####根据变化方向增/减占空比
+
+				//####设置绿灯新的占空比
+
+			//####红灯同上
+
 		}
 
 		//不断处理消息队列
 		if (g_msg.front != g_msg.rear)
 		{
-			//获取队首消息并处理
-			switch (g_msg.msg[g_msg.front++])
-			{
-			case '0':	//开启蓝灯
-				light_control(LIGHT_BLUE, LIGHT_ON);
-				break;
-			case '1':	//关闭蓝灯
-				light_control(LIGHT_BLUE, LIGHT_OFF);
-				break;
-			case '2':	//开启绿灯
-				//关闭呼吸灯效果
-				green_light.is_start = 0;
-				//设置最亮
-				breathe_light_set(BREATHE_LIGHT_GREEN, BREATHE_LIGHT_MAX_DUTY);
-				break;
-			case '3':	//关闭绿灯
-				//关闭呼吸灯效果
-				green_light.is_start = 0;
-				//设置最暗
-				breathe_light_set(BREATHE_LIGHT_GREEN, BREATHE_LIGHT_MIN_DUTY);
-				break;
-			case '4':	//开启红灯
-				//关闭呼吸灯效果
-				red_light.is_start = 0;
-				//设置最亮
-				breathe_light_set(BREATHE_LIGHT_RED, BREATHE_LIGHT_MAX_DUTY);
-				break;
-			case '5':	//关闭红灯
-				//关闭呼吸灯效果
-				red_light.is_start = 0;
-				//设置最暗
-				breathe_light_set(BREATHE_LIGHT_RED, BREATHE_LIGHT_MIN_DUTY);
-				break;
-			case '6':	//开启绿灯呼吸灯效果
-				//开启呼吸灯效果
-				green_light.is_start = 1;
-				//获取绿呼吸灯当前亮度
-				green_light.duty = breathe_light_get(BREATHE_LIGHT_GREEN);
-				break;
-			case '7':	//关闭绿灯呼吸灯效果
-				//关闭呼吸灯效果
-				green_light.is_start = 0;
-				break;
-			case '8':	//开启红灯呼吸灯效果
-				//开启呼吸灯效果
-				red_light.is_start = 1;
-				//获取红呼吸灯当前亮度
-				red_light.duty = breathe_light_get(BREATHE_LIGHT_RED);
-				break;
-			case '9':	//关闭红灯呼吸灯效果
-				//关闭呼吸灯效果
-				red_light.is_start = 0;
-				break;
-			}
+			//####获取队首消息并处理，利用switch-case语句，根据开头给出的指令做相应的操作
+
 			//防止越界
 			if (g_msg.front == 16)
 			{
