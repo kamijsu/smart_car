@@ -43,18 +43,6 @@ int main(void)
 	uart_enable_re_int(UART_2);		//使能串口2接收中断
 	pit_enable_int(PIT_CH0);		//使能PIT模块0通道中断
 
-	uart_send_string(UART_USE, "输入以下指令的编号以控制MCU：\r\n");
-	uart_send_string(UART_USE, "0.开启蓝灯\r\n");
-	uart_send_string(UART_USE, "1.关闭蓝灯\r\n");
-	uart_send_string(UART_USE, "2.开启绿灯\r\n");
-	uart_send_string(UART_USE, "3.关闭绿灯\r\n");
-	uart_send_string(UART_USE, "4.开启红灯\r\n");
-	uart_send_string(UART_USE, "5.关闭红灯\r\n");
-	uart_send_string(UART_USE, "6.开启绿灯呼吸灯效果\r\n");
-	uart_send_string(UART_USE, "7.关闭绿灯呼吸灯效果\r\n");
-	uart_send_string(UART_USE, "8.开启红灯呼吸灯效果\r\n");
-	uart_send_string(UART_USE, "9.关闭红灯呼吸灯效果\r\n");
-
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
