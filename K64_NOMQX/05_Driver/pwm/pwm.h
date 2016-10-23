@@ -52,7 +52,7 @@
 #define U_FTM3_CH6 (U_PORTE|11)// C10 E11
 #define U_FTM3_CH7 (U_PORTE|12)// C11 E12
 
-#define bus_clk_khz (50000)
+#define bus_clk_khz (48000)
 
 //=========================================================================
 //º¯ÊýÃû³Æ£ºpwm_init
