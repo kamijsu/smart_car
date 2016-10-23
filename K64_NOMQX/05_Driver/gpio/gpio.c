@@ -59,12 +59,12 @@ void gpio_init(uint16_t port_pin, uint8_t dir, uint8_t state)
 	//根据带入参数dir，决定引脚为输出还是输入
 	if (1 == dir)   //希望为输出
 	{
-		BSET(pin, gpio_ptr->PDDR);   //数据方向寄存器的pin位=1，定义为输出
+		REG_SET_SHIFT(gpio_ptr->PDDR,pin);   //数据方向寄存器的pin位=1，定义为输出
 		gpio_set(port_pin, state);  //调用gpio_set函数，设定引脚初始状态
 	}
 	else
 		//希望为输入
-		BCLR(pin, gpio_ptr->PDDR);    //数据方向寄存器的pin位=0，定义为输入
+		REG_CLR_SHIFT(gpio_ptr->PDDR,pin);    //数据方向寄存器的pin位=0，定义为输入
 }
 
 //===========================================================================
@@ -87,11 +87,11 @@ void gpio_set(uint16_t port_pin, uint8_t state)
 	//根据带入参数state，决定引脚为输出1还是0
 	if (1 == state)
 	{
-		BSET(pin, gpio_ptr->PDOR);
+		REG_SET_SHIFT(gpio_ptr->PDOR,pin);
 	}
 	else
 	{
-		BCLR(pin, gpio_ptr->PDOR);
+		REG_CLR_SHIFT(gpio_ptr->PDOR,pin);
 	}
 }
 
@@ -112,7 +112,7 @@ uint8_t gpio_get(uint16_t port_pin)
 	gpio_ptr = GPIO_ARR[port];
 
 	//返回引脚的状态
-	return ((BGET(pin, gpio_ptr->PDIR)) >= 1 ? 1 : 0);
+	return ((REG_GET_SHIFT(gpio_ptr->PDIR,pin)) >= 1 ? 1 : 0);
 }
 
 //===========================================================================
@@ -132,7 +132,7 @@ void gpio_reverse(uint16_t port_pin)
 	gpio_ptr = GPIO_ARR[port];
 
 	//反转指定引脚输出状态
-	BSET(pin, gpio_ptr->PTOR);
+	REG_SET_SHIFT(gpio_ptr->PTOR,pin);
 }
 
 //===========================================================================
@@ -154,17 +154,17 @@ void gpio_pull(uint16_t port_pin, uint8_t pullselect)
 	port_ptr->PCR[pin] &= ~PORT_PCR_MUX_MASK;
 	port_ptr->PCR[pin] |= PORT_PCR_MUX(1);
 
-	BSET(PORT_PCR_DSE_SHIFT, port_ptr->PCR[pin]);
-	BSET(PORT_PCR_PE_SHIFT, port_ptr->PCR[pin]);  //将引脚上下拉使能
+	REG_SET_SHIFT(port_ptr->PCR[pin],PORT_PCR_DSE_SHIFT);
+	REG_SET_SHIFT(port_ptr->PCR[pin],PORT_PCR_PE_SHIFT);  //将引脚上下拉使能
 
 	//根据带入参数pullselect，决定引脚拉高还是拉低
 	if (1 == pullselect)
 	{
-		BSET(PORT_PCR_PS_SHIFT, port_ptr->PCR[pin]);
+		REG_SET_SHIFT(port_ptr->PCR[pin],PORT_PCR_PS_SHIFT);
 	}
 	else
 	{
-		BCLR(PORT_PCR_PS_SHIFT, port_ptr->PCR[pin]);
+		REG_CLR_SHIFT(port_ptr->PCR[pin],PORT_PCR_PS_SHIFT);
 	}
 }
 
@@ -187,11 +187,11 @@ void gpio_drive_strength(uint16_t port_pin, uint8_t control)
 	port_ptr = PORT_ARR[port];
 
 	//根据带入参数control，决定引脚为输出高电流还是正常电流
-	BCLR(PORT_PCR_DSE_SHIFT, port_ptr->PCR[pin]);
+	REG_CLR_SHIFT( port_ptr->PCR[pin],PORT_PCR_DSE_SHIFT);
 	if (1 == control)
-		BSET(PORT_PCR_DSE_SHIFT, port_ptr->PCR[pin]);
+		REG_SET_SHIFT(port_ptr->PCR[pin],PORT_PCR_DSE_SHIFT);
 	else
-		BCLR(PORT_PCR_DSE_SHIFT, port_ptr->PCR[pin]);
+		REG_CLR_SHIFT(port_ptr->PCR[pin],PORT_PCR_DSE_SHIFT);
 }
 
 //===================================================================================

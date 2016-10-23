@@ -13,12 +13,7 @@
 //包含头文件
 #include "common.h"          //包含公共类型定义
 
-// 端口号地址偏移量宏定义
-#define U_PORTA     (0<<8)
-#define U_PORTB     (1<<8)
-#define U_PORTC     (2<<8)
-#define U_PORTD     (3<<8)
-#define U_PORTE     (4<<8)
+
 // GPIO引脚方向宏定义
 #define GPIO_IN     (0)
 #define GPIO_OUTPUT (1)

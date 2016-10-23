@@ -11,8 +11,8 @@
 #include "gpio.h"
 
 //干簧管输入输出引脚定义
-#define REED_SWITCH_INPUT  (U_PORTD|2)
-#define REED_SWITCH_OUTPUT (U_PORTD|3)
+#define REED_SWITCH_INPUT  (COM_PORTD|2)
+#define REED_SWITCH_OUTPUT (COM_PORTD|3)
 
 //==============================================================
 //函数名称：reed_switch_init

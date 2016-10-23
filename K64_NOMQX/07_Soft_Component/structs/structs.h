@@ -10,24 +10,21 @@
 #include "common.h"
 
 //PID参数
-typedef struct
-{
+typedef struct {
 	float p;	//比例控制
 	float i;	//积分控制
 	float d;	//微分控制
 } CarPID, *CarPIDPtr;
 
 //PWM参数
-typedef struct
-{
+typedef struct {
 	int16_t new_PWM;	//新计算出的PWM值
 	int16_t last_PWM;	//上次计算出的PWM值
 	int16_t output_PWM;	//输出电机的PWM值
 } CarPWM, *CarPWMPtr;
 
 //小车标志参数
-typedef struct
-{
+typedef struct {
 	uint8_t reed_switch;	//干簧管是否接通
 	uint8_t over_speed;		//速度是否过快
 	uint8_t is_starting;	//是否正在起步
@@ -35,8 +32,7 @@ typedef struct
 } CarFlag, *CarFlagPtr;
 
 //时间标志参数
-typedef struct
-{
+typedef struct {
 	uint8_t f_5ms;
 	uint8_t f_10ms;
 	uint8_t f_15ms;
@@ -52,8 +48,7 @@ typedef struct
 } TimeFlag, *TimeFlagPtr;
 
 //时间计数器参数
-typedef struct
-{
+typedef struct {
 	uint8_t c_5ms;
 	uint8_t c_10ms;
 	uint8_t c_15ms;
@@ -69,15 +64,13 @@ typedef struct
 } TimeCounter, *TimeCounterPtr;
 
 //编码器脉冲计数器
-typedef struct
-{
+typedef struct {
 	uint16_t left;		//左轮编码器计数器
 	uint16_t right;		//右轮编码器计数器
 } EncoderCounter, *EncoderCounterPtr;
 
 //角度控制模块参数
-typedef struct
-{
+typedef struct {
 	uint16_t angle_speed_AD;	//陀螺仪X轴角速度AD值
 	uint16_t acce_speed_AD;		//加速度传感器Z轴加速度AD值
 	uint16_t acce_set;			//平衡时加速度传感器Z轴加速度的AD值
@@ -91,8 +84,7 @@ typedef struct
 } CarAngle, *CarAnglePtr;
 
 //速度控制模块参数
-typedef struct
-{
+typedef struct {
 	float left_speed;			//小车左轮速度，单位m/s
 	float right_speed;			//小车右轮速度，单位m/s
 	float avg_speed;			//小车平均速度，单位m/s
@@ -103,8 +95,7 @@ typedef struct
 } CarSpeed, *CarSpeedPtr;
 
 //转向控制模块参数
-typedef struct
-{
+typedef struct {
 	float EMS_V[4];				//电磁传感器电压值的数组，单位V
 	CarPID pid;					//转向控制PID参数
 	CarPWM pwm;					//转向控制PWM参数
@@ -112,8 +103,7 @@ typedef struct
 } CarTurn, *CarTurnPtr;
 
 //小车相关参数
-typedef struct
-{
+typedef struct {
 	CarAngle angle;		//角度控制参数
 	CarSpeed speed;		//速度控制参数
 	CarTurn turn;		//转向控制参数

@@ -42,10 +42,7 @@ void PIT0_IRQHandler()
 
 	DISABLE_INTERRUPTS; //关中断
 
-	if ((PIT_TFLG(U_PIT0) & PIT_TFLG_TIF_MASK) == PIT_TFLG_TIF_MASK)
-	{
-		PIT_TFLG(U_PIT0) |= PIT_TFLG_TIF_MASK;       //清标志
-	}
+	pit_clear_int(PIT_CH0);//清标志
 
 	//这里为了效率停用了没有使用的时间标志
 
@@ -55,7 +52,7 @@ void PIT0_IRQHandler()
 	++time_counter.c_20ms;
 	++time_counter.c_50ms;
 //	++time_counter.c_100ms;
-//	++time_counter.c_1s;
+	++time_counter.c_1s;
 	++time_counter.c_5s;
 //	++time_counter.c_10s;
 	++time_counter.c_15s;
@@ -92,11 +89,11 @@ void PIT0_IRQHandler()
 //		time_counter.c_100ms = 0;
 //		time0_flag.f_100ms = 1;
 //	}       //100ms置标志
-//	if (time_counter.c_1s >= 200)
-//	{
-//		time_counter.c_1s = 0;
-//		time0_flag.f_1s = 1;
-//	}       //1s置标志
+	if (time_counter.c_1s >= 200)
+	{
+		time_counter.c_1s = 0;
+		time0_flag.f_1s = 1;
+	}       //1s置标志
 	if (time_counter.c_5s >= 1000)
 	{
 		time_counter.c_5s = 0;

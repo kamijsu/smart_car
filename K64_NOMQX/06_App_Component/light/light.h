@@ -11,9 +11,9 @@
 #include "gpio.h"
 
 //指示灯端口及引脚定义
-#define LIGHT_RED      (U_PORTD|3)   //LED1灯使用的端口/引脚
-#define LIGHT_GREEN    (U_PORTD|4)   //LED2灯使用的端口/引脚
-#define LIGHT_BLUE     (U_PORTD|5)   //LED3灯使用的端口/引脚
+#define LIGHT_RED      (COM_PORTD|3)   //LED1灯使用的端口/引脚
+#define LIGHT_GREEN    (COM_PORTD|4)   //LED2灯使用的端口/引脚
+#define LIGHT_BLUE     (COM_PORTD|5)   //LED3灯使用的端口/引脚
 
 //灯状态宏定义（灯亮、灯暗对应的物理电平由硬件接法决定）
 #define LIGHT_ON        (0)    //灯亮

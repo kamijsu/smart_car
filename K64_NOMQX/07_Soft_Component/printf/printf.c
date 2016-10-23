@@ -43,16 +43,16 @@ static void printk_putc(int c, int *count, PRINTK_INFO *info)
 //============================================================================
 int printk_mkfloatstr(double *f, char c[], int precision_width)
 {
-	uint_32 p, i, j, k, a[5] =
+	uint32 p, i, j, k, a[5] =
 	{ 0 }, b[19] =
 	{ 0 };
-	uint_64 q;
+	uint64 q;
 	double tempf;
 	p = 0;
 	q = 0;
 	//float m;
 	double m;
-	p = (uint_32) *f; //整数部分
+	p = (uint32) *f; //整数部分
 	tempf = (*f - p);
 	if (precision_width == 0)
 		q = (*f - p) * 100000000000000000; //小数部分

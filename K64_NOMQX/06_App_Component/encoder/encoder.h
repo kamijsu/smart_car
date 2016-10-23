@@ -13,8 +13,8 @@
 #include "gpio.h"      //用到gpio构件
 
 //采样参数=======================================================================
-#define ENCODER1		(U_PORTD|0)	//定义接受速度信号的引脚
-#define ENCODER2		(U_PORTD|1)
+#define ENCODER1		(COM_PORTD|0)	//定义接受速度信号的引脚
+#define ENCODER2		(COM_PORTD|1)
 #define ENCODER_PERIOD	(50)		//采样时间间隔，单位ms
 
 //编码器硬件参数===================================================================

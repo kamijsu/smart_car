@@ -29,8 +29,8 @@ void ems_get_phy(float *EMS_V)
 	uint8_t i, j;
 	uint32_t EMS_AD_sum;
 	uint16_t EMS_AD_temp;
-	uint_8 max, min;
-	uint_8 EMS_CH[4] = { EMS_CH0, EMS_CH1, EMS_CH2, EMS_CH3 };
+	uint8 max, min;
+	uint8 EMS_CH[4] = { EMS_CH0, EMS_CH1, EMS_CH2, EMS_CH3 };
 	//存放AD采样数据
 	uint16_t AD_data[4][5];
 
