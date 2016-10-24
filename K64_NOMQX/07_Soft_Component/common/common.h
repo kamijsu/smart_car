@@ -15,8 +15,8 @@
 #include "system_MK64F12.h"    //包含芯片系统初始化文件
 
 //定义开关中断
-#define ENABLE_INTERRUPTS   __enable_irq   //开总中断
-#define DISABLE_INTERRUPTS  __disable_irq  //关总中断
+#define ENABLE_INTERRUPTS   __enable_irq()   //开总中断
+#define DISABLE_INTERRUPTS  __disable_irq()  //关总中断
 #define ENABLE_IRQ(IRQn)	NVIC_EnableIRQ(IRQn)	//允许接收中断请求号为IRQn的中断，中断请求号的定义在"MK64F12.h"的171行
 #define DISABLE_IRQ(IRQn)	NVIC_DisableIRQ(IRQn)	//禁止接收中断请求号为IRQn的中断
 
