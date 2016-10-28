@@ -34,8 +34,7 @@ static void gpio_port_pin_resolution(uint16 port_pin, uint8* port, uint8* pin) {
 //功能概要: 初始化指定端口引脚为GPIO功能
 //==========================================================================
 void gpio_init(uint16 port_pin, uint8 dir, uint8 state) {
-	uint8 port;		//端口号
-	uint8 pin;		//引脚号
+	uint8 port, pin;		//端口号与引脚号
 
 	//获得端口号与引脚号
 	gpio_port_pin_resolution(port_pin, &port, &pin);
@@ -62,8 +61,7 @@ void gpio_init(uint16 port_pin, uint8 dir, uint8 state) {
 //功能概要: 当引脚配置为输出时，设定引脚状态为指定状态
 //==========================================================================
 void gpio_set(uint16 port_pin, uint8 state) {
-	uint8 port;		//端口号
-	uint8 pin;		//引脚号
+	uint8 port, pin;		//端口号与引脚号
 
 	//获得端口号与引脚号
 	gpio_port_pin_resolution(port_pin, &port, &pin);
@@ -81,71 +79,62 @@ void gpio_set(uint16 port_pin, uint8 state) {
 	}
 }
 
-//===========================================================================
-//函数名称：gpio_get
-//函数返回：指定引脚的状态（1或0）
-//参数说明：port_pin：端口号|引脚号（例：U_PORTD|(3) 表示为D口3号脚）
-//功能概要：获取指定引脚的状态（1或0）
-//===========================================================================
-uint8_t gpio_get(uint16_t port_pin) {
-	GPIO_MemMapPtr gpio_ptr;    //声明port_ptr为GPIO结构体类型指针（首地址）
-	uint8_t port;
-	uint8_t pin;
+//==========================================================================
+//函数名称: gpio_reverse
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//功能概要: 当引脚配置为输出时，反转其输出状态
+//==========================================================================
+void gpio_reverse(uint16 port_pin) {
+	uint8 port, pin;		//端口号与引脚号
+
+	//获得端口号与引脚号
 	gpio_port_pin_resolution(port_pin, &port, &pin);
-
-	//根据带入参数port，给局部变量port_ptr赋值（GPIO基地址）
-	gpio_ptr = GPIO_ARR[port];
-
-	//返回引脚的状态
-	return ((REG_GET_SHIFT(gpio_ptr->PDIR, pin)) >= 1 ? 1 : 0);
-}
-
-//===========================================================================
-//函数名称：gpio_reverse
-//函数返回：无
-//参数说明：port_pin：端口号|引脚号（例：U_PORTD|(3) 表示为D口3号脚）
-//功能概要：反转指定引脚输出状态。
-//===========================================================================
-void gpio_reverse(uint16_t port_pin) {
-	GPIO_MemMapPtr gpio_ptr;    //声明port_ptr为GPIO结构体类型指针（首地址）
-	uint8_t port;
-	uint8_t pin;
-	gpio_port_pin_resolution(port_pin, &port, &pin);
-
-	//根据带入参数port，给局部变量port_ptr赋值（GPIO基地址）
-	gpio_ptr = GPIO_ARR[port];
 
 	//反转指定引脚输出状态
-	REG_SET_SHIFT(gpio_ptr->PTOR, pin);
+	REG_SET_SHIFT(GPIO_PTOR_REG(gpio_table[port]), pin);
 }
 
-//===========================================================================
-//函数名称：gpio_pull
-//函数返回：无
-//参数说明：port_pin：端口号|引脚号（例：U_PORTD|(3) 表示为D口3号脚）
-//        pullselect：引脚拉高低电平（ 0=拉低电平，1=拉高电平）
-//功能概要：使指定引脚上拉高电平或下拉低电平
-//===========================================================================
-void gpio_pull(uint16_t port_pin, uint8_t pullselect) {
-	PORT_MemMapPtr port_ptr;    //声明port_ptr为PORT结构体类型指针
-	uint8_t port;
-	uint8_t pin;
+//==========================================================================
+//函数名称: gpio_pull
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//         state:引脚上下拉状态，GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平;
+//               GPIO_LEVEL_UNKNOWN:未知电平，即关闭上下拉电阻
+//功能概要: 当引脚配置为输入时，设定其上下拉状态
+//==========================================================================
+void gpio_pull(uint16 port_pin, uint8 state) {
+	uint8 port, pin;		//端口号与引脚号
+
+	//获得端口号与引脚号
 	gpio_port_pin_resolution(port_pin, &port, &pin);
 
-	port_ptr = PORT_ARR[port];  //获得PORT模块相应口基地址
-
-	port_ptr->PCR[pin] &= ~PORT_PCR_MUX_MASK;
-	port_ptr->PCR[pin] |= PORT_PCR_MUX(1);
-
-	REG_SET_SHIFT(port_ptr->PCR[pin], PORT_PCR_DSE_SHIFT);
-	REG_SET_SHIFT(port_ptr->PCR[pin], PORT_PCR_PE_SHIFT);  //将引脚上下拉使能
-
-	//根据带入参数pullselect，决定引脚拉高还是拉低
-	if (1 == pullselect) {
-		REG_SET_SHIFT(port_ptr->PCR[pin], PORT_PCR_PS_SHIFT);
+	if (state == GPIO_LEVEL_UNKNOWN) {
+		REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_PE_MASK);	//关闭上下拉电阻
 	} else {
-		REG_CLR_SHIFT(port_ptr->PCR[pin], PORT_PCR_PS_SHIFT);
+		if (state == GPIO_LEVEL_LOW) {
+			REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_PS_MASK);	//引脚下拉电阻使能
+		} else {
+			REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_PS_MASK);	//引脚上拉电阻使能
+		}
+		REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_PE_MASK);	//开启上下拉电阻
 	}
+}
+
+//==========================================================================
+//函数名称: gpio_get
+//函数返回: GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//功能概要: 当引脚配置为输入时，获取其电平状态
+//==========================================================================
+uint8 gpio_get(uint16 port_pin) {
+	uint8 port, pin;		//端口号与引脚号
+
+	//获得端口号与引脚号
+	gpio_port_pin_resolution(port_pin, &port, &pin);
+
+	//返回引脚的状态
+	return REG_GET_SHIFT(GPIO_PDIR_REG(gpio_table[port]), pin);
 }
 
 //===========================================================================
