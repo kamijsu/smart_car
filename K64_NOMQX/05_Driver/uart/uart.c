@@ -1,18 +1,16 @@
-//============================================================================
+//==========================================================================
 //文件名称：uart.c
-//功能概要：uart底层驱动构件源文件
-//版权所有：苏州大学飞思卡尔嵌入式中心(sumcu.suda.edu.cn)
-//更新记录：2014-10-15   V2.0
-//============================================================================
+//功能概要：K64 UART底层驱动程序源文件
+//==========================================================================
 
 #include "uart.h"
 
-//=====串口0、1、2、3、4、5号串口地址映射====
-static const UART_MemMapPtr UART_ARR[6] = {
-UART0_BASE_PTR, UART1_BASE_PTR, UART2_BASE_PTR,
-UART3_BASE_PTR, UART4_BASE_PTR, UART5_BASE_PTR };
-
-//====================接口函数实现============================================
+//各UART模块基地址
+static UART_Type * const uart_table[] = { UART0, UART1, UART2, UART3, UART4,
+UART5 };
+//UART模块中断请求号
+static const IRQn_Type uart_irq_table[] = { UART0_RX_TX_IRQn, UART1_RX_TX_IRQn,
+		UART2_RX_TX_IRQn, UART3_RX_TX_IRQn, UART4_RX_TX_IRQn, UART5_RX_TX_IRQn };
 
 //========================================================================
 //函数名称：uart_init
@@ -67,7 +65,7 @@ uint8_t uart_init(uint8_t uartNo, uint32_t baud) {
 		PORTE_PCR1 = PORT_PCR_MUX(0x3); //使能UART1_RXD
 #endif
 
-		REG_SET_SHIFT(SIM_SCGC4,SIM_SCGC4_UART1_SHIFT); //启动串口1时钟
+		REG_SET_SHIFT(SIM_SCGC4, SIM_SCGC4_UART1_SHIFT); //启动串口1时钟
 		break;
 	case 2:
 #if (U_UART2_GROUP==1)
@@ -75,7 +73,7 @@ uint8_t uart_init(uint8_t uartNo, uint32_t baud) {
 		PORTD_PCR2 = PORT_PCR_MUX(0x3);//使能UART2_RXD
 #endif
 
-		REG_SET_SHIFT(SIM_SCGC4,SIM_SCGC4_UART2_SHIFT); //启动串口2时钟
+		REG_SET_SHIFT(SIM_SCGC4, SIM_SCGC4_UART2_SHIFT); //启动串口2时钟
 		break;
 	case 3:
 #if (U_UART3_GROUP==1)
@@ -93,7 +91,7 @@ uint8_t uart_init(uint8_t uartNo, uint32_t baud) {
 		PORTE_PCR5 = PORT_PCR_MUX(0x3);//使能UART3_RXD
 #endif
 
-		REG_SET_SHIFT(SIM_SCGC4,SIM_SCGC4_UART3_SHIFT); //启动串口3时钟
+		REG_SET_SHIFT(SIM_SCGC4, SIM_SCGC4_UART3_SHIFT); //启动串口3时钟
 		break;
 	case 4:
 #if (U_UART4_GROUP==1)
@@ -106,7 +104,7 @@ uint8_t uart_init(uint8_t uartNo, uint32_t baud) {
 		PORTE_PCR25 = PORT_PCR_MUX(0x3);//使能UART4_RXD
 #endif
 
-		REG_SET_SHIFT(SIM_SCGC1,SIM_SCGC1_UART4_SHIFT); //启动串口4时钟
+		REG_SET_SHIFT(SIM_SCGC1, SIM_SCGC1_UART4_SHIFT); //启动串口4时钟
 		break;
 	case 5:
 #if (U_UART5_GROUP==1)
@@ -119,7 +117,7 @@ uint8_t uart_init(uint8_t uartNo, uint32_t baud) {
 		PORTE_PCR9 = PORT_PCR_MUX(0x3);//使能UART5_RXD
 #endif
 
-		REG_SET_SHIFT(SIM_SCGC1,SIM_SCGC1_UART5_SHIFT); //启动串口5时钟
+		REG_SET_SHIFT(SIM_SCGC1, SIM_SCGC1_UART5_SHIFT); //启动串口5时钟
 		break;
 	default:
 		return 1;  //传参错误，返回

@@ -38,20 +38,20 @@
 //函数返回: 无
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
 //         dir:引脚方向，GPIO_INPUT:配置为输入; GPIO_OUTPUT:配置为输出
-//         state:输出时为引脚电平状态，输入时为引脚上下拉状态，GPIO_LEVEL_LOW:低电平;
-//               GPIO_LEVEL_HIGH:高电平; GPIO_LEVEL_UNKNOWN:未知电平，仅在配置为输入时有效
+//         status:输出时为引脚电平状态，输入时为引脚上下拉状态，GPIO_LEVEL_LOW:低电平;
+//                GPIO_LEVEL_HIGH:高电平; GPIO_LEVEL_UNKNOWN:未知电平，仅在配置为输入时有效
 //功能概要: 初始化指定端口引脚为GPIO功能
 //==========================================================================
-void gpio_init(uint16 port_pin, uint8 dir, uint8 state);
+void gpio_init(uint16 port_pin, uint8 dir, uint8 status);
 
 //==========================================================================
 //函数名称: gpio_set
 //函数返回: 无
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
-//         state:引脚电平状态，GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平
+//         status:引脚电平状态，GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平
 //功能概要: 当引脚配置为输出时，设定引脚状态为指定状态
 //==========================================================================
-void gpio_set(uint16 port_pin, uint8 state);
+void gpio_set(uint16 port_pin, uint8 status);
 
 //==========================================================================
 //函数名称: gpio_reverse
@@ -65,22 +65,22 @@ void gpio_reverse(uint16 port_pin);
 //函数名称: gpio_drive_strength
 //函数返回: 无
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
-//         state:引脚的驱动能力，GPIO_DRIVE_LOW:正常驱动能力(5mA);
-//               GPIO_DRIVE_HIGH:高驱动能力(18mA)
+//         status:引脚的驱动能力，GPIO_DRIVE_LOW:正常驱动能力(5mA);
+//                GPIO_DRIVE_HIGH:高驱动能力(18mA)
 //功能概要: 当引脚配置为输出时，设定其驱动能力
 //备注:     K64芯片只有PTD7可以被设置为高驱动能力
 //==========================================================================
-void gpio_drive_strength(uint16 port_pin, uint8 state);
+void gpio_drive_strength(uint16 port_pin, uint8 status);
 
 //==========================================================================
 //函数名称: gpio_pull
 //函数返回: 无
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
-//         state:引脚上下拉状态，GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平;
-//               GPIO_LEVEL_UNKNOWN:未知电平，即关闭上下拉电阻
+//         status:引脚上下拉状态，GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平;
+//                GPIO_LEVEL_UNKNOWN:未知电平，即关闭上下拉电阻
 //功能概要: 当引脚配置为输入时，设定其上下拉状态
 //==========================================================================
-void gpio_pull(uint16 port_pin, uint8 state);
+void gpio_pull(uint16 port_pin, uint8 status);
 
 //==========================================================================
 //函数名称: gpio_get
