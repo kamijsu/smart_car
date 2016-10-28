@@ -6,7 +6,7 @@
 #include "pit.h"
 
 //PIT模块各通道的中断请求号
-static const IRQn_Type pit_irq[4] =
+static const IRQn_Type pit_irq_table[4] =
 		{ PIT0_IRQn, PIT1_IRQn, PIT2_IRQn, PIT3_IRQn };
 
 //==========================================================================
@@ -37,7 +37,7 @@ void pit_init(uint8 PIT_CHx, uint32 ms) {
 void pit_enable_int(uint8 PIT_CHx) {
 	REG_SET_MASK(PIT_TFLG(PIT_CHx), PIT_TFLG_TIF_MASK);	//先清除该通道中断标志，以防止使能中断后立即产生中断
 	REG_SET_MASK(PIT_TCTRL(PIT_CHx), PIT_TCTRL_TIE_MASK);	//允许该通道发送中断请求
-	ENABLE_IRQ(pit_irq[PIT_CHx]);							//允许接收该通道发送的中断请求
+	ENABLE_IRQ(pit_irq_table[PIT_CHx]);							//允许接收该通道发送的中断请求
 }
 
 //==========================================================================
@@ -48,7 +48,7 @@ void pit_enable_int(uint8 PIT_CHx) {
 //==========================================================================
 void pit_disable_int(uint8 PIT_CHx) {
 	REG_CLR_MASK(PIT_TCTRL(PIT_CHx), PIT_TCTRL_TIE_MASK);	//禁止该通道发送中断请求
-	DISABLE_IRQ(pit_irq[PIT_CHx]);							//禁止接收该通道发送的中断请求
+	DISABLE_IRQ(pit_irq_table[PIT_CHx]);							//禁止接收该通道发送的中断请求
 }
 
 //==========================================================================
