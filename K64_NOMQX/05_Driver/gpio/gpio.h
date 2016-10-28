@@ -9,46 +9,45 @@
 //包含公共头文件
 #include "common.h"
 
-// GPIO引脚方向宏定义
-#define GPIO_IN     (0)
-#define GPIO_OUTPUT (1)
-// GPIO引脚中断类型宏定义
-#define LOW_LEVEL    (8)      //低电平触发
-#define HIGH_LEVEL   (12)     //高电平触发
-#define RISING_EDGE  (9)      //上升沿触发
-#define FALLING_EDGE (10)     //下降沿触发
-#define DOUBLE_EDGE  (11)     //双边沿触发
+//定义GPIO模块电平状态
+#define GPIO_LEVEL_LOW		(0)		//低电平
+#define GPIO_LEVEL_HIGH		(1)		//高电平
+#define GPIO_LEVEL_UNKNOWN	(2)		//未知电平，仅在配置为输入时有效
 
-//各端口基地址放入常数数据组PORT_ARR[0]~PORT_ARR[4]中
-static const PORT_MemMapPtr PORT_ARR[] =
-{ PORTA_BASE_PTR, PORTB_BASE_PTR,
-PORTC_BASE_PTR, PORTD_BASE_PTR, PORTE_BASE_PTR };
-//GPIO口基地址放入常数数据组GPIO_ARR[0]~GPIO_ARR[4]中
-static const GPIO_MemMapPtr GPIO_ARR[] =
-{ PTA_BASE_PTR, PTB_BASE_PTR,
-PTC_BASE_PTR, PTD_BASE_PTR, PTE_BASE_PTR };
+//定义GPIO模块引脚方向
+#define GPIO_INPUT		(0)		//输入
+#define GPIO_OUTPUT		(1)		//输出
 
-//===============================函数接口声明===================================
+//定义GPIO模块中断类型
+#define GPIO_INT_LOW_LEVEL		(8)		//低电平触发
+#define GPIO_INT_HIGH_LEVEL		(12)	//高电平触发
+#define GPIO_INT_RISING_EDGE	(9)		//上升沿触发
+#define GPIO_INT_FALLING_EDGE	(10)	//下降沿触发
+#define GPIO_INT_DOUBLE_EDGE	(11)	//双边沿触发
 
-///==========================================================================================
-//函数名称：gpio_init
-//函数返回：无
-//参数说明：port_pin：(端口号)|(引脚号)（例：U_PORTD|(3) 表示为D口3号脚）.
-//          dir：引脚方向（0=输入，1=输出,可用引脚方向宏定义）.
-//          state：端口引脚初始状态（0=低电平，1=高电平）.
-//功能概要：初始化指定端口引脚作为GPIO引脚功能，并定义为输入或输出，若是输出，
-//        还指定初始状态是低电平或高电平.
-//===========================================================================
-void gpio_init(uint16_t port_pin, uint8_t dir, uint8_t state);
+//定义GPIO模块中断标志
+#define GPIO_INT_TRUE	(1)		//产生中断
+#define GPIO_INT_FALSE	(0)		//未产生中断
 
-//===========================================================================
-//函数名称：gpio_set
-//函数返回：无
-//参数说明：port_pin：端口号|引脚号（例：U_PORTD|(3) 表示为D口3号脚）
-//          state：引脚初始状态（0=低电平，1=高电平）
-//功能概要：设定引脚状态为低电平或高电平
-//===========================================================================
-void gpio_set(uint16_t port_pin, uint8_t state);
+//==========================================================================
+//函数名称: gpio_init
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//         dir:引脚方向，GPIO_INPUT:配置为输入; GPIO_OUTPUT:配置为输出
+//         state:输出时为引脚电平状态，输入时为引脚上下拉状态，GPIO_LEVEL_LOW:低电平;
+//               GPIO_LEVEL_HIGH:高电平; GPIO_LEVEL_UNKNOWN:未知电平，仅在配置为输入时有效
+//功能概要: 初始化指定端口引脚为GPIO功能
+//==========================================================================
+void gpio_init(uint16 port_pin, uint8 dir, uint8 state);
+
+//==========================================================================
+//函数名称: gpio_set
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//         state:引脚电平状态，GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平
+//功能概要: 当引脚配置为输出时，设定引脚状态为指定状态
+//==========================================================================
+void gpio_set(uint16 port_pin, uint8 state);
 
 //===========================================================================
 //函数名称：gpio_get

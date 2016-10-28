@@ -95,6 +95,8 @@ uint32 run_counter;
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
+	uart_send_string(UART_USE,"started.");
+
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {

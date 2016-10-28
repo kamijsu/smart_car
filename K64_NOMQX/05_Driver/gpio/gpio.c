@@ -1,97 +1,83 @@
-//===========================================================================
+//==========================================================================
 //文件名称：gpio.c
-//功能概要：K60 GPIO底层驱动程序文件
-//版权所有：苏州大学飞思卡尔嵌入式中心(sumcu.suda.edu.cn)
-//版本更新：2013-05-03  V1.0
-//        2014-04-25  V2.0
-//        2014-10-12  V3.0
-//===========================================================================
+//功能概要：K64 GPIO底层驱动程序源文件
+//==========================================================================
 
-#include "gpio.h"  //包含本构件头文件
+#include "gpio.h"
 
-//----------------------------------以下为内部函数存放处---------------------------------------
+//各端口基地址
+static PORT_Type * const port_table[] = { PORTA, PORTB, PORTC, PORTD, PORTE };
+//GPIO口基地址
+static GPIO_Type * const gpio_table[] = { PTA, PTB, PTC, PTD, PTE };
+
 //===========================================================================
-//函数名称：gpio_port_pin_resolution
-//函数返回：无
-//参数说明：port_pin：端口号|引脚号（例：U_PORTD|(3) 表示为B口5号脚）
-//        port：端口号
-//	      pin:引脚号（0~31，实际取值由芯片的物理引脚决定）
-//功能概要：将传进参数port_pin进行解析，得出具体端口号与引脚号（例：U_PORTD|(3)
-//        解析为PORTD与3，并将其分别赋值给port与pin）
+//函数名称: gpio_port_pin_resolution
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//         port:端口号
+//	       pin:引脚号(0~31，实际取值由芯片的物理引脚决定)
+//功能概要: 将传进参数port_pin进行解析，得出具体端口号与引脚号
 //===========================================================================
-static void gpio_port_pin_resolution(uint16_t port_pin, uint8_t* port,
-		uint8_t* pin)
-{
+static void gpio_port_pin_resolution(uint16 port_pin, uint8* port, uint8* pin) {
 	*port = port_pin >> 8;
 	*pin = port_pin;
 }
 //==========================================================================
-//------------------------------------内部函数结束-----------------------------------------
 
-//------------------------------------外部接口函数开始------------------------------------
-//==========================================================================================
-//函数名称：gpio_init
-//函数返回：无
-//参数说明：port_pin：(端口号)|(引脚号)（例：U_PORTD|(3) 表示为D口3号脚）
-//        dir：引脚方向（0=输入，1=输出,可用引脚方向宏定义）
-//        state：端口引脚初始状态（0=低电平，1=高电平）
-//功能概要：初始化指定端口引脚作为GPIO引脚功能，并定义为输入或输出，若是输出，
-//        还指定初始状态是低电平或高电平
-//===========================================================================
-void gpio_init(uint16_t port_pin, uint8_t dir, uint8_t state)
-{
-	//局部变量声明
-	PORT_MemMapPtr port_ptr;    //声明port_ptr为PORT结构体类型指针
-	GPIO_MemMapPtr gpio_ptr;    //声明port_ptr为GPIO结构体类型指针
-	uint8_t port;                //端口号
-	uint8_t pin;                 //引脚号
-	//获得端口号与引脚号，分别赋给port、pin
+//==========================================================================
+//函数名称: gpio_init
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//         dir:引脚方向，GPIO_INPUT:配置为输入; GPIO_OUTPUT:配置为输出
+//         state:输出时为引脚电平状态，输入时为引脚上下拉状态，GPIO_LEVEL_LOW:低电平;
+//               GPIO_LEVEL_HIGH:高电平; GPIO_LEVEL_UNKNOWN:未知电平，仅在配置为输入时有效
+//功能概要: 初始化指定端口引脚为GPIO功能
+//==========================================================================
+void gpio_init(uint16 port_pin, uint8 dir, uint8 state) {
+	uint8 port;		//端口号
+	uint8 pin;		//引脚号
+
+	//获得端口号与引脚号
 	gpio_port_pin_resolution(port_pin, &port, &pin);
 
-	//根据端口号port，给局部变量port_ptr、gpio_ptr赋值(获得两个基地址)
-	port_ptr = PORT_ARR[port];  //获得PORT模块相应口基地址
-	gpio_ptr = GPIO_ARR[port];  //获得GPIO模块相应口基地址
+	//指定该引脚功能为GPIO
+	REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_MUX_MASK);//清空MUX位
+	REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_MUX(1));//使MUX=0b001
 
-	//根据引脚号pin,指定该引脚功能为GPIO功能(即令引脚控制寄存器的MUX=0b001)
-	port_ptr->PCR[pin] &= ~PORT_PCR_MUX_MASK;   //先令MUX=0b000
-	port_ptr->PCR[pin] |= PORT_PCR_MUX(1);      //再令MUX=0b001
-
-	//根据带入参数dir，决定引脚为输出还是输入
-	if (1 == dir)   //希望为输出
-	{
-		REG_SET_SHIFT(gpio_ptr->PDDR,pin);   //数据方向寄存器的pin位=1，定义为输出
-		gpio_set(port_pin, state);  //调用gpio_set函数，设定引脚初始状态
+	//配置引脚方向
+	if (dir == GPIO_OUTPUT) {
+		REG_SET_SHIFT(GPIO_PDDR_REG(gpio_table[port]), pin);	//配置为输出
+		gpio_set(port_pin, state);  //设定引脚电平状态
+	} else {
+		REG_CLR_SHIFT(GPIO_PDDR_REG(gpio_table[port]), pin);	//配置为输入
+		gpio_pull(port_pin, state);  //设定引脚上下拉状态
 	}
-	else
-		//希望为输入
-		REG_CLR_SHIFT(gpio_ptr->PDDR,pin);    //数据方向寄存器的pin位=0，定义为输入
 }
 
-//===========================================================================
-//函数名称：gpio_set
-//函数返回：无
-//参数说明：port_pin：端口号|引脚号（例：U_PORTD|(3) 表示为D口3号脚）
-//		  state：引脚初始状态（0=低电平，1=高电平）
-//功能概要：设定引脚状态为低电平或高电平
-//===========================================================================
-void gpio_set(uint16_t port_pin, uint8_t state)
-{
-	GPIO_MemMapPtr gpio_ptr;    //声明port_ptr为GPIO结构体类型指针
-	uint8_t port;
-	uint8_t pin;
+//==========================================================================
+//函数名称: gpio_set
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//         state:引脚电平状态，GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平
+//功能概要: 当引脚配置为输出时，设定引脚状态为指定状态
+//==========================================================================
+void gpio_set(uint16 port_pin, uint8 state) {
+	uint8 port;		//端口号
+	uint8 pin;		//引脚号
+
+	//获得端口号与引脚号
 	gpio_port_pin_resolution(port_pin, &port, &pin);
 
-	//根据带入参数port，给局部变量gpio_ptr赋值（GPIO基地址）
-	gpio_ptr = GPIO_ARR[port];
-
-	//根据带入参数state，决定引脚为输出1还是0
-	if (1 == state)
-	{
-		REG_SET_SHIFT(gpio_ptr->PDOR,pin);
-	}
-	else
-	{
-		REG_CLR_SHIFT(gpio_ptr->PDOR,pin);
+	//设定引脚状态为指定状态
+	switch (state) {
+	case GPIO_LEVEL_LOW:
+		REG_CLR_SHIFT(GPIO_PDOR_REG(gpio_table[port]), pin);	//设定为低电平
+		break;
+	case GPIO_LEVEL_HIGH:
+		REG_SET_SHIFT(GPIO_PDOR_REG(gpio_table[port]), pin);	//设定为高电平
+		break;
+	default:
+		break;
 	}
 }
 
@@ -101,8 +87,7 @@ void gpio_set(uint16_t port_pin, uint8_t state)
 //参数说明：port_pin：端口号|引脚号（例：U_PORTD|(3) 表示为D口3号脚）
 //功能概要：获取指定引脚的状态（1或0）
 //===========================================================================
-uint8_t gpio_get(uint16_t port_pin)
-{
+uint8_t gpio_get(uint16_t port_pin) {
 	GPIO_MemMapPtr gpio_ptr;    //声明port_ptr为GPIO结构体类型指针（首地址）
 	uint8_t port;
 	uint8_t pin;
@@ -112,7 +97,7 @@ uint8_t gpio_get(uint16_t port_pin)
 	gpio_ptr = GPIO_ARR[port];
 
 	//返回引脚的状态
-	return ((REG_GET_SHIFT(gpio_ptr->PDIR,pin)) >= 1 ? 1 : 0);
+	return ((REG_GET_SHIFT(gpio_ptr->PDIR, pin)) >= 1 ? 1 : 0);
 }
 
 //===========================================================================
@@ -121,8 +106,7 @@ uint8_t gpio_get(uint16_t port_pin)
 //参数说明：port_pin：端口号|引脚号（例：U_PORTD|(3) 表示为D口3号脚）
 //功能概要：反转指定引脚输出状态。
 //===========================================================================
-void gpio_reverse(uint16_t port_pin)
-{
+void gpio_reverse(uint16_t port_pin) {
 	GPIO_MemMapPtr gpio_ptr;    //声明port_ptr为GPIO结构体类型指针（首地址）
 	uint8_t port;
 	uint8_t pin;
@@ -132,7 +116,7 @@ void gpio_reverse(uint16_t port_pin)
 	gpio_ptr = GPIO_ARR[port];
 
 	//反转指定引脚输出状态
-	REG_SET_SHIFT(gpio_ptr->PTOR,pin);
+	REG_SET_SHIFT(gpio_ptr->PTOR, pin);
 }
 
 //===========================================================================
@@ -142,8 +126,7 @@ void gpio_reverse(uint16_t port_pin)
 //        pullselect：引脚拉高低电平（ 0=拉低电平，1=拉高电平）
 //功能概要：使指定引脚上拉高电平或下拉低电平
 //===========================================================================
-void gpio_pull(uint16_t port_pin, uint8_t pullselect)
-{
+void gpio_pull(uint16_t port_pin, uint8_t pullselect) {
 	PORT_MemMapPtr port_ptr;    //声明port_ptr为PORT结构体类型指针
 	uint8_t port;
 	uint8_t pin;
@@ -154,17 +137,14 @@ void gpio_pull(uint16_t port_pin, uint8_t pullselect)
 	port_ptr->PCR[pin] &= ~PORT_PCR_MUX_MASK;
 	port_ptr->PCR[pin] |= PORT_PCR_MUX(1);
 
-	REG_SET_SHIFT(port_ptr->PCR[pin],PORT_PCR_DSE_SHIFT);
-	REG_SET_SHIFT(port_ptr->PCR[pin],PORT_PCR_PE_SHIFT);  //将引脚上下拉使能
+	REG_SET_SHIFT(port_ptr->PCR[pin], PORT_PCR_DSE_SHIFT);
+	REG_SET_SHIFT(port_ptr->PCR[pin], PORT_PCR_PE_SHIFT);  //将引脚上下拉使能
 
 	//根据带入参数pullselect，决定引脚拉高还是拉低
-	if (1 == pullselect)
-	{
-		REG_SET_SHIFT(port_ptr->PCR[pin],PORT_PCR_PS_SHIFT);
-	}
-	else
-	{
-		REG_CLR_SHIFT(port_ptr->PCR[pin],PORT_PCR_PS_SHIFT);
+	if (1 == pullselect) {
+		REG_SET_SHIFT(port_ptr->PCR[pin], PORT_PCR_PS_SHIFT);
+	} else {
+		REG_CLR_SHIFT(port_ptr->PCR[pin], PORT_PCR_PS_SHIFT);
 	}
 }
 
@@ -175,8 +155,7 @@ void gpio_pull(uint16_t port_pin, uint8_t pullselect)
 //        control：控制引脚的驱动能力，0=正常驱动能力(5mA),默认1=高驱动能力(18mA).
 //功能概要： 指定端口引脚被定义为GPIO功能，设定引脚驱动能力
 //===========================================================================
-void gpio_drive_strength(uint16_t port_pin, uint8_t control)
-{
+void gpio_drive_strength(uint16_t port_pin, uint8_t control) {
 	//局部变量声明
 	PORT_MemMapPtr port_ptr;    //声明port_ptr为PORT结构体类型指针
 	uint8_t port;
@@ -187,11 +166,11 @@ void gpio_drive_strength(uint16_t port_pin, uint8_t control)
 	port_ptr = PORT_ARR[port];
 
 	//根据带入参数control，决定引脚为输出高电流还是正常电流
-	REG_CLR_SHIFT( port_ptr->PCR[pin],PORT_PCR_DSE_SHIFT);
+	REG_CLR_SHIFT(port_ptr->PCR[pin], PORT_PCR_DSE_SHIFT);
 	if (1 == control)
-		REG_SET_SHIFT(port_ptr->PCR[pin],PORT_PCR_DSE_SHIFT);
+		REG_SET_SHIFT(port_ptr->PCR[pin], PORT_PCR_DSE_SHIFT);
 	else
-		REG_CLR_SHIFT(port_ptr->PCR[pin],PORT_PCR_DSE_SHIFT);
+		REG_CLR_SHIFT(port_ptr->PCR[pin], PORT_PCR_DSE_SHIFT);
 }
 
 //===================================================================================
@@ -206,8 +185,7 @@ void gpio_drive_strength(uint16_t port_pin, uint8_t control)
 //                  DOUBLE_EDGE  11     //双边沿触发
 //功能概要：指定端口引脚被定义为GPIO功能且为输入时，本函数开启引脚中断，并设置中断触发条件。
 //=====================================================================================
-void gpio_enable_int(uint16_t port_pin, uint8_t irqtype)
-{
+void gpio_enable_int(uint16_t port_pin, uint8_t irqtype) {
 	PORT_MemMapPtr port_ptr;    //声明port_ptr为PORT结构体类型指针
 	uint8_t port;
 	uint8_t pin;
@@ -218,8 +196,7 @@ void gpio_enable_int(uint16_t port_pin, uint8_t irqtype)
 	port_ptr->PCR[pin] |= PORT_PCR_ISF_MASK;  //清除引脚中断标志
 	port_ptr->PCR[pin] |= PORT_PCR_IRQC(irqtype); //使能引脚中断
 
-	switch (port)
-	{
+	switch (port) {
 	case 0: //PTA
 		NVIC_EnableIRQ(PORTA_IRQn);   //开中断控制器IRQ中断
 		break;
@@ -246,8 +223,7 @@ void gpio_enable_int(uint16_t port_pin, uint8_t irqtype)
 //参数说明：port_pin：(端口号)|(引脚号)（例：U_PORTD|(3) 表示为D口3号脚）
 //功能概要：当指定端口引脚被定义为GPIO功能且为输入时，本函数关闭引脚中断
 //===========================================================================
-void gpio_disable_int(uint16_t port_pin)
-{
+void gpio_disable_int(uint16_t port_pin) {
 	PORT_MemMapPtr port_ptr;    //声明port_ptr为PORT结构体类型指针
 	uint8_t port;
 	uint8_t pin;
@@ -257,8 +233,7 @@ void gpio_disable_int(uint16_t port_pin)
 
 	port_ptr->PCR[pin] &= ~PORT_PCR_IRQC_MASK;  //禁用引脚中断
 
-	switch (port)
-	{
+	switch (port) {
 	case 0:  //PTA
 		NVIC_DisableIRQ(PORTA_IRQn);   //开中断控制器IRQ中断
 		break;
