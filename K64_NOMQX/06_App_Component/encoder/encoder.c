@@ -17,7 +17,7 @@
 void encoder_init(uint16_t port_pin)
 {
 	//对应引脚的初始化，配置
-	gpio_init(port_pin, GPIO_IN, 0);			//将传入的引脚初始化为输入，初始状态为低电平
+	gpio_init(port_pin, GPIO_INPUT, 0);			//将传入的引脚初始化为输入，初始状态为低电平
 	gpio_pull(port_pin, 1);						//将传入的引脚拉高电平
 }
 
@@ -43,7 +43,7 @@ void encoder_get_speed(uint16_t conter, float *speed)
 //============================================================================
 void encoder_enable_int(uint16_t port_pin)
 {
-	gpio_enable_int(port_pin, FALLING_EDGE);	//引脚中断类型设定为下降沿触发
+	gpio_enable_int(port_pin, GPIO_INT_FALLING_EDGE);	//引脚中断类型设定为下降沿触发
 }
 
 //============================================================================

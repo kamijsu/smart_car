@@ -15,7 +15,7 @@
 void reed_switch_init(void)
 {
 	gpio_init(REED_SWITCH_OUTPUT,GPIO_OUTPUT,1);
-	gpio_init(REED_SWITCH_INPUT,GPIO_IN,0);
+	gpio_init(REED_SWITCH_INPUT,GPIO_INPUT,0);
 	gpio_pull(REED_SWITCH_INPUT,0);
 }
 
@@ -27,5 +27,5 @@ void reed_switch_init(void)
 //==============================================================
 void reed_switch_enable_int(void)
 {
-	gpio_enable_int(REED_SWITCH_INPUT,RISING_EDGE);
+	gpio_enable_int(REED_SWITCH_INPUT,GPIO_INT_RISING_EDGE);
 }
