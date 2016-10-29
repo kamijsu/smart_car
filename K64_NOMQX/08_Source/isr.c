@@ -19,9 +19,9 @@ void UART1_RX_TX_IRQHandler() {
 
 	DISABLE_INTERRUPTS;
 
-	ch = uart_re1(U_UART1, &flag);
+	ch = uart_re1(UART_MOD1, &flag);
 	if (0 == flag) {
-		uart_send1(U_UART1, ch);
+		uart_send1(UART_MOD1, ch);
 	}
 
 	ENABLE_INTERRUPTS;

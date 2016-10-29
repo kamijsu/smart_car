@@ -4,7 +4,7 @@
 #include "uart.h"
 #include "string.h"
 
-#define UART_Debug  U_UART1    //printf函数使用的串口号
+#define UART_Debug  UART_MOD1    //printf函数使用的串口号
 
 #define printf   myprintf
 

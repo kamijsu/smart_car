@@ -9,46 +9,54 @@
 //包含公共头文件
 #include "common.h"
 
-//宏定义串口号
-#define U_UART0 (0)
-#define U_UART1 (1)
-#define U_UART2 (2)
-#define U_UART3 (3)
-#define U_UART4 (4)
-#define U_UART5 (5)
+//定义串口模块号（MOD为module简称）
+#define UART_MOD0	(0)
+#define UART_MOD1	(1)
+#define UART_MOD2	(2)
+#define UART_MOD3	(3)
+#define UART_MOD4	(4)
+#define UART_MOD5	(5)
 
-//根据串口实际硬件引脚，确定以下宏常量值。
+//设置各串口模块所用引脚组，通过更改宏定义的值以选择引脚组，引脚组前者为TX，后者为RX
+//UART0:  0=PTA2-PTA1;  1=PTA14-PTA15;  2=PTB17-PTB16;  3=PTD7-PTD6;
+#define UART_MOD0_SETUP		(0)
+//UART1:  0=PTC4-PTC3;  1=PTE0-PTE1;
+#define UART_MOD1_SETUP		(1)
+//UART2:  0=PTD3-PTD2;
+#define UART_MOD2_SETUP		(0)
+//UART3:  0=PTB11-PTB10;  1=PTC17-PTC16;  2=PTE4-PTE5;
+#define UART_MOD3_SETUP		(0)
+//UART4:  0=PTC15-PTC14;  1=PTE24-PTE25;
+#define UART_MOD4_SETUP		(0)
+//UART5:  0=PTD9-PTD8;  1=PTE8-PTE9;
+#define UART_MOD5_SETUP		(0)
 
-//U_UART0：1=PTA2~1脚，2=PTA14~15脚，3=PTB17~16脚，4=PTD7~6脚（TX、RX）
-//#define U_UART0_GROUP    (4)
-//
-////U_UART1: 1=PTC4~3脚，2=PTE0~1脚（TX、RX）
-#define U_UART1_GROUP    (2)
-//
-////U_UART2:1=PTD3~2脚（TX、RX）
-//#define U_UART2_GROUP    (1)
-//
-//U_UART3：1=PTB11~10脚，2=PTC17~16脚，3=PTE4~5脚（TX、RX）
-//#define U_UART3_GROUP    (1)
+//定义UART各模块工作时钟频率，单位Hz
+#define UART_WORK_FREQ1		(SYSTEM_CLK_KHZ * 1000)	//UART0和UART1使用系统时钟
+#define UART_WORK_FREQ2		(BUS_CLK_KHZ * 1000)	//其余UART模块使用总线时钟
 
-//U_UART4：1=PTC15~14脚，2=PTE24~25脚（TX、RX）
-//#define U_UART4_GROUP    (1)
+//定义UART模块校验模式
+#define UART_PARITY_DISABLED	(0)		//不启用校验
+#define UART_PARITY_ODD			(1)		//奇校验
+#define UART_PARITY_EVEN		(2)		//偶校验
 
-//U_UART5：1=PTD9~8脚，2=PTE8~9脚
-//#define U_UART5_GROUP    (2)
+//定义UART模块停止位
+#define UART_STOP_BIT_1			(1)		//1位停止位
+#define UART_STOP_BIT_2			(2)		//2位停止位
 
-//=================接口函数声明============================================
-//========================================================================
-//函数名称：uart_init
-//功能概要：初始化uart模块
-//参数说明：uartNo:串口号：U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//          sel_clk:选择串口时钟源:
-//                内核时钟    (96000Khz)
-//				   总线时钟    (48000khz)
-//          baud:波特率：300、600、1200、2400、4800、9600、19200、115200...
-//函数返回：无
-//=========================================================================
-uint8_t uart_init(uint8_t uartNo, uint32_t baud);
+//==========================================================================
+//函数名称: uart_init
+//函数返回: 无
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//         baud:波特率:(600) | 1200 | 2400 | 4800 | 9600 | 14400 | 19200 |
+//                     38400 | 56000 | 57600 | 115200 | 128000 | 256000
+//         parity_mode:校验模式，UART_PARITY_DISABLED:不启用校验;
+//                     UART_PARITY_ODD:奇校验; UART_PARITY_EVEN:偶校验
+//         stop_bit:停止位，UART_STOP_BIT_1:1位停止位; UART_STOP_BIT_2:2位停止位
+//功能概要: 初始化UART模块
+//备注: 波特率为600时，UART0与UART1无法使用
+//==========================================================================
+void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit);
 
 //=========================================================================
 //函数名称：uart_re1
@@ -112,5 +120,80 @@ void uart_enable_re_int(uint8_t uartNo);
 //功能概要：关串口接收中断
 //=========================================================================
 void uart_disable_re_int(uint8_t uartNo);
+
+//根据各模块所设置的引脚组，定义其使用的引脚控制寄存器
+#ifdef UART_MOD0_SETUP
+#if(UART_MOD0_SETUP == 0)
+#define UART_MOD0_TX_PCR	PORTA_PCR2
+#define UART_MOD0_RX_PCR	PORTA_PCR1
+#endif
+#if(UART_MOD0_SETUP == 1)
+#define UART_MOD0_TX_PCR	PORTA_PCR14
+#define UART_MOD0_RX_PCR	PORTA_PCR15
+#endif
+#if(UART_MOD0_SETUP == 2)
+#define UART_MOD0_TX_PCR	PORTB_PCR17
+#define UART_MOD0_RX_PCR	PORTB_PCR16
+#endif
+#if(UART_MOD0_SETUP == 3)
+#define UART_MOD0_TX_PCR	PORTD_PCR7
+#define UART_MOD0_RX_PCR	PORTD_PCR6
+#endif
+#endif
+
+#ifdef UART_MOD1_SETUP
+#if(UART_MOD1_SETUP == 0)
+#define UART_MOD1_TX_PCR	PORTC_PCR4
+#define UART_MOD1_RX_PCR	PORTC_PCR3
+#endif
+#if(UART_MOD1_SETUP == 1)
+#define UART_MOD1_TX_PCR	PORTE_PCR0
+#define UART_MOD1_RX_PCR	PORTE_PCR1
+#endif
+#endif
+
+#ifdef UART_MOD2_SETUP
+#if(UART_MOD2_SETUP == 0)
+#define UART_MOD2_TX_PCR	PORTD_PCR3
+#define UART_MOD2_RX_PCR	PORTD_PCR2
+#endif
+#endif
+
+#ifdef UART_MOD3_SETUP
+#if(UART_MOD3_SETUP == 0)
+#define UART_MOD3_TX_PCR	PORTB_PCR11
+#define UART_MOD3_RX_PCR	PORTB_PCR10
+#endif
+#if(UART_MOD3_SETUP == 1)
+#define UART_MOD3_TX_PCR	PORTC_PCR17
+#define UART_MOD3_RX_PCR	PORTC_PCR16
+#endif
+#if(UART_MOD3_SETUP == 2)
+#define UART_MOD3_TX_PCR	PORTE_PCR4
+#define UART_MOD3_RX_PCR	PORTE_PCR5
+#endif
+#endif
+
+#ifdef UART_MOD4_SETUP
+#if(UART_MOD4_SETUP == 0)
+#define UART_MOD4_TX_PCR	PORTC_PCR15
+#define UART_MOD4_RX_PCR	PORTC_PCR14
+#endif
+#if(UART_MOD4_SETUP == 1)
+#define UART_MOD4_TX_PCR	PORTE_PCR24
+#define UART_MOD4_RX_PCR	PORTE_PCR25
+#endif
+#endif
+
+#ifdef UART_MOD5_SETUP
+#if(UART_MOD5_SETUP == 0)
+#define UART_MOD5_TX_PCR	PORTD_PCR9
+#define UART_MOD5_RX_PCR	PORTD_PCR8
+#endif
+#if(UART_MOD5_SETUP == 1)
+#define UART_MOD5_TX_PCR	PORTE_PCR8
+#define UART_MOD5_RX_PCR	PORTE_PCR9
+#endif
+#endif
 
 #endif

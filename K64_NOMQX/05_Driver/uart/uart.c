@@ -8,153 +8,129 @@
 //各UART模块基地址
 static UART_Type * const uart_table[] = { UART0, UART1, UART2, UART3, UART4,
 UART5 };
-//UART模块中断请求号
-static const IRQn_Type uart_irq_table[] = { UART0_RX_TX_IRQn, UART1_RX_TX_IRQn,
-		UART2_RX_TX_IRQn, UART3_RX_TX_IRQn, UART4_RX_TX_IRQn, UART5_RX_TX_IRQn };
+//UART模块发送接收中断请求号
+static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
+		UART1_RX_TX_IRQn, UART2_RX_TX_IRQn, UART3_RX_TX_IRQn, UART4_RX_TX_IRQn,
+		UART5_RX_TX_IRQn };
 
-//========================================================================
-//函数名称：uart_init
-//功能概要：初始化uart模块
-//参数说明：uartNo:串口号：U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//          sel_clk:选择串口时钟源:
-//                内核时钟   (96000Khz)
-//		  总线时钟    (48000khz)
-//          baud:波特率：300、600、1200、2400、4800、9600、19200、115200...
-//函数返回：无
-//=========================================================================
-uint8_t uart_init(uint8_t uartNo, uint32_t baud) {
-	register uint16_t sbr;
-	uint16_t brfa;
-	uint8_t temp;
-	uint32_t sel_clk;
-	UART_MemMapPtr uartch = UART_ARR[uartNo];
+//==========================================================================
+//函数名称: uart_init
+//函数返回: 无
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//         baud:波特率:(600) | 1200 | 2400 | 4800 | 9600 | 14400 | 19200 |
+//                     38400 | 56000 | 57600 | 115200 | 128000 | 256000
+//         parity_mode:校验模式，UART_PARITY_DISABLED:不启用校验;
+//                     UART_PARITY_ODD:奇校验; UART_PARITY_EVEN:偶校验
+//         stop_bit:停止位，UART_STOP_BIT_1:1位停止位; UART_STOP_BIT_2:2位停止位
+//功能概要: 初始化UART模块
+//备注: 波特率为600时，UART0与UART1无法使用
+//==========================================================================
+void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
+	uint16 sbr;	//波特率位，用来计算波特率
+	uint8 brfa;	//波特率微调
+	uint32 clk_freq;	//所用时钟频率
 
-	//使能引脚功能并启动引脚时钟
-	switch (uartNo) {
-	case 0:
-#if (U_UART0_GROUP==1)
-		PORTA_PCR1 = PORT_PCR_MUX(0x2); //使能UART0_TXD
-		PORTA_PCR2 = PORT_PCR_MUX(0x2);//使能UART0_RXD
-#endif
-
-#if (U_UART0_GROUP==2)
-		PORTA_PCR14 = PORT_PCR_MUX(0x3); //使能UART0_TXD
-		PORTA_PCR15 = PORT_PCR_MUX(0x3);//使能UART0_RXD
-#endif
-
-#if (U_UART0_GROUP==3)
-		PORTB_PCR17 = PORT_PCR_MUX(0x3); //使能UART0_TXD
-		PORTB_PCR16 = PORT_PCR_MUX(0x3);//使能UART0_RXD
-#endif
-
-#if (U_UART0_GROUP==4)
-		PORTD_PCR7 = PORT_PCR_MUX(0x3); //使能UART0_TXD
-		PORTD_PCR6 = PORT_PCR_MUX(0x3);//使能UART0_RXD
-#endif
-
-		REG_SET_SHIFT(SIM_SCGC4, SIM_SCGC4_UART0_SHIFT); //启动串口0时钟
-		break;
-	case 1:
-#if (U_UART1_GROUP==1)
-		PORTC_PCR4 = PORT_PCR_MUX(0x3); //使能UART1_TXD
-		PORTC_PCR3 = PORT_PCR_MUX(0x3);//使能UART1_RXD
-#endif
-
-#if (U_UART1_GROUP==2)
-		PORTE_PCR0 = PORT_PCR_MUX(0x3); //使能UART1_TXD
-		PORTE_PCR1 = PORT_PCR_MUX(0x3); //使能UART1_RXD
-#endif
-
-		REG_SET_SHIFT(SIM_SCGC4, SIM_SCGC4_UART1_SHIFT); //启动串口1时钟
-		break;
-	case 2:
-#if (U_UART2_GROUP==1)
-		PORTD_PCR3 = PORT_PCR_MUX(0x3); //使能UART2_TXD
-		PORTD_PCR2 = PORT_PCR_MUX(0x3);//使能UART2_RXD
-#endif
-
-		REG_SET_SHIFT(SIM_SCGC4, SIM_SCGC4_UART2_SHIFT); //启动串口2时钟
-		break;
-	case 3:
-#if (U_UART3_GROUP==1)
-		PORTB_PCR11 = PORT_PCR_MUX(0x3); //使能UART3_TXD
-		PORTB_PCR10 = PORT_PCR_MUX(0x3);//使能UART3_RXD
-#endif
-
-#if (U_UART3_GROUP==2)
-		PORTC_PCR17 = PORT_PCR_MUX(0x3); //使能UART3_TXD
-		PORTC_PCR16 = PORT_PCR_MUX(0x3);//使能UART3_RXD
-#endif
-
-#if (U_UART3_GROUP==3)
-		PORTE_PCR4 = PORT_PCR_MUX(0x3); //使能UART3_TXD
-		PORTE_PCR5 = PORT_PCR_MUX(0x3);//使能UART3_RXD
-#endif
-
-		REG_SET_SHIFT(SIM_SCGC4, SIM_SCGC4_UART3_SHIFT); //启动串口3时钟
-		break;
-	case 4:
-#if (U_UART4_GROUP==1)
-		PORTC_PCR15 = PORT_PCR_MUX(0x3); //使能UART4_TXD
-		PORTC_PCR14 = PORT_PCR_MUX(0x3);//使能UART4_RXD
-#endif
-
-#if (U_UART4_GROUP==2)
-		PORTE_PCR24 = PORT_PCR_MUX(0x3); //使能UART4_TXD
-		PORTE_PCR25 = PORT_PCR_MUX(0x3);//使能UART4_RXD
-#endif
-
-		REG_SET_SHIFT(SIM_SCGC1, SIM_SCGC1_UART4_SHIFT); //启动串口4时钟
-		break;
-	case 5:
-#if (U_UART5_GROUP==1)
-		PORTD_PCR9 = PORT_PCR_MUX(0x3); //使能UART4_TXD
-		PORTD_PCR8 = PORT_PCR_MUX(0x3);//使能UART4_RXD
-#endif
-
-#if (U_UART5_GROUP==2)
-		PORTE_PCR8 = PORT_PCR_MUX(0x3); //使能UART5_TXD
-		PORTE_PCR9 = PORT_PCR_MUX(0x3);//使能UART5_RXD
-#endif
-
-		REG_SET_SHIFT(SIM_SCGC1, SIM_SCGC1_UART5_SHIFT); //启动串口5时钟
-		break;
-	default:
-		return 1;  //传参错误，返回
+	//UART0和UART1使用系统时钟，其余UART模块使用总线时钟
+	if (mod == UART_MOD0 || mod == UART_MOD1) {
+		clk_freq = UART_WORK_FREQ1;
+	} else {
+		clk_freq = UART_WORK_FREQ2;
 	}
 
-	//配置串口工作模式,8位无校验模式
-	uartch->C1 = 0;
+	//使能引脚功能并开相应的UART模块时钟门
+	switch (mod) {
+	case UART_MOD0:
+		REG_CLR_MASK(UART_MOD0_TX_PCR, PORT_PCR_MUX_MASK);
+		REG_CLR_MASK(UART_MOD0_RX_PCR, PORT_PCR_MUX_MASK);
+#if(UART_MOD0_SETUP == 0)
+		REG_SET_MASK(UART_MOD0_TX_PCR, PORT_PCR_MUX(2));
+		REG_SET_MASK(UART_MOD0_RX_PCR, PORT_PCR_MUX(2));
+#else
+		REG_SET_MASK(UART_MOD0_TX_PCR,PORT_PCR_MUX(3));
+		REG_SET_MASK(UART_MOD0_RX_PCR,PORT_PCR_MUX(3));
+#endif
+		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART0_MASK);
+		break;
+	case UART_MOD1:
+		REG_CLR_MASK(UART_MOD1_TX_PCR, PORT_PCR_MUX_MASK);
+		REG_CLR_MASK(UART_MOD1_RX_PCR, PORT_PCR_MUX_MASK);
+		REG_SET_MASK(UART_MOD1_TX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(UART_MOD1_RX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART1_MASK);
+		break;
+	case UART_MOD2:
+		REG_CLR_MASK(UART_MOD2_TX_PCR, PORT_PCR_MUX_MASK);
+		REG_CLR_MASK(UART_MOD2_RX_PCR, PORT_PCR_MUX_MASK);
+		REG_SET_MASK(UART_MOD2_TX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(UART_MOD2_RX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART2_MASK);
+		break;
+	case UART_MOD3:
+		REG_CLR_MASK(UART_MOD3_TX_PCR, PORT_PCR_MUX_MASK);
+		REG_CLR_MASK(UART_MOD3_RX_PCR, PORT_PCR_MUX_MASK);
+		REG_SET_MASK(UART_MOD3_TX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(UART_MOD3_RX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART3_MASK);
+		break;
+	case UART_MOD4:
+		REG_CLR_MASK(UART_MOD4_TX_PCR, PORT_PCR_MUX_MASK);
+		REG_CLR_MASK(UART_MOD4_RX_PCR, PORT_PCR_MUX_MASK);
+		REG_SET_MASK(UART_MOD4_TX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(UART_MOD4_RX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(SIM_SCGC1, SIM_SCGC1_UART4_MASK);
+		break;
+	case UART_MOD5:
+		REG_CLR_MASK(UART_MOD5_TX_PCR, PORT_PCR_MUX_MASK);
+		REG_CLR_MASK(UART_MOD5_RX_PCR, PORT_PCR_MUX_MASK);
+		REG_SET_MASK(UART_MOD5_TX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(UART_MOD5_RX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(SIM_SCGC1, SIM_SCGC1_UART5_MASK);
+		break;
+	}
 
 	//暂时关闭串口发送与接收功能
-	uartch->C2 &= ~(UART_C2_TE_MASK | UART_C2_RE_MASK);
+	REG_CLR_MASK(UART_C2_REG(uart_table[mod]),
+			(UART_C2_TE_MASK | UART_C2_RE_MASK));
 
-	//配置波特率
-	//串口0、1使用的内核时钟是其它串口使用外设时钟频率的2倍
-	if (U_UART0 == uartNo || U_UART1 == uartNo)
-		sel_clk = SYSTEM_CLK_KHZ;
-	else
-		sel_clk = BUS_CLK_KHZ;
+	//配置波特率，根据公式计算，UART波特率 = UART模块时钟/(16*(sbr+brfa/32))
+	sbr = (uint16) (clk_freq / (baud * 16));
+	brfa = ((32 * clk_freq) / (baud * 16)) - 32 * sbr;
+	//清空原值
+	REG_CLR_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBR_MASK);
+	REG_CLR_MASK(UART_BDL_REG(uart_table[mod]), UART_BDL_SBR_MASK);
+	REG_CLR_MASK(UART_C4_REG(uart_table[mod]), UART_C4_BRFA_MASK);
+	//设置计算出的值
+	REG_SET_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBR(sbr >> 8));
+	REG_SET_MASK(UART_BDL_REG(uart_table[mod]), UART_BDL_SBR(sbr));
+	REG_SET_MASK(UART_C4_REG(uart_table[mod]), UART_C4_BRFA(brfa));
 
-	sbr = (uint16_t) ((sel_clk * 1000) / (baud * 16));
-	temp = UART_BDH_REG(uartch) & ~(UART_BDH_SBR(0x1F));
-	UART_BDH_REG(uartch) = temp | UART_BDH_SBR(((sbr & 0x1F00) >> 8));
-	UART_BDL_REG(uartch) = (uint8_t) (sbr & UART_BDL_SBR_MASK);
+	//配置校验模式
+	if (parity_mode == UART_PARITY_DISABLED) {
+		REG_CLR_MASK(UART_C1_REG(uart_table[mod]), UART_C1_M_MASK);		//8位数据
+		REG_CLR_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PE_MASK);	//不开启校验
+	} else {
+		REG_SET_MASK(UART_C1_REG(uart_table[mod]), UART_C1_M_MASK);	//9位数据(连同校验位)
+		REG_SET_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PE_MASK);	//开启校验
+		if (parity_mode == UART_PARITY_ODD) {
+			REG_SET_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PT_MASK);//开启奇校验
+		} else {
+			REG_CLR_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PT_MASK);//开启偶校验
+		}
+	}
 
-//	brfa = (32*sel_clk/(baud*16)) - 32*sbr;
-//	uartch->C4 |= UART_C4_BRFA(brfa);
-	//此句放的位置需要注意
-	UART_BDH_REG(uartch) |= UART_BDH_SBNS_MASK;   //两位停止位
+	//设置数据位顺序，这里设置为LSB，即紧跟起始位传输的是位0
+	REG_CLR_MASK(UART_S2_REG(uart_table[mod]), UART_S2_MSBF_MASK);
 
-	//初始化控制寄存器、清标志位
-	uartch->C1 = 0x00;
-	uartch->C3 = 0x00;
-	uartch->S2 = 0x00;
+	//设置停止位
+	if (stop_bit == UART_STOP_BIT_1) {
+		REG_CLR_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBNS_MASK);//1位停止位
+	} else {
+		REG_SET_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBNS_MASK);//2位停止位
+	}
 
 	//启动发送接收
-	UART_C2_REG(uartch) |= (UART_C2_TE_MASK | UART_C2_RE_MASK);
-
-	return 0;
+	REG_SET_MASK(UART_C2_REG(uart_table[mod]),
+			(UART_C2_TE_MASK | UART_C2_RE_MASK));
 }
 
 //============================================================================
@@ -166,7 +142,7 @@ uint8_t uart_init(uint8_t uartNo, uint32_t baud) {
 //============================================================================
 uint8_t uart_send1(uint8_t uartNo, uint8_t ch) {
 	uint32_t t;
-	UART_MemMapPtr uartch = UART_ARR[uartNo]; //获取UART1或者2基地址
+	UART_MemMapPtr uartch = uart_table[uartNo]; //获取UART1或者2基地址
 
 	for (t = 0; t < 0xFBBB; t++) //查询指定次数
 			{
@@ -233,7 +209,7 @@ uint8_t uart_send_string(uint8_t uartNo, void *buff) {
 uint8_t uart_re1(uint8_t uartNo, uint8_t *fp) {
 	uint32_t t;
 	uint8_t dat;
-	UART_MemMapPtr uartch = UART_ARR[uartNo];         //获取UART1或者2基地址
+	UART_MemMapPtr uartch = uart_table[uartNo];         //获取UART1或者2基地址
 
 	for (t = 0; t < 0xFBBB; t++)         //查询指定次数
 			{
@@ -284,7 +260,7 @@ uint8_t uart_reN(uint8_t uartNo, uint16_t len, uint8_t* buff) {
 //功能概要：开串口接收中断
 //============================================================================
 void uart_enable_re_int(uint8_t uartNo) {
-	UART_MemMapPtr uartch = UART_ARR[uartNo];
+	UART_MemMapPtr uartch = uart_table[uartNo];
 	uartch->C2 |= UART_C2_RIE_MASK;        //开放UART接收中断
 	if (uartNo < 4)
 		NVIC_EnableIRQ(UART0_RX_TX_IRQn + 2 * uartNo);   //开中断控制器IRQ中断
@@ -299,7 +275,7 @@ void uart_enable_re_int(uint8_t uartNo) {
 //功能概要：关串口接收中断
 //============================================================================
 void uart_disable_re_int(uint8_t uartNo) {
-	UART_MemMapPtr uartch = UART_ARR[uartNo];
+	UART_MemMapPtr uartch = uart_table[uartNo];
 	uartch->C2 &= ~UART_C2_RIE_MASK;           //禁止UART接收中断
 	if (uartNo < 4)
 		NVIC_DisableIRQ(UART0_RX_TX_IRQn + 2 * uartNo);   //开中断控制器IRQ中断
