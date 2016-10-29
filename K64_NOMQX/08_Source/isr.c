@@ -21,7 +21,9 @@ void UART1_RX_TX_IRQHandler() {
 
 	ch = uart_re1(UART_MOD1, &flag);
 	if (0 == flag) {
-		uart_send1(UART_MOD1, ch);
+		if(!uart_send1(UART_MOD1, ch)){
+			uart_send_string(UART_MOD1,"failed!");
+		}
 	}
 
 	ENABLE_INTERRUPTS;

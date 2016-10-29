@@ -18,7 +18,7 @@ static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
 //函数返回: 无
 //参数说明: mod:UART模块号，UART_MODx，x为模块号
 //         baud:波特率:(600) | 1200 | 2400 | 4800 | 9600 | 14400 | 19200 |
-//                     38400 | 56000 | 57600 | 115200 | 128000 | 256000
+//                     38400 | 56000 | 57600 | 115200
 //         parity_mode:校验模式，UART_PARITY_DISABLED:不启用校验;
 //                     UART_PARITY_ODD:奇校验; UART_PARITY_EVEN:偶校验
 //         stop_bit:停止位，UART_STOP_BIT_1:1位停止位; UART_STOP_BIT_2:2位停止位
@@ -46,8 +46,8 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 		REG_SET_MASK(UART_MOD0_TX_PCR, PORT_PCR_MUX(2));
 		REG_SET_MASK(UART_MOD0_RX_PCR, PORT_PCR_MUX(2));
 #else
-		REG_SET_MASK(UART_MOD0_TX_PCR,PORT_PCR_MUX(3));
-		REG_SET_MASK(UART_MOD0_RX_PCR,PORT_PCR_MUX(3));
+		REG_SET_MASK(UART_MOD0_TX_PCR, PORT_PCR_MUX(3));
+		REG_SET_MASK(UART_MOD0_RX_PCR, PORT_PCR_MUX(3));
 #endif
 		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART0_MASK);
 		break;
@@ -133,30 +133,29 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 			(UART_C2_TE_MASK | UART_C2_RE_MASK));
 }
 
-//============================================================================
-//函数名称：uart_send1
-//参数说明：uartNo: 串口号:U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//          ch:要发送的字节
-//函数返回：函数执行状态：0=正常；非0=异常。
-//功能概要：串行发送1个字节
-//============================================================================
-uint8_t uart_send1(uint8_t uartNo, uint8_t ch) {
-	uint32_t t;
-	UART_MemMapPtr uartch = uart_table[uartNo]; //获取UART1或者2基地址
-
-	for (t = 0; t < 0xFBBB; t++) //查询指定次数
-			{
-		if ((uartch->S1) & UART_S1_TDRE_MASK) //判断发送缓冲区是否为空
-		{
-			uartch->D = ch;   //获取数据并发送
-			break;            //跳出循环
+//==========================================================================
+//函数名称: uart_send1
+//函数返回: true:发送成功; false:发送失败
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//         byte:想要发送的字节数据
+//功能概要: 发送1个字节数据
+//==========================================================================
+bool uart_send1(uint8 mod, uint8 byte) {
+#if(UART_RP_TIME_SEND == UART_RP_TIME_INFINITY)
+	for (;;) {
+#else
+	uint32 max = UART_RP_TIME_SEND;	//将上限次数转化为uint32类型
+	uint32 i;
+	for (i = 0; i < max; i++) {
+#endif
+		//判断发送缓冲区是否为空
+		if (REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_TDRE_MASK)) {
+			//为空时，设置数据寄存器为byte
+			REG_SET_VAL(UART_D_REG(uart_table[mod]), byte);
+			return true;
 		}
-	}            //end for
-	if (t >= 0xFBBB)
-		return 1; //发送超时，发送失败
-	else
-		return 0; //成功发送
-
+	}
+	return false;
 }
 
 //============================================================================

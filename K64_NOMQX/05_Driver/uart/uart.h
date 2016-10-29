@@ -9,7 +9,7 @@
 //包含公共头文件
 #include "common.h"
 
-//定义串口模块号（MOD为module简称）
+//定义串口模块号（MOD为module简写）
 #define UART_MOD0	(0)
 #define UART_MOD1	(1)
 #define UART_MOD2	(2)
@@ -19,7 +19,7 @@
 
 //设置各串口模块所用引脚组，通过更改宏定义的值以选择引脚组，引脚组前者为TX，后者为RX
 //UART0:  0=PTA2-PTA1;  1=PTA14-PTA15;  2=PTB17-PTB16;  3=PTD7-PTD6;
-#define UART_MOD0_SETUP		(0)
+#define UART_MOD0_SETUP		(1)
 //UART1:  0=PTC4-PTC3;  1=PTE0-PTE1;
 #define UART_MOD1_SETUP		(1)
 //UART2:  0=PTD3-PTD2;
@@ -27,7 +27,7 @@
 //UART3:  0=PTB11-PTB10;  1=PTC17-PTC16;  2=PTE4-PTE5;
 #define UART_MOD3_SETUP		(0)
 //UART4:  0=PTC15-PTC14;  1=PTE24-PTE25;
-#define UART_MOD4_SETUP		(0)
+#define UART_MOD4_SETUP		(1)
 //UART5:  0=PTD9-PTD8;  1=PTE8-PTE9;
 #define UART_MOD5_SETUP		(0)
 
@@ -44,12 +44,18 @@
 #define UART_STOP_BIT_1			(1)		//1位停止位
 #define UART_STOP_BIT_2			(2)		//2位停止位
 
+//定义发送与接收时轮询上限次数（RP为roll poling简写）
+#define UART_RP_TIME_SEND		(0xFBBBu)	//发送轮询上限次数
+#define UART_RP_TIME_RECEIVE	(0xFBBBu)	//接收轮询上限次数
+//若发送与接收轮询上限次数被定义为UART_RP_TIME_INFINITY，则在发送或接收完前不会结束函数
+#define UART_RP_TIME_INFINITY	(-1)
+
 //==========================================================================
 //函数名称: uart_init
 //函数返回: 无
 //参数说明: mod:UART模块号，UART_MODx，x为模块号
 //         baud:波特率:(600) | 1200 | 2400 | 4800 | 9600 | 14400 | 19200 |
-//                     38400 | 56000 | 57600 | 115200 | 128000 | 256000
+//                     38400 | 56000 | 57600 | 115200
 //         parity_mode:校验模式，UART_PARITY_DISABLED:不启用校验;
 //                     UART_PARITY_ODD:奇校验; UART_PARITY_EVEN:偶校验
 //         stop_bit:停止位，UART_STOP_BIT_1:1位停止位; UART_STOP_BIT_2:2位停止位
@@ -57,6 +63,15 @@
 //备注: 波特率为600时，UART0与UART1无法使用
 //==========================================================================
 void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit);
+
+//==========================================================================
+//函数名称: uart_send1
+//函数返回: true:发送成功; false:发送失败
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//         byte:想要发送的字节数据
+//功能概要: 发送1个字节数据
+//==========================================================================
+bool uart_send1(uint8 mod, uint8 byte);
 
 //=========================================================================
 //函数名称：uart_re1
@@ -66,15 +81,6 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit);
 //功能概要：串行接收1个字节
 //=========================================================================
 uint8_t uart_re1(uint8_t uartNo, uint8_t *fp);
-
-//=========================================================================
-//函数名称：uart_send1
-//参数说明：uartNo: 串口号
-//          ch:要发送的字节
-//函数返回：函数执行状态：0=正常；非0=异常。
-//功能概要：串行发送1个字节
-//=========================================================================
-uint8_t uart_send1(uint8_t uartNo, uint8_t ch);
 
 //=========================================================================
 //函数名称：uart_reN                                                         
@@ -126,16 +132,13 @@ void uart_disable_re_int(uint8_t uartNo);
 #if(UART_MOD0_SETUP == 0)
 #define UART_MOD0_TX_PCR	PORTA_PCR2
 #define UART_MOD0_RX_PCR	PORTA_PCR1
-#endif
-#if(UART_MOD0_SETUP == 1)
+#elif(UART_MOD0_SETUP == 1)
 #define UART_MOD0_TX_PCR	PORTA_PCR14
 #define UART_MOD0_RX_PCR	PORTA_PCR15
-#endif
-#if(UART_MOD0_SETUP == 2)
+#elif(UART_MOD0_SETUP == 2)
 #define UART_MOD0_TX_PCR	PORTB_PCR17
 #define UART_MOD0_RX_PCR	PORTB_PCR16
-#endif
-#if(UART_MOD0_SETUP == 3)
+#elif(UART_MOD0_SETUP == 3)
 #define UART_MOD0_TX_PCR	PORTD_PCR7
 #define UART_MOD0_RX_PCR	PORTD_PCR6
 #endif
@@ -145,8 +148,7 @@ void uart_disable_re_int(uint8_t uartNo);
 #if(UART_MOD1_SETUP == 0)
 #define UART_MOD1_TX_PCR	PORTC_PCR4
 #define UART_MOD1_RX_PCR	PORTC_PCR3
-#endif
-#if(UART_MOD1_SETUP == 1)
+#elif(UART_MOD1_SETUP == 1)
 #define UART_MOD1_TX_PCR	PORTE_PCR0
 #define UART_MOD1_RX_PCR	PORTE_PCR1
 #endif
@@ -163,12 +165,10 @@ void uart_disable_re_int(uint8_t uartNo);
 #if(UART_MOD3_SETUP == 0)
 #define UART_MOD3_TX_PCR	PORTB_PCR11
 #define UART_MOD3_RX_PCR	PORTB_PCR10
-#endif
-#if(UART_MOD3_SETUP == 1)
+#elif(UART_MOD3_SETUP == 1)
 #define UART_MOD3_TX_PCR	PORTC_PCR17
 #define UART_MOD3_RX_PCR	PORTC_PCR16
-#endif
-#if(UART_MOD3_SETUP == 2)
+#elif(UART_MOD3_SETUP == 2)
 #define UART_MOD3_TX_PCR	PORTE_PCR4
 #define UART_MOD3_RX_PCR	PORTE_PCR5
 #endif
@@ -178,8 +178,7 @@ void uart_disable_re_int(uint8_t uartNo);
 #if(UART_MOD4_SETUP == 0)
 #define UART_MOD4_TX_PCR	PORTC_PCR15
 #define UART_MOD4_RX_PCR	PORTC_PCR14
-#endif
-#if(UART_MOD4_SETUP == 1)
+#elif(UART_MOD4_SETUP == 1)
 #define UART_MOD4_TX_PCR	PORTE_PCR24
 #define UART_MOD4_RX_PCR	PORTE_PCR25
 #endif
@@ -189,8 +188,7 @@ void uart_disable_re_int(uint8_t uartNo);
 #if(UART_MOD5_SETUP == 0)
 #define UART_MOD5_TX_PCR	PORTD_PCR9
 #define UART_MOD5_RX_PCR	PORTD_PCR8
-#endif
-#if(UART_MOD5_SETUP == 1)
+#elif(UART_MOD5_SETUP == 1)
 #define UART_MOD5_TX_PCR	PORTE_PCR8
 #define UART_MOD5_RX_PCR	PORTE_PCR9
 #endif

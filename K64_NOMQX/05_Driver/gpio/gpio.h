@@ -25,10 +25,6 @@
 #define GPIO_INT_FALLING_EDGE	(10)	//下降沿触发
 #define GPIO_INT_DOUBLE_EDGE	(11)	//双边沿触发
 
-//定义GPIO模块中断标志
-#define GPIO_INT_TRUE	(1)		//产生中断
-#define GPIO_INT_FALSE	(0)		//未产生中断
-
 //定义GPIO模块驱动能力
 #define GPIO_DRIVE_LOW	(0)		//正常驱动能力
 #define GPIO_DRIVE_HIGH	(1)		//高驱动能力
@@ -114,11 +110,11 @@ void gpio_disable_int(uint16 port_pin);
 
 //==========================================================================
 //函数名称: gpio_get_int
-//函数返回: GPIO_INT_TRUE(1):产生中断; GPIO_INT_FALSE(0):未产生中断
+//函数返回: true:产生中断; false:未产生中断
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
 //功能概要: 当引脚配置为输入时，获取其中断标志
 //==========================================================================
-uint8 gpio_get_int(uint16 port_pin);
+bool gpio_get_int(uint16 port_pin);
 
 //==========================================================================
 //函数名称: gpio_clear_int

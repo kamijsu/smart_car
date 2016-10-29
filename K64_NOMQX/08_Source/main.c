@@ -22,7 +22,7 @@ uint32 run_counter;
 	//3. 初始化外设模块
 	light_init(LIGHT_RED, LIGHT_OFF); //蓝灯初始化
 	light_init(LIGHT_BLUE, LIGHT_OFF);
-	uart_init(UART_USE, 9600,UART_PARITY_ODD,UART_STOP_BIT_1);     //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
+	uart_init(UART_USE,9600,UART_PARITY_DISABLED,UART_STOP_BIT_1);     //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 	motor_init(MOTOR1);			//左电机初始化

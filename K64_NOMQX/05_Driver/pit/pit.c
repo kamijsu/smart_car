@@ -53,13 +53,13 @@ void pit_disable_int(uint8 ch) {
 
 //==========================================================================
 //函数名称: pit_get_int
-//函数返回: PIT_INT_TRUE(1):该通道产生中断; PIT_INT_FALSE(0):该通道未产生中断
+//函数返回: true:该通道产生中断; false:该通道未产生中断
 //参数说明: ch:PIT通道号，PIT_CHx，x为通道号
 //功能概要: 获取PIT通道中断标志
 //==========================================================================
-uint8 pit_get_int(uint8 ch) {
+bool pit_get_int(uint8 ch) {
 	//获取该通道定时器标志寄存器中中断标志的值，并根据值判断是否产生中断
-	return REG_GET_SHIFT(PIT_TFLG(ch), PIT_TFLG_TIF_SHIFT);
+	return (REG_GET_SHIFT(PIT_TFLG(ch), PIT_TFLG_TIF_SHIFT)) ? true : false;
 }
 
 //==========================================================================

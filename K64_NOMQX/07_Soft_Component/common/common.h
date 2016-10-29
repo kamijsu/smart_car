@@ -53,6 +53,11 @@ typedef volatile int16 vint16;		//不优化有符号16位数，字
 typedef volatile int32 vint32;		//不优化有符号32位数，长字
 typedef volatile int64 vint64;		//不优化有符号64位数，长长字
 
+typedef uint8 bool;					//bool型，值为true或false
+//定义bool型的值
+#define true	(1)					//真
+#define false	(0)					//假
+
 //定义系统使用的时钟频率
 #define  SYSTEM_CLK_KHZ   (SystemCoreClock/1000)     //芯片系统时钟频率(KHz)
 #define  BUS_CLK_KHZ      (SYSTEM_CLK_KHZ/2)         //芯片总线时钟频率(KHz)
