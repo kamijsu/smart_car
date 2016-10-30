@@ -15,15 +15,14 @@
 //==========================================================================
 void UART1_RX_TX_IRQHandler() {
 	uint8 ch;
-
+bool err;
 	DISABLE_INTERRUPTS;
-	uart_send_string(UART_MOD1,"收到数据!");
-	if (uart_re1(UART_MOD1, &ch)) {
-		if(!uart_send1(UART_MOD1, ch)){
-			uart_send_string(UART_MOD1,"failed!");
+
+	if (uart_re1_parity(UART_MOD1, &ch,&err)) {
+		if(!err){
+			uart_send1(UART_MOD1, ch);
 		}
 	}
-
 
 	ENABLE_INTERRUPTS;
 }
