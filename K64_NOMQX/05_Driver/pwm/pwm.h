@@ -28,29 +28,29 @@
 #define U_FTMCH6  (6)
 #define U_FTMCH7  (7)
 //定义U_FTM通道号选择                     		  	可用的端口_引脚
-#define U_FTM0_CH0 (U_PORTC|1) // A3  C1
-#define U_FTM0_CH1 (U_PORTC|2) // A4  C2
-#define U_FTM0_CH2 (U_PORTC|3) // A5  C3  C5
-#define U_FTM0_CH3 (U_PORTC|4) // A6  C4
-#define U_FTM0_CH4 (U_PORTD|4) // A7  B12 D4
-#define U_FTM0_CH5 (U_PORTD|5) // A0  B13 D5
-#define U_FTM0_CH6 (U_PORTD|6) // A1  D6
-#define U_FTM0_CH7 (U_PORTD|7) // A2  D7
+#define U_FTM0_CH0 (U_PORTC|1) // A3 3  C1 4
+#define U_FTM0_CH1 (U_PORTC|2) // A4 3  C2 4
+#define U_FTM0_CH2 (U_PORTC|3) // A5 3  C3 4  C5 7
+#define U_FTM0_CH3 (U_PORTC|4) // A6 3  C4 4
+#define U_FTM0_CH4 (U_PORTD|4) // A7 3  B12 4 D4 4
+#define U_FTM0_CH5 (U_PORTD|5) // A0 3  B13 4 D5 4
+#define U_FTM0_CH6 (U_PORTD|6) // A1 3 D6 4
+#define U_FTM0_CH7 (U_PORTD|7) // A2 3 D7 4
 
-#define U_FTM1_CH0 (U_PORTA|12)// A8  A12  B0  B12
-#define U_FTM1_CH1 (U_PORTA|13)// A9  A13  B1  B13
+#define U_FTM1_CH0 (U_PORTA|12)// A8 3 A12 3 B0 3 B12 3
+#define U_FTM1_CH1 (U_PORTA|13)// A9 3 A13 3 B1 3 B13 3
 
-#define U_FTM2_CH0 (U_PORTA|10)// A10 B18
-#define U_FTM2_CH1 (U_PORTA|11)// A11 B19
+#define U_FTM2_CH0 (U_PORTA|10)// A10 3 B18 3
+#define U_FTM2_CH1 (U_PORTA|11)// A11 3 B19 3
 
-#define U_FTM3_CH0 (U_PORTE|5) // D0  E5
-#define U_FTM3_CH1 (U_PORTE|6) // D1  E6
-#define U_FTM3_CH2 (U_PORTE|7) // D2  E7
-#define U_FTM3_CH3 (U_PORTE|8) // D3  E8
-#define U_FTM3_CH4 (U_PORTE|9) // C8  E9
-#define U_FTM3_CH5 (U_PORTE|10)// C9  E10
-#define U_FTM3_CH6 (U_PORTE|11)// C10 E11
-#define U_FTM3_CH7 (U_PORTE|12)// C11 E12
+#define U_FTM3_CH0 (U_PORTE|5) // D0 4  E5 6
+#define U_FTM3_CH1 (U_PORTE|6) // D1 4  E6 6
+#define U_FTM3_CH2 (U_PORTE|7) // D2 4  E7 6
+#define U_FTM3_CH3 (U_PORTE|8) // D3 4  E8 6
+#define U_FTM3_CH4 (U_PORTE|9) // C8 3  E9 6
+#define U_FTM3_CH5 (U_PORTE|10)// C9 3  E10 6
+#define U_FTM3_CH6 (U_PORTE|11)// C10 3 E11 6
+#define U_FTM3_CH7 (U_PORTE|12)// C11 3 E12 6
 
 #define bus_clk_khz (48000)
 

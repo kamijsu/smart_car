@@ -141,13 +141,9 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 //功能概要: 发送1个字节数据
 //==========================================================================
 bool uart_send1(uint8 mod, uint8 byte) {
-#if(UART_RP_TIME_SEND == UART_RP_TIME_INFINITY)
-	for (;;) {
-#else
 	uint32 max = UART_RP_TIME_SEND;	//将上限次数转化为uint32类型
 	uint32 i;
 	for (i = 0; i < max; i++) {
-#endif
 		//判断发送缓冲区是否为空
 		if (REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_TDRE_MASK)) {
 			//为空时，设置数据寄存器为byte
@@ -202,13 +198,9 @@ bool uart_send_string(uint8 mod, uint8* str) {
 //功能概要: 接收1个字节数据
 //==========================================================================
 bool uart_re1(uint8 mod, uint8* byte) {
-#if(UART_RP_TIME_RECEIVE == UART_RP_TIME_INFINITY)
-	for(;;) {
-#else
 	uint32 max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
 	uint32 i;
 	for (i = 0; i < max; i++) {
-#endif
 		//判断接收缓冲区是否满
 		if (REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_RDRF_MASK)) {
 			//满时获取数据寄存器数据
@@ -228,13 +220,9 @@ bool uart_re1(uint8 mod, uint8* byte) {
 //功能概要: 接收1个字节数据，并判断校验位有无错误
 //==========================================================================
 bool uart_re1_parity(uint8 mod, uint8* byte, bool* err) {
-#if(UART_RP_TIME_RECEIVE == UART_RP_TIME_INFINITY)
-	for(;;) {
-#else
 	uint32 max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
 	uint32 i;
 	for (i = 0; i < max; i++) {
-#endif
 		//判断接收缓冲区是否满
 		if (REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_RDRF_MASK)) {
 			//查看奇偶校验错误标志

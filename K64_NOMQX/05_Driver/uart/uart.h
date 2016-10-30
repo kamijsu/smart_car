@@ -47,8 +47,6 @@
 //定义发送与接收时轮询上限次数（RP为roll poling简写）
 #define UART_RP_TIME_SEND		(0xFBBBu)	//发送轮询上限次数
 #define UART_RP_TIME_RECEIVE	(0xFBBBu)	//接收轮询上限次数
-//若发送与接收轮询上限次数被定义为UART_RP_TIME_INFINITY，则在发送或接收完前不会结束函数
-#define UART_RP_TIME_INFINITY	(-1)
 
 //==========================================================================
 //函数名称: uart_init
