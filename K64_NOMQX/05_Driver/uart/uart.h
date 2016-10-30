@@ -125,7 +125,7 @@ void uart_enable_re_int(uint8 mod);
 //==========================================================================
 void uart_disable_re_int(uint8 mod);
 
-//根据各模块所设置的引脚组，定义其使用的引脚控制寄存器
+//根据各模块所设置的引脚组，定义相应模块的RX与TX引脚号，以及相应的PCR的MUX值
 #ifdef UART_MOD0_SETUP
 #if(UART_MOD0_SETUP == 0)
 #define UART_MOD0_TX_PIN	(COM_PORTA|2)
