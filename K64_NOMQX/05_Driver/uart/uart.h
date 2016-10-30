@@ -44,7 +44,7 @@
 #define UART_STOP_BIT_1			(1)		//1位停止位
 #define UART_STOP_BIT_2			(2)		//2位停止位
 
-//定义发送与接收时轮询上限次数（RP为roll poling简写）
+//定义发送与接收时轮询上限次数，最大32位（RP为roll poling简写）
 #define UART_RP_TIME_SEND		(0xFBBBu)	//发送轮询上限次数
 #define UART_RP_TIME_RECEIVE	(0xFBBBu)	//接收轮询上限次数
 

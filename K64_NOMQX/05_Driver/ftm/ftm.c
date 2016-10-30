@@ -4,3 +4,6 @@
 //==========================================================================
 
 #include "ftm.h"
+
+static FTM_Type * const ftm_table[] ={FMT0,FTM1,FTM2,FTM3};
+static __IO uint32_t ftm_pcr_table[] = {PORTA_PCR3};
