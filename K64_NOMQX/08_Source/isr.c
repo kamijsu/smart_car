@@ -14,13 +14,11 @@
 //功能概要：UART1中断服务函数
 //==========================================================================
 void UART1_RX_TX_IRQHandler() {
-	uint8_t ch;
-	uint8_t flag = 1;
+	uint8 ch;
 
 	DISABLE_INTERRUPTS;
 
-	ch = uart_re1(UART_MOD1, &flag);
-	if (0 == flag) {
+	if (uart_re1(UART_MOD1, &ch)) {
 		if(!uart_send1(UART_MOD1, ch)){
 			uart_send_string(UART_MOD1,"failed!");
 		}

@@ -158,127 +158,89 @@ bool uart_send1(uint8 mod, uint8 byte) {
 	return false;
 }
 
-//============================================================================
-//函数名称：uart_sendN
-//参数说明：uartNo: 串口号:U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//          buff: 发送缓冲区
-//          len:发送长度
-//函数返回： 函数执行状态：0=正常；1=异常
-//功能概要：串行 接收n个字节   
-//============================================================================
-uint8_t uart_sendN(uint8_t uartNo, uint16_t len, uint8_t* buff) {
-	uint16_t i;
+//==========================================================================
+//函数名称: uart_sendN
+//函数返回: true:发送成功; false:发送失败
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//         len:发送的字节数
+//         buff:发送缓冲区
+//功能概要: 发送N个字节数据
+//==========================================================================
+bool uart_sendN(uint8 mod, uint32 len, uint8* buff) {
+	uint32 i;
 	for (i = 0; i < len; i++) {
-		if (uart_send1(uartNo, buff[i])) //发送一个字节数据，失败则跳出循环
-				{
-			break;
+		//发送1个字节数据，失败则发送失败
+		if (!uart_send1(mod, buff[i])) {
+			return false;
 		}
 	}
-	if (i < len)
-		return 1;   //发送len个字节出错
-	else
-		return 0;   //发送len个字节成功
+	return true;
 }
 
-//============================================================================
-//函数名称：uart_send_string
-//参数说明：uartNo:UART模块号:U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//          buff:要发送的字符串的首地址
-//函数返回： 函数执行状态：0=正常；非0=异常。
-//功能概要：从指定UART端口发送一个以'\0'结束的字符串
-//============================================================================
-uint8_t uart_send_string(uint8_t uartNo, void *buff) {
-	uint16_t i = 0;
-	uint8_t *buff_ptr = (uint8_t *) buff;    //定义指针指向要发送字符串首地址
-	for (i = 0; buff_ptr[i] != '\0'; i++)  //遍历字符串里的字符
-			{
-		if (uart_send1(uartNo, buff_ptr[i]))  //发送指针对应的字符
-			return 1;  //发送失败
+//==========================================================================
+//函数名称: uart_send_string
+//函数返回: true:发送成功; false:发送失败
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//         str:发送字符串的首地址
+//功能概要: 发送一个以'\0'结束的字符串，不会发送'\0'
+//==========================================================================
+bool uart_send_string(uint8 mod, uint8* str) {
+	while (*str != '\0') {
+		//发送1个字节数据，失败则发送失败
+		if (!uart_send1(mod, *str++)) {
+			return false;
+		}
 	}
-	return 0;         //发送成功
+	return true;
 }
 
-//============================================================================
-//函数名称：uart_re1
-//参数说明：uartNo: 串口号:U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//          fp:接收成功标志的指针:*fp=0，成功接收；*fp=1，接收失败
-//函数返回：接收返回字节
-//功能概要：串行接收1个字节
-//============================================================================
-uint8_t uart_re1(uint8_t uartNo, uint8_t *fp) {
-	uint32_t t;
-	uint8_t dat;
-	UART_MemMapPtr uartch = uart_table[uartNo];         //获取UART1或者2基地址
-
-	for (t = 0; t < 0xFBBB; t++)         //查询指定次数
-			{
+//==========================================================================
+//函数名称: uart_re1
+//函数返回: true:接收成功; false:接收失败
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//         byte:想要接收字节数据的地址
+//功能概要: 接收1个字节数据
+//==========================================================================
+bool uart_re1(uint8 mod, uint8* byte) {
+#if(UART_RP_TIME_RECEIVE == UART_RP_TIME_INFINITY)
+	for(;;) {
+#else
+	uint32 max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
+	uint32 i;
+	for (i = 0; i < max; i++) {
+#endif
 		//判断接收缓冲区是否满
-		if ((uartch->S1) & UART_S1_RDRF_MASK) {
-			uint8_t dummy = uartch->S1;
-			dummy++; /* For unused variable warning */
-			dat = uartch->D; //获取数据
-			*fp = 0;  //接受成功
-			break;
+		if (REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_RDRF_MASK)) {
+			//满时获取数据寄存器数据
+			*byte = UART_D_REG(uart_table[mod]);
+			return true;
 		}
-
-	}  //end for
-	if (t >= 0xFBBB) {
-		dat = 0xFF;
-		*fp = 1;    //未收到数据
 	}
-	return dat;    //返回接收到的数据
-
+	return false;
 }
 
-//============================================================================
-//函数名称：uart_reN
-//参数说明：uartNo: 串口号:U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//          buff: 接收缓冲区
-//          len:接收长度
-//函数返回：函数执行状态 0=正常;非0=异常
-//功能概要：串行 接收n个字节
-//============================================================================
-uint8_t uart_reN(uint8_t uartNo, uint16_t len, uint8_t* buff) {
-	uint16_t i;
-	uint8_t flag = 0;
-
-	//判断是否能接受数据
-	for (i = 0; i < len && 0 == flag; i++) {
-		buff[i] = uart_re1(uartNo, &flag); //接受数据
-	}
-	if (i < len)
-		return 1; //接收失败
-	else
-		return 0; //接收成功
+//==========================================================================
+//函数名称: uart_enable_re_int
+//函数返回: 无
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//功能概要: 使能串口模块接收中断
+//==========================================================================
+void uart_enable_re_int(uint8 mod) {
+	//允许发送接收中断
+	REG_SET_MASK(UART_C2_REG(uart_table[mod]), UART_C2_RIE_MASK);
+	//允许接收接收中断
+	ENABLE_IRQ(uart_rx_tx_irq_table[mod]);
 }
 
-//============================================================================
-//函数名称：uart_enable_re_int
-//参数说明：uartNo: 串口号:U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//函数返回：无
-//功能概要：开串口接收中断
-//============================================================================
-void uart_enable_re_int(uint8_t uartNo) {
-	UART_MemMapPtr uartch = uart_table[uartNo];
-	uartch->C2 |= UART_C2_RIE_MASK;        //开放UART接收中断
-	if (uartNo < 4)
-		NVIC_EnableIRQ(UART0_RX_TX_IRQn + 2 * uartNo);   //开中断控制器IRQ中断
-	else
-		NVIC_EnableIRQ(UART4_RX_TX_IRQn + 2 * (4 - uartNo));
+//==========================================================================
+//函数名称: uart_disable_re_int
+//函数返回: 无
+//参数说明: mod:UART模块号，UART_MODx，x为模块号
+//功能概要: 关闭串口模块接收中断
+//==========================================================================
+void uart_disable_re_int(uint8 mod) {
+	//禁止发送接收中断
+	REG_CLR_MASK(UART_C2_REG(uart_table[mod]), UART_C2_RIE_MASK);
+	//禁止接收接收中断
+	DISABLE_IRQ(uart_rx_tx_irq_table[mod]);
 }
-
-//============================================================================
-//函数名称：uart_disable_re_int
-//参数说明：uartNo: 串口号 :U_UART0、U_UART1、U_UART2、U_UART3、U_UART4、U_UART5
-//函数返回：无
-//功能概要：关串口接收中断
-//============================================================================
-void uart_disable_re_int(uint8_t uartNo) {
-	UART_MemMapPtr uartch = uart_table[uartNo];
-	uartch->C2 &= ~UART_C2_RIE_MASK;           //禁止UART接收中断
-	if (uartNo < 4)
-		NVIC_DisableIRQ(UART0_RX_TX_IRQn + 2 * uartNo);   //开中断控制器IRQ中断
-	else
-		NVIC_DisableIRQ(UART4_RX_TX_IRQn + 2 * (4 - uartNo));
-}
-
