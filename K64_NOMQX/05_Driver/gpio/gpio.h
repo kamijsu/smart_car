@@ -38,7 +38,7 @@
 //                GPIO_LEVEL_HIGH:高电平; GPIO_LEVEL_UNKNOWN:未知电平，仅在配置为输入时有效
 //功能概要: 初始化指定端口引脚为GPIO功能
 //==========================================================================
-void gpio_init(uint16 port_pin, uint8 dir, uint8 status);
+void gpio_init(uint8 port_pin, uint8 dir, uint8 status);
 
 //==========================================================================
 //函数名称: gpio_set
@@ -47,7 +47,7 @@ void gpio_init(uint16 port_pin, uint8 dir, uint8 status);
 //         status:引脚电平状态，GPIO_LEVEL_LOW:低电平; GPIO_LEVEL_HIGH:高电平
 //功能概要: 当引脚配置为输出时，设定引脚状态为指定状态
 //==========================================================================
-void gpio_set(uint16 port_pin, uint8 status);
+void gpio_set(uint8 port_pin, uint8 status);
 
 //==========================================================================
 //函数名称: gpio_reverse
@@ -55,7 +55,7 @@ void gpio_set(uint16 port_pin, uint8 status);
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
 //功能概要: 当引脚配置为输出时，反转其输出状态
 //==========================================================================
-void gpio_reverse(uint16 port_pin);
+void gpio_reverse(uint8 port_pin);
 
 //==========================================================================
 //函数名称: gpio_drive_strength
@@ -66,7 +66,7 @@ void gpio_reverse(uint16 port_pin);
 //功能概要: 当引脚配置为输出时，设定其驱动能力
 //备注:     K64芯片只有PTD7可以被设置为高驱动能力
 //==========================================================================
-void gpio_drive_strength(uint16 port_pin, uint8 status);
+void gpio_drive_strength(uint8 port_pin, uint8 status);
 
 //==========================================================================
 //函数名称: gpio_pull
@@ -76,7 +76,7 @@ void gpio_drive_strength(uint16 port_pin, uint8 status);
 //                GPIO_LEVEL_UNKNOWN:未知电平，即关闭上下拉电阻
 //功能概要: 当引脚配置为输入时，设定其上下拉状态
 //==========================================================================
-void gpio_pull(uint16 port_pin, uint8 status);
+void gpio_pull(uint8 port_pin, uint8 status);
 
 //==========================================================================
 //函数名称: gpio_get
@@ -84,7 +84,7 @@ void gpio_pull(uint16 port_pin, uint8 status);
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
 //功能概要: 当引脚配置为输入时，获取其电平状态
 //==========================================================================
-uint8 gpio_get(uint16 port_pin);
+uint8 gpio_get(uint8 port_pin);
 
 //==========================================================================
 //函数名称: gpio_enable_int
@@ -98,7 +98,7 @@ uint8 gpio_get(uint16 port_pin);
 //                  GPIO_INT_DOUBLE_EDGE	(11)	//双边沿触发
 //功能概要: 当引脚配置为输入时，根据中断类型开启该引脚中断
 //==========================================================================
-void gpio_enable_int(uint16 port_pin, uint8 int_type);
+void gpio_enable_int(uint8 port_pin, uint8 int_type);
 
 //==========================================================================
 //函数名称: gpio_disable_int
@@ -106,7 +106,7 @@ void gpio_enable_int(uint16 port_pin, uint8 int_type);
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
 //功能概要: 当引脚配置为输入时，关闭该引脚中断
 //==========================================================================
-void gpio_disable_int(uint16 port_pin);
+void gpio_disable_int(uint8 port_pin);
 
 //==========================================================================
 //函数名称: gpio_get_int
@@ -114,7 +114,7 @@ void gpio_disable_int(uint16 port_pin);
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
 //功能概要: 当引脚配置为输入时，获取其中断标志
 //==========================================================================
-bool gpio_get_int(uint16 port_pin);
+bool gpio_get_int(uint8 port_pin);
 
 //==========================================================================
 //函数名称: gpio_clear_int
@@ -122,6 +122,6 @@ bool gpio_get_int(uint16 port_pin);
 //参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
 //功能概要: 当引脚配置为输入时，清除其中断标志
 //==========================================================================
-void gpio_clear_int(uint16 port_pin);
+void gpio_clear_int(uint8 port_pin);
 
 #endif

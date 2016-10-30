@@ -8,7 +8,7 @@
 #include "pwm.h"
 
 //定义三个指针数组保存 FTMn 的地址
-static const FTM_MemMapPtr ftm_table[] = { FTM0, FTM1, FTM2, FTM3 };
+static const FTM_MemMapPtr FTMx[] = { FTM0, FTM1, FTM2, FTM3 };
 //=========================================================================
 //函数名称：pwm_init
 //功能概要：pwm模块初始化。

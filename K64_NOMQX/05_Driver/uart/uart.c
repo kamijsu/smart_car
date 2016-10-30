@@ -8,6 +8,16 @@
 //各UART模块基地址
 static UART_Type * const uart_table[] = { UART0, UART1, UART2, UART3, UART4,
 UART5 };
+//UART各模块RX引脚号
+static const uint8 uart_rx_pin_table[] = { UART_MOD0_RX_PIN, UART_MOD1_RX_PIN,
+UART_MOD2_RX_PIN, UART_MOD3_RX_PIN, UART_MOD4_RX_PIN, UART_MOD5_RX_PIN };
+//UART各模块TX引脚号
+static const uint8 uart_tx_pin_table[] = { UART_MOD0_TX_PIN, UART_MOD1_TX_PIN,
+UART_MOD2_TX_PIN, UART_MOD3_TX_PIN, UART_MOD4_TX_PIN, UART_MOD5_TX_PIN };
+//UART各模块PCR的MUX值
+static const uint8 uart_pcr_mux_table[] = { UART_MOD0_PCR_MUX,
+UART_MOD1_PCR_MUX, UART_MOD2_PCR_MUX, UART_MOD3_PCR_MUX,
+UART_MOD4_PCR_MUX, UART_MOD5_PCR_MUX };
 //UART模块发送接收中断请求号
 static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
 		UART1_RX_TX_IRQn, UART2_RX_TX_IRQn, UART3_RX_TX_IRQn, UART4_RX_TX_IRQn,
@@ -26,9 +36,14 @@ static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
 //备注: 波特率为600时，UART0与UART1无法使用
 //==========================================================================
 void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
+	uint8 rx_port, rx_pin, tx_port, tx_pin;	//rx与tx端口号与引脚号
 	uint16 sbr;	//波特率位，用来计算波特率
 	uint8 brfa;	//波特率微调
 	uint32 clk_freq;	//所用时钟频率
+
+	//获得端口号与引脚号
+	com_port_pin_resolution(uart_rx_pin_table[mod], &rx_port, &rx_pin);
+	com_port_pin_resolution(uart_tx_pin_table[mod], &tx_port, &tx_pin);
 
 	//UART0和UART1使用系统时钟，其余UART模块使用总线时钟
 	if (mod == UART_MOD0 || mod == UART_MOD1) {
@@ -37,53 +52,32 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 		clk_freq = UART_WORK_FREQ2;
 	}
 
-	//使能引脚功能并开相应的UART模块时钟门
+	//使能引脚功能
+	REG_CLR_MASK(PORT_PCR_REG(port_table[rx_port],rx_pin), PORT_PCR_MUX_MASK);
+	REG_CLR_MASK(PORT_PCR_REG(port_table[tx_port],tx_pin), PORT_PCR_MUX_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_table[rx_port],rx_pin),
+			PORT_PCR_MUX(uart_pcr_mux_table[mod]));
+	REG_SET_MASK(PORT_PCR_REG(port_table[tx_port],tx_pin),
+			PORT_PCR_MUX(uart_pcr_mux_table[mod]));
+
+	//开相应的UART模块时钟门
 	switch (mod) {
 	case UART_MOD0:
-		REG_CLR_MASK(UART_MOD0_TX_PCR, PORT_PCR_MUX_MASK);
-		REG_CLR_MASK(UART_MOD0_RX_PCR, PORT_PCR_MUX_MASK);
-#if(UART_MOD0_SETUP == 0)
-		REG_SET_MASK(UART_MOD0_TX_PCR, PORT_PCR_MUX(2));
-		REG_SET_MASK(UART_MOD0_RX_PCR, PORT_PCR_MUX(2));
-#else
-		REG_SET_MASK(UART_MOD0_TX_PCR, PORT_PCR_MUX(3));
-		REG_SET_MASK(UART_MOD0_RX_PCR, PORT_PCR_MUX(3));
-#endif
 		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART0_MASK);
 		break;
 	case UART_MOD1:
-		REG_CLR_MASK(UART_MOD1_TX_PCR, PORT_PCR_MUX_MASK);
-		REG_CLR_MASK(UART_MOD1_RX_PCR, PORT_PCR_MUX_MASK);
-		REG_SET_MASK(UART_MOD1_TX_PCR, PORT_PCR_MUX(3));
-		REG_SET_MASK(UART_MOD1_RX_PCR, PORT_PCR_MUX(3));
 		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART1_MASK);
 		break;
 	case UART_MOD2:
-		REG_CLR_MASK(UART_MOD2_TX_PCR, PORT_PCR_MUX_MASK);
-		REG_CLR_MASK(UART_MOD2_RX_PCR, PORT_PCR_MUX_MASK);
-		REG_SET_MASK(UART_MOD2_TX_PCR, PORT_PCR_MUX(3));
-		REG_SET_MASK(UART_MOD2_RX_PCR, PORT_PCR_MUX(3));
 		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART2_MASK);
 		break;
 	case UART_MOD3:
-		REG_CLR_MASK(UART_MOD3_TX_PCR, PORT_PCR_MUX_MASK);
-		REG_CLR_MASK(UART_MOD3_RX_PCR, PORT_PCR_MUX_MASK);
-		REG_SET_MASK(UART_MOD3_TX_PCR, PORT_PCR_MUX(3));
-		REG_SET_MASK(UART_MOD3_RX_PCR, PORT_PCR_MUX(3));
 		REG_SET_MASK(SIM_SCGC4, SIM_SCGC4_UART3_MASK);
 		break;
 	case UART_MOD4:
-		REG_CLR_MASK(UART_MOD4_TX_PCR, PORT_PCR_MUX_MASK);
-		REG_CLR_MASK(UART_MOD4_RX_PCR, PORT_PCR_MUX_MASK);
-		REG_SET_MASK(UART_MOD4_TX_PCR, PORT_PCR_MUX(3));
-		REG_SET_MASK(UART_MOD4_RX_PCR, PORT_PCR_MUX(3));
 		REG_SET_MASK(SIM_SCGC1, SIM_SCGC1_UART4_MASK);
 		break;
 	case UART_MOD5:
-		REG_CLR_MASK(UART_MOD5_TX_PCR, PORT_PCR_MUX_MASK);
-		REG_CLR_MASK(UART_MOD5_RX_PCR, PORT_PCR_MUX_MASK);
-		REG_SET_MASK(UART_MOD5_TX_PCR, PORT_PCR_MUX(3));
-		REG_SET_MASK(UART_MOD5_RX_PCR, PORT_PCR_MUX(3));
 		REG_SET_MASK(SIM_SCGC1, SIM_SCGC1_UART5_MASK);
 		break;
 	}

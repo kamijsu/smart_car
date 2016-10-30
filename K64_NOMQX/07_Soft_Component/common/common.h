@@ -64,10 +64,23 @@ typedef uint8 bool;					//bool型，值为true或false
 
 //端口号地址偏移量宏定义，即形如COM_PORTA|0的值表示A端口0引脚；
 //为了防止宏定义重名，请加上相应文件的名称，这里的COM为common的简写
-#define COM_PORTA     (0<<8)
-#define COM_PORTB     (1<<8)
-#define COM_PORTC     (2<<8)
-#define COM_PORTD     (3<<8)
-#define COM_PORTE     (4<<8)
+#define COM_PORTA     (0<<5)
+#define COM_PORTB     (1<<5)
+#define COM_PORTC     (2<<5)
+#define COM_PORTD     (3<<5)
+#define COM_PORTE     (4<<5)
+
+//各端口基地址，这是个全局常量，通过PORT_PCR_REG(port_table[port],pin)可获得该引脚的引脚控制寄存器
+static PORT_Type * const port_table[] = { PORTA, PORTB, PORTC, PORTD, PORTE };
+
+//===========================================================================
+//函数名称: com_port_pin_resolution
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
+//         port:端口号
+//	       pin:引脚号(0~31，实际取值由芯片的物理引脚决定)
+//功能概要: 将传进参数port_pin进行解析，得出具体端口号与引脚号
+//===========================================================================
+void com_port_pin_resolution(uint8 port_pin, uint8* port, uint8* pin);
 
 #endif
