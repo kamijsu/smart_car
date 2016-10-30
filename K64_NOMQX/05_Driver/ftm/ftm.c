@@ -5,5 +5,9 @@
 
 #include "ftm.h"
 
-static FTM_Type * const ftm_table[] ={FMT0,FTM1,FTM2,FTM3};
-static __IO uint32_t ftm_pcr_table[] = {PORTA_PCR3};
+//FTM各模块基地址
+static FTM_Type * const ftm_table[] = { FTM0, FTM1, FTM2, FTM3 };
+//FTM各模块中断请求号
+static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
+		FTM3_IRQn };
+

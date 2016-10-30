@@ -99,7 +99,7 @@ uint32 run_counter;
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-
+		run_counter = 3.14*5.123;
 //		if(run_counter++>=RUN_COUNTER_MAX){
 //			run_counter = 0;
 //			light_change(LIGHT_RED);

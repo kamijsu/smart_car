@@ -25,6 +25,8 @@
 #define FTM_CH6		(6)
 #define FTM_CH7		(7)
 
+//FTM各模块各通道的引脚设置，通过更改COM_PORTx|x的x以选择引脚，
+//可选择的引脚注释在相应通道后方。注意：B12|B13不要重复定义
 #define FTM_MOD0_CH0_SETUP	(COM_PORTA|3)	//A3   C1
 #define FTM_MOD0_CH1_SETUP	(COM_PORTA|4)	//A2   C2
 #define FTM_MOD0_CH2_SETUP	(COM_PORTA|5)	//A5   C3   C5
@@ -49,6 +51,18 @@
 #define FTM_MOD3_CH6_SETUP	(COM_PORTC|10)	//C10  E11
 #define FTM_MOD3_CH7_SETUP	(COM_PORTC|11)	//C11  E12
 
+//FTM模块所用时钟频率，这里使用的是系统时钟，单位kHz
+#define FTM_CLK_FREQ	SYSTEM_CLK_KHZ
+
+//FTM模块时钟分频因子，DIV后的数字代表分频因子，其工作频率=时钟频率/分频因子
+#define FTM_CLK_DIV_1		(0)
+#define FTM_CLK_DIV_2		(1)
+#define FTM_CLK_DIV_4		(2)
+#define FTM_CLK_DIV_8		(3)
+#define FTM_CLK_DIV_16		(4)
+#define FTM_CLK_DIV_32		(5)
+#define FTM_CLK_DIV_64		(6)
+#define FTM_CLK_DIV_128		(7)
 
 #ifdef FTM_MOD0_CH0_SETUP
 #if(FTM_MOD0_CH0_SETUP == (COM_PORTA|3))
