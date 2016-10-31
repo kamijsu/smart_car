@@ -59,7 +59,7 @@ void pit_disable_int(uint8 ch) {
 //==========================================================================
 bool pit_get_int(uint8 ch) {
 	//获取该通道定时器标志寄存器中中断标志的值，并根据值判断是否产生中断
-	return (REG_GET_SHIFT(PIT_TFLG(ch), PIT_TFLG_TIF_SHIFT)) ? true : false;
+	return (REG_GET_MASK(PIT_TFLG(ch), PIT_TFLG_TIF_MASK)) ? true : false;
 }
 
 //==========================================================================

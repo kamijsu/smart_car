@@ -44,7 +44,7 @@
 							<builder buildPath="${workspace_loc:/mapsk64_adc_potentiometer}/Debug" enableCleanBuild="false" errorParsers="org.eclipse.cdt.core.GmakeErrorParser;org.eclipse.cdt.core.CWDLocator" id="ilg.gnuarmeclipse.managedbuild.cross.builder.1203527384" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool command="${cross_prefix}${cross_c}${cross_suffix}" commandLinePattern="${COMMAND} ${cross_toolchain_flags} ${FLAGS} -c ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GASErrorParser" id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.105752918" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.41023125" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
-								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.555250010" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths" valueType="includePath"/>
+								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.555250010" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths"/>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input.1890596808" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input"/>
 							</tool>
 							<tool command="${cross_prefix}${cross_c}${cross_suffix}" commandLinePattern="${COMMAND} ${cross_toolchain_flags} ${FLAGS} -c ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser" id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.1558577115" name="Cross ARM C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler">
@@ -55,6 +55,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/04_Linker_File&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/adc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/ftm&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/gpio&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/pit&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/pwm&quot;"/>

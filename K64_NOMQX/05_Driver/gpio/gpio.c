@@ -202,8 +202,8 @@ bool gpio_get_int(uint8 port_pin) {
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
 	//获取中断标志
-	return (REG_GET_SHIFT(PORT_PCR_REG(port_table[port],pin),
-			PORT_PCR_ISF_SHIFT)) ? true : false;
+	return (REG_GET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_ISF_MASK)) ?
+			true : false;
 }
 
 //==========================================================================

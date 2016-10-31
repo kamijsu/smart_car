@@ -51,8 +51,8 @@
 #define FTM_MOD3_CH6_PIN	(COM_PORTC|10)	//C10  E11
 #define FTM_MOD3_CH7_PIN	(COM_PORTC|11)	//C11  E12
 
-//FTM模块所用时钟频率，这里使用的是系统时钟，单位kHz
-#define FTM_CLK_FREQ	SYSTEM_CLK_KHZ
+//FTM模块所用时钟频率，这里使用的是总线时钟，单位kHz
+#define FTM_CLK_FREQ	BUS_CLK_KHZ
 
 //FTM模块时钟分频因子，DIV后的数字代表分频因子，其工作频率=时钟频率/分频因子
 #define FTM_CLK_DIV_1		(0)
@@ -64,216 +64,201 @@
 #define FTM_CLK_DIV_64		(6)
 #define FTM_CLK_DIV_128		(7)
 
+//==========================================================================
+//函数名称: ftm_init
+//函数返回: 无
+//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
+//         period:FTM模块计数周期，其大小上限与分频因子大小有关，单位ms
+//         div:时钟分频因子，FTM_CLK_DIV_x，x为分频因子大小
+//功能概要: 初始化FTM模块，默认未开启中断
+//备注: 48000/div*period<=65536，48000为这里使用的总线时钟频率，单位kHz
+//==========================================================================
+void ftm_init(uint8 mod, uint8 period, uint8 div);
+
+//==========================================================================
+//函数名称: ftm_enable_timer_int
+//函数返回: 无
+//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
+//         time:FTM模块每time个计数周期产生一个中断请求，范围[1,32]
+//功能概要: 使能FTM模块计时中断，中断时间周期为period*time，单位ms
+//==========================================================================
+void ftm_enable_timer_int(uint8 mod, uint8 time);
+
+//==========================================================================
+//函数名称: ftm_disable_timer_int
+//函数返回: 无
+//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
+//功能概要: 关闭FTM模块计时中断
+//==========================================================================
+void ftm_disable_timer_int(uint8 mod);
+
+//==========================================================================
+//函数名称: ftm_get_timer_int
+//函数返回: true:产生中断; false:未产生中断
+//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
+//功能概要: 获取FTM模块计时中断标志
+//==========================================================================
+bool ftm_get_timer_int(uint8 mod);
+
+//==========================================================================
+//函数名称: ftm_clear_timer_int
+//函数返回: 无
+//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
+//功能概要: 清除FTM模块计时中断标志
+//==========================================================================
+void ftm_clear_timer_int(uint8 mod);
+
 #ifdef FTM_MOD0_CH0_PIN
 #if(FTM_MOD0_CH0_PIN == (COM_PORTA|3))
-#define FTM_MOD0_CH0_PCR	PORTA_PCR3
-#define FTM_MOD0_CH0_MUX	(3)
+#define FTM_MOD0_CH0_PCR_MUX	(3)
 #elif(FTM_MOD0_CH0_PIN == (COM_PORTC|1))
-#define FTM_MOD0_CH0_PCR	PORTC_PCR1
-#define FTM_MOD0_CH0_MUX	(4)
+#define FTM_MOD0_CH0_PCR_MUX	(4)
 #endif
 #endif
 
 #ifdef FTM_MOD0_CH1_PIN
 #if(FTM_MOD0_CH1_PIN == (COM_PORTA|4))
-#define FTM_MOD0_CH1_PCR	PORTA_PCR4
-#define FTM_MOD0_CH1_MUX	(3)
+#define FTM_MOD0_CH1_PCR_MUX	(3)
 #elif(FTM_MOD0_CH1_PIN == (COM_PORTC|2))
-#define FTM_MOD0_CH1_PCR	PORTC_PCR2
-#define FTM_MOD0_CH1_MUX	(4)
+#define FTM_MOD0_CH1_PCR_MUX	(4)
 #endif
 #endif
 
 #ifdef FTM_MOD0_CH2_PIN
 #if(FTM_MOD0_CH2_PIN == (COM_PORTA|5))
-#define FTM_MOD0_CH2_PCR	PORTA_PCR5
-#define FTM_MOD0_CH2_MUX	(3)
+#define FTM_MOD0_CH2_PCR_MUX	(3)
 #elif(FTM_MOD0_CH2_PIN == (COM_PORTC|3))
-#define FTM_MOD0_CH2_PCR	PORTC_PCR3
-#define FTM_MOD0_CH2_MUX	(4)
+#define FTM_MOD0_CH2_PCR_MUX	(4)
 #elif(FTM_MOD0_CH2_PIN == (COM_PORTC|5))
-#define FTM_MOD0_CH2_PCR	PORTC_PCR5
-#define FTM_MOD0_CH2_MUX	(7)
+#define FTM_MOD0_CH2_PCR_MUX	(7)
 #endif
 #endif
 
 #ifdef FTM_MOD0_CH3_PIN
 #if(FTM_MOD0_CH3_PIN == (COM_PORTA|6))
-#define FTM_MOD0_CH3_PCR	PORTA_PCR6
-#define FTM_MOD0_CH3_MUX	(3)
+#define FTM_MOD0_CH3_PCR_MUX	(3)
 #elif(FTM_MOD0_CH3_PIN == (COM_PORTC|4))
-#define FTM_MOD0_CH3_PCR	PORTC_PCR4
-#define FTM_MOD0_CH3_MUX	(4)
+#define FTM_MOD0_CH3_PCR_MUX	(4)
 #endif
 #endif
 
 #ifdef FTM_MOD0_CH4_PIN
 #if(FTM_MOD0_CH4_PIN == (COM_PORTA|7))
-#define FTM_MOD0_CH4_PCR	PORTA_PCR7
-#define FTM_MOD0_CH4_MUX	(3)
-#elif(FTM_MOD0_CH4_PIN == (COM_PORTB|12))
-#define FTM_MOD0_CH4_PCR	PORTB_PCR12
-#define FTM_MOD0_CH4_MUX	(4)
-#elif(FTM_MOD0_CH4_PIN == (COM_PORTD|4))
-#define FTM_MOD0_CH4_PCR	PORTD_PCR4
-#define FTM_MOD0_CH4_MUX	(4)
+#define FTM_MOD0_CH4_PCR_MUX	(3)
+#elif(FTM_MOD0_CH4_PIN == (COM_PORTB|12) || FTM_MOD0_CH4_PIN == (COM_PORTD|4))
+#define FTM_MOD0_CH4_PCR_MUX	(4)
 #endif
 #endif
 
 #ifdef FTM_MOD0_CH5_PIN
 #if(FTM_MOD0_CH5_PIN == (COM_PORTA|0))
-#define FTM_MOD0_CH5_PCR	PORTA_PCR0
-#define FTM_MOD0_CH5_MUX	(3)
-#elif(FTM_MOD0_CH5_PIN == (COM_PORTB|13))
-#define FTM_MOD0_CH5_PCR	PORTB_PCR13
-#define FTM_MOD0_CH5_MUX	(4)
-#elif(FTM_MOD0_CH5_PIN == (COM_PORTD|5))
-#define FTM_MOD0_CH5_PCR	PORTD_PCR5
-#define FTM_MOD0_CH5_MUX	(4)
+#define FTM_MOD0_CH5_PCR_MUX	(3)
+#elif(FTM_MOD0_CH5_PIN == (COM_PORTB|13) || FTM_MOD0_CH5_PIN == (COM_PORTD|5))
+#define FTM_MOD0_CH5_PCR_MUX	(4)
 #endif
 #endif
 
 #ifdef FTM_MOD0_CH6_PIN
 #if(FTM_MOD0_CH6_PIN == (COM_PORTA|1))
-#define FTM_MOD0_CH6_PCR	PORTA_PCR1
-#define FTM_MOD0_CH6_MUX	(3)
+#define FTM_MOD0_CH6_PCR_MUX	(3)
 #elif(FTM_MOD0_CH6_PIN == (COM_PORTD|6))
-#define FTM_MOD0_CH6_PCR	PORTD_PCR6
-#define FTM_MOD0_CH6_MUX	(4)
+#define FTM_MOD0_CH6_PCR_MUX	(4)
 #endif
 #endif
 
 #ifdef FTM_MOD0_CH7_PIN
 #if(FTM_MOD0_CH7_PIN == (COM_PORTA|2))
-#define FTM_MOD0_CH7_PCR	PORTA_PCR2
-#define FTM_MOD0_CH7_MUX	(3)
+#define FTM_MOD0_CH7_PCR_MUX	(3)
 #elif(FTM_MOD0_CH7_PIN == (COM_PORTD|7))
-#define FTM_MOD0_CH7_PCR	PORTD_PCR7
-#define FTM_MOD0_CH7_MUX	(4)
+#define FTM_MOD0_CH7_PCR_MUX	(4)
 #endif
 #endif
 
 #ifdef FTM_MOD1_CH0_PIN
-#if(FTM_MOD1_CH0_PIN == (COM_PORTA|8))
-#define FTM_MOD1_CH0_PCR	PORTA_PCR8
-#elif(FTM_MOD1_CH0_PIN == (COM_PORTA|12))
-#define FTM_MOD1_CH0_PCR	PORTA_PCR12
-#elif(FTM_MOD1_CH0_PIN == (COM_PORTB|0))
-#define FTM_MOD1_CH0_PCR	PORTB_PCR0
-#elif(FTM_MOD1_CH0_PIN == (COM_PORTB|12))
-#define FTM_MOD1_CH0_PCR	PORTB_PCR12
+#if(FTM_MOD1_CH0_PIN == (COM_PORTA|8) || FTM_MOD1_CH0_PIN == (COM_PORTA|12) || FTM_MOD1_CH0_PIN == (COM_PORTB|0)||FTM_MOD1_CH0_PIN == (COM_PORTB|12))
+#define FTM_MOD1_CH0_PCR_MUX	(3)
 #endif
-#define FTM_MOD1_CH0_MUX	(3)
 #endif
 
 #ifdef FTM_MOD1_CH1_PIN
-#if(FTM_MOD1_CH1_PIN == (COM_PORTA|9))
-#define FTM_MOD1_CH1_PCR	PORTA_PCR9
-#elif(FTM_MOD1_CH1_PIN == (COM_PORTA|13))
-#define FTM_MOD1_CH1_PCR	PORTA_PCR13
-#elif(FTM_MOD1_CH1_PIN == (COM_PORTB|1))
-#define FTM_MOD1_CH1_PCR	PORTB_PCR1
-#elif(FTM_MOD1_CH1_PIN == (COM_PORTB|13))
-#define FTM_MOD1_CH1_PCR	PORTB_PCR13
+#if(FTM_MOD1_CH1_PIN == (COM_PORTA|9) || FTM_MOD1_CH1_PIN == (COM_PORTA|13) || FTM_MOD1_CH1_PIN == (COM_PORTB|1) || FTM_MOD1_CH1_PIN == (COM_PORTB|13))
+#define FTM_MOD1_CH1_PCR_MUX	(3)
 #endif
-#define FTM_MOD1_CH1_MUX	(3)
 #endif
 
 #ifdef FTM_MOD2_CH0_PIN
-#if(FTM_MOD2_CH0_PIN == (COM_PORTA|10))
-#define FTM_MOD2_CH0_PCR	PORTA_PCR10
-#elif(FTM_MOD2_CH0_PIN == (COM_PORTB|18))
-#define FTM_MOD2_CH0_PCR	PORTB_PCR18
+#if(FTM_MOD2_CH0_PIN == (COM_PORTA|10) || FTM_MOD2_CH0_PIN == (COM_PORTB|18))
+#define FTM_MOD2_CH0_PCR_MUX	(3)
 #endif
-#define FTM_MOD2_CH0_MUX	(3)
 #endif
 
 #ifdef FTM_MOD2_CH1_PIN
-#if(FTM_MOD2_CH1_PIN == (COM_PORTA|11))
-#define FTM_MOD2_CH1_PCR	PORTA_PCR11
-#elif(FTM_MOD2_CH1_PIN == (COM_PORTB|19))
-#define FTM_MOD2_CH1_PCR	PORTB_PCR19
+#if(FTM_MOD2_CH1_PIN == (COM_PORTA|11) || FTM_MOD2_CH1_PIN == (COM_PORTB|19))
+#define FTM_MOD2_CH1_PCR_MUX	(3)
 #endif
-#define FTM_MOD2_CH1_MUX	(3)
 #endif
 
 #ifdef FTM_MOD3_CH0_PIN
 #if(FTM_MOD3_CH0_PIN == (COM_PORTD|0))
-#define FTM_MOD3_CH0_PCR	PORTD_PCR0
-#define FTM_MOD3_CH0_MUX	(4)
+#define FTM_MOD3_CH0_PCR_MUX	(4)
 #elif(FTM_MOD3_CH0_PIN == (COM_PORTE|5))
-#define FTM_MOD3_CH0_PCR	PORTE_PCR5
-#define FTM_MOD3_CH0_MUX	(6)
+#define FTM_MOD3_CH0_PCR_MUX	(6)
 #endif
 #endif
 
 #ifdef FTM_MOD3_CH1_PIN
 #if(FTM_MOD3_CH1_PIN == (COM_PORTD|1))
-#define FTM_MOD3_CH1_PCR	PORTD_PCR1
-#define FTM_MOD3_CH1_MUX	(4)
+#define FTM_MOD3_CH1_PCR_MUX	(4)
 #elif(FTM_MOD3_CH1_PIN == (COM_PORTE|6))
-#define FTM_MOD3_CH1_PCR	PORTE_PCR6
-#define FTM_MOD3_CH1_MUX	(6)
+#define FTM_MOD3_CH1_PCR_MUX	(6)
 #endif
 #endif
 
 #ifdef FTM_MOD3_CH2_PIN
 #if(FTM_MOD3_CH2_PIN == (COM_PORTD|2))
-#define FTM_MOD3_CH2_PCR	PORTD_PCR2
-#define FTM_MOD3_CH2_MUX	(4)
+#define FTM_MOD3_CH2_PCR_MUX	(4)
 #elif(FTM_MOD3_CH2_PIN == (COM_PORTE|7))
-#define FTM_MOD3_CH2_PCR	PORTE_PCR7
-#define FTM_MOD3_CH2_MUX	(6)
+#define FTM_MOD3_CH2_PCR_MUX	(6)
 #endif
 #endif
 
 #ifdef FTM_MOD3_CH3_PIN
 #if(FTM_MOD3_CH3_PIN == (COM_PORTD|3))
-#define FTM_MOD3_CH3_PCR	PORTD_PCR3
-#define FTM_MOD3_CH3_MUX	(4)
+#define FTM_MOD3_CH3_PCR_MUX	(4)
 #elif(FTM_MOD3_CH3_PIN == (COM_PORTE|8))
-#define FTM_MOD3_CH3_PCR	PORTE_PCR8
-#define FTM_MOD3_CH3_MUX	(6)
+#define FTM_MOD3_CH3_PCR_MUX	(6)
 #endif
 #endif
 
 #ifdef FTM_MOD3_CH4_PIN
 #if(FTM_MOD3_CH4_PIN == (COM_PORTC|8))
-#define FTM_MOD3_CH4_PCR	PORTC_PCR8
-#define FTM_MOD3_CH4_MUX	(3)
+#define FTM_MOD3_CH4_PCR_MUX	(3)
 #elif(FTM_MOD3_CH4_PIN == (COM_PORTE|9))
-#define FTM_MOD3_CH4_PCR	PORTE_PCR9
-#define FTM_MOD3_CH4_MUX	(6)
+#define FTM_MOD3_CH4_PCR_MUX	(6)
 #endif
 #endif
 
 #ifdef FTM_MOD3_CH5_PIN
 #if(FTM_MOD3_CH5_PIN == (COM_PORTC|9))
-#define FTM_MOD3_CH5_PCR	PORTC_PCR9
-#define FTM_MOD3_CH5_MUX	(3)
+#define FTM_MOD3_CH5_PCR_MUX	(3)
 #elif(FTM_MOD3_CH5_PIN == (COM_PORTE|10))
-#define FTM_MOD3_CH5_PCR	PORTE_PCR10
-#define FTM_MOD3_CH5_MUX	(6)
+#define FTM_MOD3_CH5_PCR_MUX	(6)
 #endif
 #endif
 
 #ifdef FTM_MOD3_CH6_PIN
 #if(FTM_MOD3_CH6_PIN == (COM_PORTC|10))
-#define FTM_MOD3_CH6_PCR	PORTC_PCR10
-#define FTM_MOD3_CH6_MUX	(3)
+#define FTM_MOD3_CH6_PCR_MUX	(3)
 #elif(FTM_MOD3_CH6_PIN == (COM_PORTE|11))
-#define FTM_MOD3_CH6_PCR	PORTE_PCR11
-#define FTM_MOD3_CH6_MUX	(6)
+#define FTM_MOD3_CH6_PCR_MUX	(6)
 #endif
 #endif
 
 #ifdef FTM_MOD3_CH7_PIN
 #if(FTM_MOD3_CH7_PIN == (COM_PORTC|11))
-#define FTM_MOD3_CH7_PCR	PORTC_PCR11
-#define FTM_MOD3_CH7_MUX	(3)
+#define FTM_MOD3_CH7_PCR_MUX	(3)
 #elif(FTM_MOD3_CH7_PIN == (COM_PORTE|12))
-#define FTM_MOD3_CH7_PCR	PORTE_PCR12
-#define FTM_MOD3_CH7_MUX	(6)
+#define FTM_MOD3_CH7_PCR_MUX	(6)
 #endif
 #endif
 
