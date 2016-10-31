@@ -54,9 +54,9 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 
 	//使能引脚功能
 	REG_CLR_MASK(PORT_PCR_REG(port_table[rx_port],rx_pin), PORT_PCR_MUX_MASK);
-	REG_CLR_MASK(PORT_PCR_REG(port_table[tx_port],tx_pin), PORT_PCR_MUX_MASK);
 	REG_SET_MASK(PORT_PCR_REG(port_table[rx_port],rx_pin),
 			PORT_PCR_MUX(uart_pcr_mux_table[mod]));
+	REG_CLR_MASK(PORT_PCR_REG(port_table[tx_port],tx_pin), PORT_PCR_MUX_MASK);
 	REG_SET_MASK(PORT_PCR_REG(port_table[tx_port],tx_pin),
 			PORT_PCR_MUX(uart_pcr_mux_table[mod]));
 
@@ -87,8 +87,8 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 			(UART_C2_TE_MASK | UART_C2_RE_MASK));
 
 	//配置波特率，根据公式计算，UART波特率 = UART模块时钟/(16*(sbr+brfa/32))
-	sbr = (uint16) (clk_freq / (baud * 16));
-	brfa = ((32 * clk_freq) / (baud * 16)) - 32 * sbr;
+	sbr = (uint16) (clk_freq / (baud << 4));
+	brfa = ((clk_freq << 1) / baud) - (sbr << 5);
 	//清空原值
 	REG_CLR_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBR_MASK);
 	REG_CLR_MASK(UART_BDL_REG(uart_table[mod]), UART_BDL_SBR_MASK);
@@ -100,11 +100,11 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 
 	//配置校验模式
 	if (parity_mode == UART_PARITY_DISABLED) {
-		REG_CLR_MASK(UART_C1_REG(uart_table[mod]), UART_C1_M_MASK);		//8位数据
-		REG_CLR_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PE_MASK);	//不开启校验
+		REG_CLR_MASK(UART_C1_REG(uart_table[mod]),
+				(UART_C1_M_MASK|UART_C1_PE_MASK));	//8位数据，不开启校验
 	} else {
-		REG_SET_MASK(UART_C1_REG(uart_table[mod]), UART_C1_M_MASK);	//9位数据(连同校验位)
-		REG_SET_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PE_MASK);	//开启校验
+		REG_SET_MASK(UART_C1_REG(uart_table[mod]),
+				(UART_C1_M_MASK|UART_C1_PE_MASK));	//9位数据(连同校验位)，开启校验
 		if (parity_mode == UART_PARITY_ODD) {
 			REG_SET_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PT_MASK);//开启奇校验
 		} else {

@@ -59,8 +59,8 @@ typedef uint8 bool;					//bool型，值为true或false
 #define false	(0)					//假
 
 //定义系统使用的时钟频率
-#define  SYSTEM_CLK_KHZ   (SystemCoreClock/1000)     //芯片系统时钟频率(KHz)
-#define  BUS_CLK_KHZ      (SYSTEM_CLK_KHZ/2)         //芯片总线时钟频率(KHz)
+#define  SYSTEM_CLK_KHZ   (SystemCoreClock/1000)	//芯片系统时钟频率(KHz)
+#define  BUS_CLK_KHZ      (SYSTEM_CLK_KHZ>>1)		//芯片总线时钟频率(KHz)，这里设置的为系统时钟2分频
 
 //端口号地址偏移量宏定义，即形如COM_PORTA|0的值表示A端口0引脚；
 //为了防止宏定义重名，请加上相应文件的名称，这里的COM为common的简写
