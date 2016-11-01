@@ -73,12 +73,15 @@
 //==========================================================================
 //函数名称: ftm_init
 //函数返回: 无
-//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
-//         clk_div:时钟分频因子，FTM_CLK_DIV_x，x为分频因子大小
-//         counter_mode:计数器模式，FTM_COUNTER_MODE_UP:向上计数;
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         clk_div:时钟分频因子:
+//                 FTM_CLK_DIV_x，x为分频因子大小;
+//         counter_mode:计数器模式:
+//                      FTM_COUNTER_MODE_UP:向上计数;
 //                      FTM_COUNTER_MODE_UP_DOWN:上下计数;
 //                      FTM_COUNTER_MODE_FREE_RUNNING:自由运行;
-//                      FTM_COUNTER_MODE_QD:正交解码
+//                      FTM_COUNTER_MODE_QD:正交解码;
 //         counter_period:见备注
 //功能概要: 初始化FTM模块，默认未开启中断
 //备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位ms，
@@ -95,7 +98,8 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 //==========================================================================
 //函数名称: ftm_timer_enable_int
 //函数返回: 无
-//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
 //         time:FTM模块每time个计数周期产生一个中断请求，范围[1,32]
 //功能概要: 使能FTM模块计时中断
 //备注: 相应FTM模块的计数器需运行在向上计数模式下，
@@ -105,28 +109,34 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 void ftm_timer_enable_int(uint8 mod, uint8 time);
 
 //==========================================================================
-//函数名称: ftm_disable_timer_int
+//函数名称: ftm_disable_int
 //函数返回: 无
-//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
-//功能概要: 关闭FTM模块计时中断
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//功能概要: 关闭FTM模块中断，不会关闭FTM通道中断
+//备注: 可以关闭ftm_timer_enable_int使能的中断
 //==========================================================================
-void ftm_disable_timer_int(uint8 mod);
+void ftm_disable_int(uint8 mod);
 
 //==========================================================================
-//函数名称: ftm_get_timer_int
+//函数名称: ftm_get_int
 //函数返回: true:产生中断; false:未产生中断
-//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
-//功能概要: 获取FTM模块计时中断标志
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//功能概要: 获取FTM模块中断标志，不会获取FTM通道中断标志
+//备注: 可以获取ftm_timer_enable_int使能的中断的中断标志
 //==========================================================================
-bool ftm_get_timer_int(uint8 mod);
+bool ftm_get_int(uint8 mod);
 
 //==========================================================================
-//函数名称: ftm_clear_timer_int
+//函数名称: ftm_clear_int
 //函数返回: 无
-//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
-//功能概要: 清除FTM模块计时中断标志
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//功能概要: 清除FTM模块中断标志，不会清除FTM通道中断标志
+//备注: 可以清除ftm_timer_enable_int使能的中断的中断标志
 //==========================================================================
-void ftm_clear_timer_int(uint8 mod);
+void ftm_clear_int(uint8 mod);
 
 //定义FTM模块PWM功能的模式
 #define FTM_PWM_MODE_EDGE_ALIGNED	(0)	//单通道，PWM波边沿对齐
@@ -147,20 +157,37 @@ void ftm_clear_timer_int(uint8 mod);
 //==========================================================================
 //函数名称: ftm_pwm_single_init
 //函数返回: 无
-//参数说明: mod:FTM模块号，FTM_MODx，x为模块号
-//         ch:FTM模块的通道号，FTM_CHx，x为通道号
-//         mode:PWM模式，FTM_PWM_MODE_EDGE_ALIGNED:边沿对齐模式;
-//              FTM_PWM_MODE_CENTER_ALIGNED:中心对齐模式
-//         pol:PWM极性，FTM_PWM_POL_POSITIVE:正极性; FTM_PWM_POL_NEGATIVE:负极性
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//         mode:PWM模式:
+//              FTM_PWM_MODE_EDGE_ALIGNED:边沿对齐模式;
+//              FTM_PWM_MODE_CENTER_ALIGNED:中心对齐模式;
+//         pol:PWM极性:
+//             FTM_PWM_POL_POSITIVE:正极性;
+//             FTM_PWM_POL_NEGATIVE:负极性;
 //         duty:初始占空比，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
 //功能概要: 初始化FTM模块的通道为单通道的PWM功能
-//备注: 需先初始化相应FTM模块;
-//     当选择中心对齐模式时，相应FTM模块初始化时，48000/div*period<=32768;
-//     当选择边沿对齐模式时，PWM波的频率为(1000/period)，单位Hz，而选择中心对齐模式时，
-//     频率为((1000/period)/2)，单位Hz，period为相应FTM模块的计数周期，单位ms;
+//备注: 当选择边沿对齐模式时，相应FTM模块的计数器需运行在向上计数模式下;
+//     当选择中心对齐模式时，相应FTM模块的计数器需运行在上下计数模式下;
+//     PWM波的频率为(1000/counter_period)，单位Hz，
+//     counter_period为相应FTM模块的计数周期，单位ms
 //==========================================================================
 void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 		uint16 duty);
+
+//==========================================================================
+//函数名称: ftm_pwm_single_set
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//         duty:占空比，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//功能概要: 设置该通道的占空比，将在下一个计数周期更新
+//==========================================================================
+void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty);
 
 //根据通道所设置的引脚号，定义相应的PCR的MUX值
 #ifdef FTM_MOD0_CH0_PIN

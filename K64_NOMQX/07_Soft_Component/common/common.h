@@ -76,9 +76,10 @@ static PORT_Type * const port_table[] = { PORTA, PORTB, PORTC, PORTD, PORTE };
 //===========================================================================
 //函数名称: com_port_pin_resolution
 //函数返回: 无
-//参数说明: port_pin:(端口号)|(引脚号)，具体见common.h中宏定义
-//         port:端口号
-//	       pin:引脚号(0~31，实际取值由芯片的物理引脚决定)
+//参数说明: port_pin:(端口号)|(引脚号):
+//                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
+//         port:获得端口号的变量
+//	       pin:获得引脚号的变量(0~31，实际取值由芯片的物理引脚决定)
 //功能概要: 将传进参数port_pin进行解析，得出具体端口号与引脚号
 //===========================================================================
 void com_port_pin_resolution(uint8 port_pin, uint8* port, uint8* pin);

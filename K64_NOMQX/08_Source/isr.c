@@ -29,15 +29,15 @@ void UART1_RX_TX_IRQHandler() {
 
 void FTM0_IRQHandler() {
 	static uint32 counter = 0;
-	if (ftm_get_timer_int(FTM_MOD0)) {
+	//if (ftm_get_timer_int(FTM_MOD0)) {
 //		if (++counter >= 1000) {
 //			counter = 0;
 			time0_flag.f_1s = 1;
 
 //			ftm_disable_timer_int(FTM_MOD0);
 //		}
-		ftm_clear_timer_int(FTM_MOD0);
-	}
+		//ftm_clear_timer_int(FTM_MOD0);
+//	}
 
 }
 
