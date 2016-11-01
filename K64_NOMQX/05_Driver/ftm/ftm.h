@@ -25,6 +25,12 @@
 #define FTM_CH6		(6)
 #define FTM_CH7		(7)
 
+//定义FTM模块通道组号
+#define FTM_CH_GROUP0	(0)		//CH0和CH1
+#define FTM_CH_GROUP1	(1)		//CH2和CH3
+#define FTM_CH_GROUP2	(2)		//CH4和CH5
+#define FTM_CH_GROUP3	(3)		//CH6和CH7
+
 //FTM各模块各通道的引脚设置，通过更改COM_PORTx|x的x以选择引脚，
 //可选择的引脚注释在相应通道后方。注意：B12|B13不要重复定义
 #define FTM_MOD0_CH0_PIN	(COM_PORTA|3)	//A3   C1
@@ -78,10 +84,10 @@
 //         clk_div:时钟分频因子:
 //                 FTM_CLK_DIV_x，x为分频因子大小;
 //         counter_mode:计数器模式:
-//                      FTM_COUNTER_MODE_UP:向上计数;
-//                      FTM_COUNTER_MODE_UP_DOWN:上下计数;
+//                      FTM_COUNTER_MODE_UP:          向上计数;
+//                      FTM_COUNTER_MODE_UP_DOWN:     上下计数;
 //                      FTM_COUNTER_MODE_FREE_RUNNING:自由运行;
-//                      FTM_COUNTER_MODE_QD:正交解码;
+//                      FTM_COUNTER_MODE_QD:          正交解码;
 //         counter_period:见备注
 //功能概要: 初始化FTM模块，默认未开启中断
 //备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位ms，
@@ -162,7 +168,7 @@ void ftm_clear_int(uint8 mod);
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
 //         mode:PWM模式:
-//              FTM_PWM_MODE_EDGE_ALIGNED:边沿对齐模式;
+//              FTM_PWM_MODE_EDGE_ALIGNED:  边沿对齐模式;
 //              FTM_PWM_MODE_CENTER_ALIGNED:中心对齐模式;
 //         pol:PWM极性:
 //             FTM_PWM_POL_POSITIVE:正极性;
@@ -188,6 +194,32 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 //功能概要: 设置该通道的占空比，将在下一个计数周期更新
 //==========================================================================
 void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty);
+
+//==========================================================================
+//函数名称: ftm_pwm_combine_init
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch_group:FTM模块的通道组号:
+//                  FTM_CH_GROUPx，x为通道组号;
+//         mode:PWM模式:
+//              FTM_PWM_MODE_COMBINE:      联合模式，两通道输出相同;
+//              FTM_PWM_MODE_COMPLEMENTARY:互补模式，两通道输出相反;
+//         pol:PWM极性:
+//             FTM_PWM_POL_POSITIVE:正极性;
+//             FTM_PWM_POL_NEGATIVE:负极性;
+//         duty1:初始占空比1，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty2:初始占空比2，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//功能概要: 初始化FTM模块的通道组为双通道的PWM功能
+//备注: 相应FTM模块的计数器需运行在向上计数模式下;
+//     最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
+//     PWM波极性将再次反转;
+//     PWM波的频率为(1000/counter_period)，单位Hz，
+//     counter_period为相应FTM模块的计数周期，单位ms;
+//     偶数通道输出的PWM波，无论选择哪种模式，都是一样的，即互补模式只针对奇数通道
+//==========================================================================
+void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
+		uint16 duty1, uint16 duty2);
 
 //根据通道所设置的引脚号，定义相应的PCR的MUX值
 #ifdef FTM_MOD0_CH0_PIN
