@@ -15,11 +15,11 @@
 //==========================================================================
 void UART1_RX_TX_IRQHandler() {
 	uint8 ch;
-bool err;
+	bool err;
 	DISABLE_INTERRUPTS;
 
-	if (uart_re1_parity(UART_MOD1, &ch,&err)) {
-		if(!err){
+	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
+		if (!err) {
 			uart_send1(UART_MOD1, ch);
 		}
 	}
@@ -27,13 +27,17 @@ bool err;
 	ENABLE_INTERRUPTS;
 }
 
-void FTM0_IRQHandler(){
-	static uint8 counter = 0;
-//	if(++counter >= 100){
-//		counter =0;
-		time0_flag.f_1s = 1;
-//	}
-ftm_clear_timer_int(FTM_MOD0);
+void FTM0_IRQHandler() {
+	static uint32 counter = 0;
+	if (ftm_get_timer_int(FTM_MOD0)) {
+//		if (++counter >= 1000) {
+//			counter = 0;
+			time0_flag.f_1s = 1;
+
+//			ftm_disable_timer_int(FTM_MOD0);
+//		}
+		ftm_clear_timer_int(FTM_MOD0);
+	}
 
 }
 

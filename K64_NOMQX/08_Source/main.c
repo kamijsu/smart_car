@@ -32,7 +32,7 @@ uint32 run_counter;
 	encoder_init(ENCODER2);		//右编码器初始化
 	ems_init();					//电磁传感器初始化
 	reed_switch_init();			//干簧管初始化
-	ftm_init(FTM_MOD0,40,FTM_CLK_DIV_128);
+	ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
 
 	//4. 给有关变量赋初值
 	run_counter = 0;
@@ -88,7 +88,7 @@ uint32 run_counter;
 	time0_flag.f_1min = 0;
 
 	//5. 使能模块中断
-	ftm_enable_timer_int(FTM_MOD0,25);
+	ftm_timer_enable_int(FTM_MOD0,10);
 	//pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	encoder_enable_int(ENCODER1);	//使能左编码器中断
