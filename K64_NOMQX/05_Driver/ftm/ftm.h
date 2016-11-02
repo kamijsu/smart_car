@@ -37,8 +37,8 @@
 #define FTM_MOD0_CH1_PIN	(COM_PORTA|4)	//A2   C2
 #define FTM_MOD0_CH2_PIN	(COM_PORTA|5)	//A5   C3   C5
 #define FTM_MOD0_CH3_PIN	(COM_PORTA|6)	//A6   C4
-#define FTM_MOD0_CH4_PIN	(COM_PORTA|7)	//A7   B12  D4
-#define FTM_MOD0_CH5_PIN	(COM_PORTA|0)	//A0   B13  D5
+#define FTM_MOD0_CH4_PIN	(COM_PORTD|4)	//A7   B12  D4
+#define FTM_MOD0_CH5_PIN	(COM_PORTD|5)	//A0   B13  D5
 #define FTM_MOD0_CH6_PIN	(COM_PORTA|1)	//A1        D6
 #define FTM_MOD0_CH7_PIN	(COM_PORTA|2)	//A2        D7
 
@@ -220,6 +220,21 @@ void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty);
 //==========================================================================
 void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 		uint16 duty1, uint16 duty2);
+
+//==========================================================================
+//函数名称: ftm_pwm_combine_set
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch_group:FTM模块的通道组号:
+//                  FTM_CH_GROUPx，x为通道组号;
+//         duty1:占空比1，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty2:占空比2，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//功能概要: 设置该通道组的占空比，将在下一个计数周期更新
+//备注: 最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
+//     PWM波极性将再次反转
+//==========================================================================
+void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2);
 
 //根据通道所设置的引脚号，定义相应的PCR的MUX值
 #ifdef FTM_MOD0_CH0_PIN

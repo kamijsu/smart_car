@@ -25,17 +25,16 @@ uint32 run_counter;
 	uart_init(UART_USE,9600,UART_PARITY_DISABLED,UART_STOP_BIT_1);     //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	//pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
-	motor_init(MOTOR1);			//左电机初始化
-	motor_init(MOTOR2);			//右电机初始化
+//	motor_init(MOTOR1);			//左电机初始化
+//	motor_init(MOTOR2);			//右电机初始化
 	gyro_acce_init();			//陀螺仪加速度计初始化
-	encoder_init(ENCODER1);		//左编码器初始化
-	encoder_init(ENCODER2);		//右编码器初始化
+//	encoder_init(ENCODER1);		//左编码器初始化
+//	encoder_init(ENCODER2);		//右编码器初始化
 	ems_init();					//电磁传感器初始化
 	reed_switch_init();			//干簧管初始化
-	ftm_init(FTM_MOD3,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
-ftm_pwm_single_init(FTM_MOD3,FTM_CH3,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
-
-
+	ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
+//ftm_pwm_single_init(FTM_MOD3,FTM_CH3,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
+ftm_pwm_combine_init(FTM_MOD0,FTM_CH_GROUP2,FTM_PWM_MODE_COMPLEMENTARY,FTM_PWM_POL_NEGATIVE,0,10000);
 	//4. 给有关变量赋初值
 	run_counter = 0;
 

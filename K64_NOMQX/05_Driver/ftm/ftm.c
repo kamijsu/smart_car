@@ -221,7 +221,7 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 		uint16 duty) {
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 
-	shift = (ch >> 1) << 3;
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
 	//配置通道为相应的PWM功能
@@ -266,4 +266,99 @@ void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty) {
 	//设置占空比，会在下一个周期更新CnV的值
 	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
 			(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PWM_DUTY_ACCURACY));
+}
+
+//==========================================================================
+//函数名称: ftm_pwm_combine_init
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch_group:FTM模块的通道组号:
+//                  FTM_CH_GROUPx，x为通道组号;
+//         mode:PWM模式:
+//              FTM_PWM_MODE_COMBINE:      联合模式，两通道输出相同;
+//              FTM_PWM_MODE_COMPLEMENTARY:互补模式，两通道输出相反;
+//         pol:PWM极性:
+//             FTM_PWM_POL_POSITIVE:正极性;
+//             FTM_PWM_POL_NEGATIVE:负极性;
+//         duty1:初始占空比1，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty2:初始占空比2，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//功能概要: 初始化FTM模块的通道组为双通道的PWM功能
+//备注: 相应FTM模块的计数器需运行在向上计数模式下;
+//     最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
+//     PWM波极性将再次反转;
+//     PWM波的频率为(1000/counter_period)，单位Hz，
+//     counter_period为相应FTM模块的计数周期，单位ms;
+//     偶数通道输出的PWM波，无论选择哪种模式，都是一样的，即互补模式只针对奇数通道
+//==========================================================================
+void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
+		uint16 duty1, uint16 duty2) {
+	uint8 ch0, ch1;	//两个通道号
+	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
+
+	ch0 = ch_group << 1;	//偶数通道
+	ch1 = ch0 + 1;			//奇数通道
+	shift = ch_group << 3;	//相邻COMBINEn相差8位
+	//使能FTM模块通道功能
+	ftm_ch_set_mux(mod, ch0);
+	ftm_ch_set_mux(mod, ch1);
+	//使能FTM功能
+	REG_SET_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
+	//配置通道为相应的PWM功能
+	//COMBINEn=1;DECAPENn=0;SYNCEN=1;
+	REG_SET_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_COMBINE0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_DECAPEN0_MASK<<shift);
+	REG_SET_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_SYNCEN0_MASK<<shift);
+	if (mode == FTM_PWM_MODE_COMBINE) {
+		//COMPn=0;
+		REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+				FTM_COMBINE_COMP0_MASK<<shift);
+	} else {
+		//COMPn=1;
+		REG_SET_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+				FTM_COMBINE_COMP0_MASK<<shift);
+	}
+	//配置PWM波极性
+	if (pol == FTM_PWM_POL_POSITIVE) {
+		//ELSB=1;ELSA=0;
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_ELSA_MASK);
+	} else {
+		//ELSA=1;
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_ELSA_MASK);
+	}
+	//最小装载点使能，即计数器达到CNTIN值时，为同步的一个载入点;禁止硬件触发同步;同步时计数器继续计数
+	REG_SET_VAL(FTM_SYNC_REG(ftm_table[mod]), FTM_SYNC_CNTMIN_MASK);
+	//设置初始占空比
+	ftm_pwm_combine_set(mod, ch_group, duty1, duty2);
+}
+
+//==========================================================================
+//函数名称: ftm_pwm_combine_set
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch_group:FTM模块的通道组号:
+//                  FTM_CH_GROUPx，x为通道组号;
+//         duty1:占空比1，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty2:占空比2，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//功能概要: 设置该通道组的占空比，将在下一个计数周期更新
+//备注: 最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
+//     PWM波极性将再次反转
+//==========================================================================
+void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) {
+	//设置偶数通道占空比
+	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch_group<<1),
+			(FTM_MOD_REG(ftm_table[mod]) * duty1 / FTM_PWM_DUTY_ACCURACY));
+	//设置奇数通道占空比
+	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],(ch_group<<1)+1),
+			(FTM_MOD_REG(ftm_table[mod]) * duty2 / FTM_PWM_DUTY_ACCURACY));
+	//软件触发下一个载入点同步更新CnV
+	REG_SET_MASK(FTM_SYNC_REG(ftm_table[mod]), FTM_SYNC_SWSYNC_MASK);
 }
