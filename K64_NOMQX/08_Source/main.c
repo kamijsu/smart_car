@@ -33,8 +33,9 @@ uint32 run_counter;
 	ems_init();					//电磁传感器初始化
 	reed_switch_init();			//干簧管初始化
 	ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
-//ftm_pwm_single_init(FTM_MOD3,FTM_CH3,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
-ftm_pwm_combine_init(FTM_MOD0,FTM_CH_GROUP2,FTM_PWM_MODE_COMPLEMENTARY,FTM_PWM_POL_NEGATIVE,0,10000);
+
+//ftm_pwm_combine_init(FTM_MOD0,FTM_CH_GROUP2,FTM_PWM_MODE_COMPLEMENTARY,FTM_PWM_POL_NEGATIVE,0,10000);
+ftm_pwm_single_init(FTM_MOD0,FTM_CH4,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 	//4. 给有关变量赋初值
 	run_counter = 0;
 

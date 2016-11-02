@@ -105,8 +105,7 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		modulo = (FTM_CLK_FREQ >> clk_div) * counter_period - 1;
 		break;
 	case FTM_COUNTER_MODE_UP_DOWN:
-		//上下计数:QUADEN=0;CPWMS=1，这里因为用不到FTM功能所以把FTMEN置0
-		REG_CLR_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
+		//上下计数:QUADEN=0;CPWMS=1
 		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADEN_MASK);
 		REG_SET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK);
 		//计数周期=2*(MOD-CNTIN)/时钟频率
@@ -224,6 +223,8 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
+	//关闭FTM功能，不关闭的话无法使用单通道
+	REG_CLR_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
 	//配置通道为相应的PWM功能
 	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
 	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
