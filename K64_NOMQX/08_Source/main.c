@@ -34,8 +34,10 @@ uint32 run_counter;
 	reed_switch_init();			//干簧管初始化
 	ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
 
-//ftm_pwm_combine_init(FTM_MOD0,FTM_CH_GROUP2,FTM_PWM_MODE_COMPLEMENTARY,FTM_PWM_POL_NEGATIVE,0,10000);
-ftm_pwm_single_init(FTM_MOD0,FTM_CH4,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
+
+ftm_pwm_single_init(FTM_MOD0,FTM_CH0,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_POSITIVE,8000);
+ftm_ic_init(FTM_MOD0,FTM_CH1,FTM_CAPTURE_DOUBLE_EDGE);
+
 	//4. 给有关变量赋初值
 	run_counter = 0;
 
@@ -90,7 +92,7 @@ ftm_pwm_single_init(FTM_MOD0,FTM_CH4,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGAT
 	time0_flag.f_1min = 0;
 
 	//5. 使能模块中断
-	//ftm_timer_enable_int(FTM_MOD0,10);
+	ftm_ic_enable_int(FTM_MOD0,FTM_CH1);
 	//pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	encoder_enable_int(ENCODER1);	//使能左编码器中断

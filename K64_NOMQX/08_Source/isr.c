@@ -28,16 +28,16 @@ void UART1_RX_TX_IRQHandler() {
 }
 
 void FTM0_IRQHandler() {
-	static uint32 counter = 0;
-	//if (ftm_get_timer_int(FTM_MOD0)) {
-//		if (++counter >= 1000) {
-//			counter = 0;
-			time0_flag.f_1s = 1;
-
-//			ftm_disable_timer_int(FTM_MOD0);
-//		}
-		//ftm_clear_timer_int(FTM_MOD0);
-//	}
+	static uint16 radio = 0;
+	if (ftm_ic_get_int(FTM_MOD0, FTM_CH1)) {
+		ftm_ic_clear_int(FTM_MOD0, FTM_CH1);
+		radio = ftm_ic_get_ratio(FTM_MOD0, FTM_CH1);
+		uart_send1(UART_USE,radio>>8);
+		uart_send1(UART_USE,radio);
+		//ftm_ic_disable_int(FTM_MOD0, FTM_CH1);
+	} else {
+		uart_send_string(UART_USE,"Î´²úÉúÖĞ¶Ï£¡\r\n");
+	}
 
 }
 

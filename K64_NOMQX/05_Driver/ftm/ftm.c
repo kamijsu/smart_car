@@ -209,7 +209,7 @@ void ftm_clear_int(uint8 mod) {
 //         pol:PWM极性:
 //             FTM_PWM_POL_POSITIVE:正极性;
 //             FTM_PWM_POL_NEGATIVE:负极性;
-//         duty:初始占空比，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty:初始占空比，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 初始化FTM模块的通道为单通道的PWM功能
 //备注: 当选择边沿对齐模式时，相应FTM模块的计数器需运行在向上计数模式下;
 //     当选择中心对齐模式时，相应FTM模块的计数器需运行在上下计数模式下;
@@ -250,7 +250,7 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 	}
 	//设置初始占空比
 	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
-			(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PWM_DUTY_ACCURACY));
+			(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PERIOD_ACCURACY));
 }
 
 //==========================================================================
@@ -260,13 +260,13 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//         duty:占空比，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty:占空比，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 设置该通道的占空比，将在下一个计数周期更新
 //==========================================================================
 void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty) {
 	//设置占空比，会在下一个周期更新CnV的值
 	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
-			(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PWM_DUTY_ACCURACY));
+			(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PERIOD_ACCURACY));
 }
 
 //==========================================================================
@@ -282,8 +282,8 @@ void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty) {
 //         pol:PWM极性:
 //             FTM_PWM_POL_POSITIVE:正极性;
 //             FTM_PWM_POL_NEGATIVE:负极性;
-//         duty1:初始占空比1，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
-//         duty2:初始占空比2，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty1:初始占空比1，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
+//         duty2:初始占空比2，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 初始化FTM模块的通道组为双通道的PWM功能
 //备注: 相应FTM模块的计数器需运行在向上计数模式下;
 //     最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
@@ -347,8 +347,8 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 //             FTM_MODx，x为模块号;
 //         ch_group:FTM模块的通道组号:
 //                  FTM_CH_GROUPx，x为通道组号;
-//         duty1:占空比1，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
-//         duty2:占空比2，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty1:占空比1，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
+//         duty2:占空比2，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 设置该通道组的占空比，将在下一个计数周期更新
 //备注: 最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
 //     PWM波极性将再次反转
@@ -356,10 +356,139 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) {
 	//设置偶数通道占空比
 	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch_group<<1),
-			(FTM_MOD_REG(ftm_table[mod]) * duty1 / FTM_PWM_DUTY_ACCURACY));
+			(FTM_MOD_REG(ftm_table[mod]) * duty1 / FTM_PERIOD_ACCURACY));
 	//设置奇数通道占空比
 	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],(ch_group<<1)+1),
-			(FTM_MOD_REG(ftm_table[mod]) * duty2 / FTM_PWM_DUTY_ACCURACY));
+			(FTM_MOD_REG(ftm_table[mod]) * duty2 / FTM_PERIOD_ACCURACY));
 	//软件触发下一个载入点同步更新CnV
 	REG_SET_MASK(FTM_SYNC_REG(ftm_table[mod]), FTM_SYNC_SWSYNC_MASK);
+}
+
+//==========================================================================
+//函数名称: ftm_ic_init
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//         mode:输入捕捉的模式:
+//              FTM_CAPTURE_RISING_EDGE: 上升沿捕捉;
+//              FTM_CAPTURE_FALLING_EDGE:下降沿捕捉;
+//              FTM_CAPTURE_DOUBLE_EDGE: 双边沿捕捉;
+//功能概要: 初始化FTM模块的通道为输入捕捉功能
+//备注: 相应FTM模块的计数器需运行在向上计数模式下;
+//==========================================================================
+void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
+	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
+
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
+	//使能FTM模块通道功能
+	ftm_ch_set_mux(mod, ch);
+	//关闭FTM功能，不关闭的话无法使用单通道
+	REG_CLR_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
+	//配置通道为输入捕捉功能
+	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_COMBINE0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_COMP0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_DECAPEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_SYNCEN0_MASK<<shift);
+	switch (mode) {
+	case FTM_CAPTURE_RISING_EDGE:
+		//ELSB=0;ELSA=1;
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	case FTM_CAPTURE_FALLING_EDGE:
+		//ELSB=1;ELSA=0;
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	case FTM_CAPTURE_DOUBLE_EDGE:
+		//ELSB=1;ELSA=1;
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	}
+	//MSB=0;MSA=0;
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSB_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSA_MASK);
+}
+
+//==========================================================================
+//函数名称: ftm_ic_get_ratio
+//函数返回: 满足捕捉条件时的比例
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 获取当满足捕捉条件时，计数器计数个数占整个计数周期的比例
+//备注: 返回值除以FTM_PERIOD_ACCURACY(10000)为百分比的比例;
+//     可以用来测量PWM波占空比，比如:
+//     上升沿捕捉模式:返回值为相同计数周期、边沿对齐模式、负极性PWM波占空比;
+//     下降沿捕捉模式:返回值为相同计数周期、边沿对齐模式、正极性PWM波占空比;
+//==========================================================================
+uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch) {
+	return FTM_CnV_REG(ftm_table[mod],ch) * FTM_PERIOD_ACCURACY
+			/ FTM_MOD_REG(ftm_table[mod]);
+}
+
+//==========================================================================
+//函数名称: ftm_ic_enable_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 使能输入捕捉通道中断
+//==========================================================================
+void ftm_ic_enable_int(uint8 mod, uint8 ch) {
+	//使能通道事件中断
+	REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHIE_MASK);
+	//允许接收该FTM模块中断请求
+	ENABLE_IRQ(ftm_irq_table[mod]);
+}
+
+//==========================================================================
+//函数名称: ftm_ic_disable_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 关闭输入捕捉通道中断
+//==========================================================================
+void ftm_ic_disable_int(uint8 mod, uint8 ch) {
+	//关闭通道事件中断，未禁止接收该FTM模块中断请求，因为可能有别的通道会产生中断请求
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHIE_MASK);
+}
+
+//==========================================================================
+//函数名称: ftm_ic_get_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 获取输入捕捉功能通道的中断标志
+//==========================================================================
+bool ftm_ic_get_int(uint8 mod, uint8 ch) {
+	return (REG_GET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHF_MASK)) ?
+			true : false;
+}
+
+//==========================================================================
+//函数名称: ftm_ic_clear_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 清除输入捕捉功能通道的中断标志
+//==========================================================================
+void ftm_ic_clear_int(uint8 mod, uint8 ch) {
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHF_MASK);
 }

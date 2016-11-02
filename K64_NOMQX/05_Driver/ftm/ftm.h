@@ -33,8 +33,8 @@
 
 //FTM各模块各通道的引脚设置，通过更改COM_PORTx|x的x以选择引脚，
 //可选择的引脚注释在相应通道后方。注意：B12|B13不要重复定义
-#define FTM_MOD0_CH0_PIN	(COM_PORTA|3)	//A3   C1
-#define FTM_MOD0_CH1_PIN	(COM_PORTA|4)	//A2   C2
+#define FTM_MOD0_CH0_PIN	(COM_PORTC|1)	//A3   C1
+#define FTM_MOD0_CH1_PIN	(COM_PORTC|2)	//A2   C2
 #define FTM_MOD0_CH2_PIN	(COM_PORTA|5)	//A5   C3   C5
 #define FTM_MOD0_CH3_PIN	(COM_PORTA|6)	//A6   C4
 #define FTM_MOD0_CH4_PIN	(COM_PORTD|4)	//A7   B12  D4
@@ -75,6 +75,27 @@
 #define FTM_COUNTER_MODE_UP_DOWN		(1)	//上下计数
 #define FTM_COUNTER_MODE_FREE_RUNNING	(2)	//自由运行
 #define FTM_COUNTER_MODE_QD				(3)	//正交解码
+
+//定义FTM模块PWM功能的模式
+#define FTM_PWM_MODE_EDGE_ALIGNED	(0)	//单通道，PWM波边沿对齐
+#define FTM_PWM_MODE_CENTER_ALIGNED	(1)	//单通道，PWM波中心对齐
+#define FTM_PWM_MODE_COMBINE		(2)	//双通道，两通道的PWM波相同
+#define FTM_PWM_MODE_COMPLEMENTARY	(3)	//双通道，两通道的PWM波互补
+
+//定义FTM模块PWM功能的极性（POL为polarity简写）
+#define FTM_PWM_POL_POSITIVE		(1)	//正极性，即占空比越大，高电平所占比例越高
+#define FTM_PWM_POL_NEGATIVE		(0)	//负极性，即占空比越大，低电平所占比例越高
+
+//定义FTM模块的计数周期精度，(duty/FTM_PERIOD_ACCURACY)才为实际占空比，这里姑且称duty为占空比，回避了百分数，是为了避免浮点数运算
+#define FTM_PERIOD_ACCURACY			(10000u)
+//定义FTM模块占空比的最大值与最小值
+#define FTM_DUTY_MIN				(0u)
+#define FTM_DUTY_MAX				FTM_PERIOD_ACCURACY
+
+//定义FTM模块捕捉模式
+#define FTM_CAPTURE_RISING_EDGE		(0)		//上升沿捕捉
+#define FTM_CAPTURE_FALLING_EDGE	(1)		//下降沿捕捉
+#define FTM_CAPTURE_DOUBLE_EDGE		(2)		//双边沿捕捉
 
 //==========================================================================
 //函数名称: ftm_init
@@ -144,22 +165,6 @@ bool ftm_get_int(uint8 mod);
 //==========================================================================
 void ftm_clear_int(uint8 mod);
 
-//定义FTM模块PWM功能的模式
-#define FTM_PWM_MODE_EDGE_ALIGNED	(0)	//单通道，PWM波边沿对齐
-#define FTM_PWM_MODE_CENTER_ALIGNED	(1)	//单通道，PWM波中心对齐
-#define FTM_PWM_MODE_COMBINE		(2)	//双通道，两通道的PWM波相同
-#define FTM_PWM_MODE_COMPLEMENTARY	(3)	//双通道，两通道的PWM波互补
-
-//定义FTM模块PWM功能的极性（POL为polarity简写）
-#define FTM_PWM_POL_POSITIVE		(1)	//正极性，即占空比越大，高电平所占比例越高
-#define FTM_PWM_POL_NEGATIVE		(0)	//负极性，即占空比越大，低电平所占比例越高
-
-//定义FTM模块PWM功能的占空比精度，这里称duty为占空比，(duty/FTM_PWM_DUTY_ACCURACY)为实际占空比，这样做是为了避免浮点数运算
-#define FTM_PWM_DUTY_ACCURACY	(10000u)
-//定义FTM模块PWM功能占空比的最大值与最小值
-#define FTM_PWM_DUTY_MIN			(0u)
-#define FTM_PWM_DUTY_MAX			FTM_PWM_ACCURACY
-
 //==========================================================================
 //函数名称: ftm_pwm_single_init
 //函数返回: 无
@@ -173,7 +178,7 @@ void ftm_clear_int(uint8 mod);
 //         pol:PWM极性:
 //             FTM_PWM_POL_POSITIVE:正极性;
 //             FTM_PWM_POL_NEGATIVE:负极性;
-//         duty:初始占空比，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty:初始占空比，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 初始化FTM模块的通道为单通道的PWM功能
 //备注: 当选择边沿对齐模式时，相应FTM模块的计数器需运行在向上计数模式下;
 //     当选择中心对齐模式时，相应FTM模块的计数器需运行在上下计数模式下;
@@ -190,7 +195,7 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//         duty:占空比，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty:占空比，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 设置该通道的占空比，将在下一个计数周期更新
 //==========================================================================
 void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty);
@@ -208,8 +213,8 @@ void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty);
 //         pol:PWM极性:
 //             FTM_PWM_POL_POSITIVE:正极性;
 //             FTM_PWM_POL_NEGATIVE:负极性;
-//         duty1:初始占空比1，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
-//         duty2:初始占空比2，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty1:初始占空比1，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
+//         duty2:初始占空比2，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 初始化FTM模块的通道组为双通道的PWM功能
 //备注: 相应FTM模块的计数器需运行在向上计数模式下;
 //     最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
@@ -228,13 +233,88 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 //             FTM_MODx，x为模块号;
 //         ch_group:FTM模块的通道组号:
 //                  FTM_CH_GROUPx，x为通道组号;
-//         duty1:占空比1，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
-//         duty2:占空比2，范围[0,FTM_PWM_DUTY_ACCURACY(10000)]，这里未限幅
+//         duty1:占空比1，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
+//         duty2:占空比2，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 设置该通道组的占空比，将在下一个计数周期更新
 //备注: 最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
 //     PWM波极性将再次反转
 //==========================================================================
 void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2);
+
+//==========================================================================
+//函数名称: ftm_ic_init
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//         mode:输入捕捉的模式:
+//              FTM_CAPTURE_RISING_EDGE: 上升沿捕捉;
+//              FTM_CAPTURE_FALLING_EDGE:下降沿捕捉;
+//              FTM_CAPTURE_DOUBLE_EDGE: 双边沿捕捉;
+//功能概要: 初始化FTM模块的通道为输入捕捉功能
+//备注: 相应FTM模块的计数器需运行在向上计数模式下;
+//==========================================================================
+void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode);
+
+//==========================================================================
+//函数名称: ftm_ic_get_ratio
+//函数返回: 满足捕捉条件时的比例
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 获取当满足捕捉条件时，计数器计数个数占整个计数周期的比例
+//备注: 返回值除以FTM_PERIOD_ACCURACY(10000)为百分比的比例;
+//     可以用来测量PWM波占空比，比如:
+//     上升沿捕捉模式:返回值为相同计数周期、边沿对齐模式、负极性PWM波占空比;
+//     下降沿捕捉模式:返回值为相同计数周期、边沿对齐模式、正极性PWM波占空比;
+//==========================================================================
+uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch);
+
+//==========================================================================
+//函数名称: ftm_ic_enable_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 使能输入捕捉通道中断
+//==========================================================================
+void ftm_ic_enable_int(uint8 mod, uint8 ch);
+
+//==========================================================================
+//函数名称: ftm_ic_disable_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 关闭输入捕捉通道中断
+//==========================================================================
+void ftm_ic_disable_int(uint8 mod, uint8 ch);
+
+//==========================================================================
+//函数名称: ftm_ic_get_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 获取输入捕捉功能通道的中断标志
+//==========================================================================
+bool ftm_ic_get_int(uint8 mod, uint8 ch);
+
+//==========================================================================
+//函数名称: ftm_ic_clear_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 清除输入捕捉功能通道的中断标志
+//==========================================================================
+void ftm_ic_clear_int(uint8 mod, uint8 ch);
 
 //根据通道所设置的引脚号，定义相应的PCR的MUX值
 #ifdef FTM_MOD0_CH0_PIN
