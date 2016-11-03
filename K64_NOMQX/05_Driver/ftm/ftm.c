@@ -378,11 +378,11 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) 
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
 //         mode:输入捕捉的模式:
-//              FTM_CAPTURE_RISING_EDGE: 上升沿捕捉;
-//              FTM_CAPTURE_FALLING_EDGE:下降沿捕捉;
-//              FTM_CAPTURE_DOUBLE_EDGE: 双边沿捕捉;
+//              FTM_IC_MODE_RISING_EDGE: 上升沿捕捉;
+//              FTM_IC_MODE_FALLING_EDGE:下降沿捕捉;
+//              FTM_IC_MODE_DOUBLE_EDGE: 双边沿捕捉;
 //功能概要: 初始化FTM模块的通道为输入捕捉功能
-//备注: 相应FTM模块的计数器需运行在向上计数模式下;
+//备注: 相应FTM模块的计数器需运行在向上计数模式下
 //==========================================================================
 void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
@@ -403,17 +403,17 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
 			FTM_COMBINE_SYNCEN0_MASK<<shift);
 	switch (mode) {
-	case FTM_CAPTURE_RISING_EDGE:
+	case FTM_IC_MODE_RISING_EDGE:
 		//ELSB=0;ELSA=1;
 		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
 		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
 		break;
-	case FTM_CAPTURE_FALLING_EDGE:
+	case FTM_IC_MODE_FALLING_EDGE:
 		//ELSB=1;ELSA=0;
 		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
 		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
 		break;
-	case FTM_CAPTURE_DOUBLE_EDGE:
+	case FTM_IC_MODE_DOUBLE_EDGE:
 		//ELSB=1;ELSA=1;
 		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
 		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
@@ -443,15 +443,108 @@ uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch) {
 }
 
 //==========================================================================
-//函数名称: ftm_ic_enable_int
+//函数名称: ftm_oc_init
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 使能输入捕捉通道中断，当输入的信号满足捕捉条件时，产生中断
+//         mode:输出比较的模式:
+//              FTM_OC_MODE_TOGGLE:比较成功后反转电平;
+//              FTM_OC_MODE_SET:   比较成功后置高电平;
+//              FTM_OC_MODE_CLEAR: 比较成功后置低电平;
+//         ratio:比较成功的时间占整个计数周期的比例，范围[0,FTM_PERIOD_ACCURACY(10000))
+//功能概要: 初始化FTM模块的通道为输出比较功能
+//备注: 相应FTM模块的计数器需运行在向上计数模式下;
+//     ratio除以FTM_PERIOD_ACCURACY(10000)为百分比的比例
 //==========================================================================
-void ftm_ic_enable_int(uint8 mod, uint8 ch) {
+void ftm_oc_init(uint8 mod, uint8 ch, uint8 mode, uint16 ratio) {
+	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
+
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
+	//使能FTM模块通道功能
+	ftm_ch_set_mux(mod, ch);
+	//关闭FTM功能，不关闭的话无法使用单通道
+	REG_CLR_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
+	//配置通道为输出比较功能
+	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_COMBINE0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_COMP0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_DECAPEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
+			FTM_COMBINE_SYNCEN0_MASK<<shift);
+	ftm_oc_change_mode(mod, ch, mode);
+	//MSB=0;MSA=1;
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSB_MASK);
+	REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSA_MASK);
+	//设置比较成功点
+	ftm_oc_set_ratio(mod, ch, ratio);
+}
+
+//==========================================================================
+//函数名称: ftm_oc_change_mode
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//         mode:输出比较的模式:
+//              FTM_OC_MODE_TOGGLE:比较成功后反转电平;
+//              FTM_OC_MODE_SET:   比较成功后置高电平;
+//              FTM_OC_MODE_CLEAR: 比较成功后置低电平;
+//功能概要: 更改输出比较功能通道的模式
+//==========================================================================
+void ftm_oc_change_mode(uint8 mod, uint8 ch, uint8 mode) {
+	switch (mode) {
+	case FTM_OC_MODE_TOGGLE:
+		//ELSB=0;ELSA=1;
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	case FTM_OC_MODE_SET:
+		//ELSB=1;ELSA=1;
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	case FTM_OC_MODE_CLEAR:
+		//ELSB=1;ELSA=0;
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	}
+}
+
+//==========================================================================
+//函数名称: ftm_oc_set_ratio
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//         ratio:比较成功的时间占整个计数周期的比例，范围[0,FTM_PERIOD_ACCURACY(10000))
+//功能概要: 更改输出比较功能通道的比较成功时间
+//==========================================================================
+void ftm_oc_set_ratio(uint8 mod, uint8 ch, uint16 ratio) {
+	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
+			((FTM_MOD_REG(ftm_table[mod]) + 1) * ratio / FTM_PERIOD_ACCURACY));
+}
+
+//==========================================================================
+//函数名称: ftm_ch_enable_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 使能通道中断
+//备注: 可以使能输入捕捉和输出比较功能通道的中断:
+//     输入捕捉:当输入的信号满足捕捉条件时，产生中断;
+//     输出比较:当比较成功时，产生中断;
+//==========================================================================
+void ftm_ch_enable_int(uint8 mod, uint8 ch) {
 	//使能通道事件中断
 	REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHIE_MASK);
 	//允许接收该FTM模块中断请求
@@ -459,42 +552,42 @@ void ftm_ic_enable_int(uint8 mod, uint8 ch) {
 }
 
 //==========================================================================
-//函数名称: ftm_ic_disable_int
+//函数名称: ftm_ch_disable_int
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 关闭输入捕捉通道中断
+//功能概要: 关闭通道中断
 //==========================================================================
-void ftm_ic_disable_int(uint8 mod, uint8 ch) {
+void ftm_ch_disable_int(uint8 mod, uint8 ch) {
 	//关闭通道事件中断，未禁止接收该FTM模块中断请求，因为可能有别的通道会产生中断请求
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHIE_MASK);
 }
 
 //==========================================================================
-//函数名称: ftm_ic_get_int
+//函数名称: ftm_ch_get_int
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 获取输入捕捉功能通道的中断标志
+//功能概要: 获取通道的中断标志
 //==========================================================================
-bool ftm_ic_get_int(uint8 mod, uint8 ch) {
+bool ftm_ch_get_int(uint8 mod, uint8 ch) {
 	return (REG_GET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHF_MASK)) ?
 			true : false;
 }
 
 //==========================================================================
-//函数名称: ftm_ic_clear_int
+//函数名称: ftm_ch_clear_int
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 清除输入捕捉功能通道的中断标志
+//功能概要: 清除通道的中断标志
 //==========================================================================
-void ftm_ic_clear_int(uint8 mod, uint8 ch) {
+void ftm_ch_clear_int(uint8 mod, uint8 ch) {
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHF_MASK);
 }

@@ -32,14 +32,16 @@ uint32 run_counter;
 //	encoder_init(ENCODER2);		//右编码器初始化
 	ems_init();					//电磁传感器初始化
 	reed_switch_init();			//干簧管初始化
-	ftm_init(FTM_MOD1,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,150);
+	//ftm_init(FTM_MOD1,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,150);
 
-	ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP_DOWN,100);
-//ftm_pwm_combine_init(FTM_MOD0,FTM_CH_GROUP2,FTM_PWM_MODE_COMPLEMENTARY,FTM_PWM_POL_NEGATIVE,1000,8000);
-	ftm_pwm_single_init(FTM_MOD0,FTM_CH4,FTM_PWM_MODE_CENTER_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
-	ftm_pwm_single_init(FTM_MOD1,FTM_CH0,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,2000);
-ftm_pwm_single_set(FTM_MOD0,FTM_CH4,2);
-ftm_ic_init(FTM_MOD1,FTM_CH1,FTM_CAPTURE_RISING_EDGE);
+	ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
+//ftm_pwm_combine_init(FTM_MOD0,FTM_CH_GROUP2,FTM_PWM_MODE_COMBINE,FTM_PWM_POL_NEGATIVE,9998,10000);
+	//ftm_pwm_single_init(FTM_MOD0,FTM_CH4,FTM_PWM_MODE_CENTER_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
+	//ftm_pwm_single_init(FTM_MOD1,FTM_CH0,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,2000);
+//ftm_pwm_single_set(FTM_MOD0,FTM_CH4,2);
+ftm_ic_init(FTM_MOD0,FTM_CH1,FTM_IC_MODE_FALLING_EDGE);
+
+	ftm_oc_init(FTM_MOD0,FTM_CH0,FTM_OC_MODE_SET,5000);
 
 	//4. 给有关变量赋初值
 	run_counter = 0;
@@ -95,7 +97,8 @@ ftm_ic_init(FTM_MOD1,FTM_CH1,FTM_CAPTURE_RISING_EDGE);
 	time0_flag.f_1min = 0;
 
 	//5. 使能模块中断
-	ftm_ic_enable_int(FTM_MOD1,FTM_CH1);
+	ftm_ch_enable_int(FTM_MOD0,FTM_CH1);
+	ftm_ch_enable_int(FTM_MOD0,FTM_CH0);
 	//pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	encoder_enable_int(ENCODER1);	//使能左编码器中断

@@ -92,10 +92,15 @@
 #define FTM_DUTY_MIN				(0u)
 #define FTM_DUTY_MAX				FTM_PERIOD_ACCURACY
 
-//定义FTM模块捕捉模式
-#define FTM_CAPTURE_RISING_EDGE		(0)		//上升沿捕捉
-#define FTM_CAPTURE_FALLING_EDGE	(1)		//下降沿捕捉
-#define FTM_CAPTURE_DOUBLE_EDGE		(2)		//双边沿捕捉
+//定义FTM模块输入捕捉功能捕捉模式
+#define FTM_IC_MODE_RISING_EDGE		(0)		//上升沿捕捉
+#define FTM_IC_MODE_FALLING_EDGE		(1)		//下降沿捕捉
+#define FTM_IC_MODE_DOUBLE_EDGE		(2)		//双边沿捕捉
+
+//定义FTM模块输出比较功能模式
+#define FTM_OC_MODE_TOGGLE		(0)		//比较成功后反转电平
+#define FTM_OC_MODE_SET			(1)		//比较成功后置高电平
+#define FTM_OC_MODE_CLEAR		(2)		//比较成功后置低电平
 
 //==========================================================================
 //函数名称: ftm_init
@@ -249,11 +254,11 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2);
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
 //         mode:输入捕捉的模式:
-//              FTM_CAPTURE_RISING_EDGE: 上升沿捕捉;
-//              FTM_CAPTURE_FALLING_EDGE:下降沿捕捉;
-//              FTM_CAPTURE_DOUBLE_EDGE: 双边沿捕捉;
+//              FTM_IC_MODE_RISING_EDGE: 上升沿捕捉;
+//              FTM_IC_MODE_FALLING_EDGE:下降沿捕捉;
+//              FTM_IC_MODE_DOUBLE_EDGE: 双边沿捕捉;
 //功能概要: 初始化FTM模块的通道为输入捕捉功能
-//备注: 相应FTM模块的计数器需运行在向上计数模式下;
+//备注: 相应FTM模块的计数器需运行在向上计数模式下
 //==========================================================================
 void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode);
 
@@ -273,48 +278,96 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode);
 uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch);
 
 //==========================================================================
-//函数名称: ftm_ic_enable_int
+//函数名称: ftm_oc_init
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 使能输入捕捉通道中断，当输入的信号满足捕捉条件时，产生中断
+//         mode:输出比较的模式:
+//              FTM_OC_MODE_TOGGLE:比较成功后反转电平;
+//              FTM_OC_MODE_SET:   比较成功后置高电平;
+//              FTM_OC_MODE_CLEAR: 比较成功后置低电平;
+//         ratio:比较成功的时间占整个计数周期的比例，范围[0,FTM_PERIOD_ACCURACY(10000))
+//功能概要: 初始化FTM模块的通道为输出比较功能
+//备注: 相应FTM模块的计数器需运行在向上计数模式下;
+//     ratio除以FTM_PERIOD_ACCURACY(10000)为百分比的比例
 //==========================================================================
-void ftm_ic_enable_int(uint8 mod, uint8 ch);
+void ftm_oc_init(uint8 mod, uint8 ch, uint8 mode, uint16 ratio);
 
 //==========================================================================
-//函数名称: ftm_ic_disable_int
+//函数名称: ftm_oc_change_mode
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 关闭输入捕捉通道中断
+//         mode:输出比较的模式:
+//              FTM_OC_MODE_TOGGLE:比较成功后反转电平;
+//              FTM_OC_MODE_SET:   比较成功后置高电平;
+//              FTM_OC_MODE_CLEAR: 比较成功后置低电平;
+//功能概要: 更改输出比较功能通道的模式
 //==========================================================================
-void ftm_ic_disable_int(uint8 mod, uint8 ch);
+void ftm_oc_change_mode(uint8 mod, uint8 ch, uint8 mode);
 
 //==========================================================================
-//函数名称: ftm_ic_get_int
+//函数名称: ftm_oc_set_ratio
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 获取输入捕捉功能通道的中断标志
+//         ratio:比较成功的时间占整个计数周期的比例，范围[0,FTM_PERIOD_ACCURACY(10000))
+//功能概要: 更改输出比较功能通道的比较成功时间
 //==========================================================================
-bool ftm_ic_get_int(uint8 mod, uint8 ch);
+void ftm_oc_set_ratio(uint8 mod, uint8 ch, uint16 ratio);
 
 //==========================================================================
-//函数名称: ftm_ic_clear_int
+//函数名称: ftm_ch_enable_int
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 清除输入捕捉功能通道的中断标志
+//功能概要: 使能通道中断
+//备注: 可以使能输入捕捉和输出比较功能通道的中断:
+//     输入捕捉:当输入的信号满足捕捉条件时，产生中断;
+//     输出比较:当比较成功时，产生中断;
 //==========================================================================
-void ftm_ic_clear_int(uint8 mod, uint8 ch);
+void ftm_ch_enable_int(uint8 mod, uint8 ch);
+
+//==========================================================================
+//函数名称: ftm_ch_disable_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 关闭通道中断
+//==========================================================================
+void ftm_ch_disable_int(uint8 mod, uint8 ch);
+
+//==========================================================================
+//函数名称: ftm_ch_get_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 获取通道的中断标志
+//==========================================================================
+bool ftm_ch_get_int(uint8 mod, uint8 ch);
+
+//==========================================================================
+//函数名称: ftm_ch_clear_int
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;
+//         ch:FTM模块的通道号:
+//            FTM_CHx，x为通道号;
+//功能概要: 清除通道的中断标志
+//==========================================================================
+void ftm_ch_clear_int(uint8 mod, uint8 ch);
 
 //根据通道所设置的引脚号，定义相应的PCR的MUX值
 #ifdef FTM_MOD0_CH0_PIN
