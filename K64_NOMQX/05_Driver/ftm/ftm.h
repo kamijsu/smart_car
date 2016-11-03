@@ -42,8 +42,8 @@
 #define FTM_MOD0_CH6_PIN	(COM_PORTA|1)	//A1        D6
 #define FTM_MOD0_CH7_PIN	(COM_PORTA|2)	//A2        D7
 
-#define FTM_MOD1_CH0_PIN	(COM_PORTA|8)	//A8   A12  B0   B12
-#define FTM_MOD1_CH1_PIN	(COM_PORTA|9)	//A9   A13  B1   B13
+#define FTM_MOD1_CH0_PIN	(COM_PORTB|0)	//A8   A12  B0   B12
+#define FTM_MOD1_CH1_PIN	(COM_PORTB|1)	//A9   A13  B1   B13
 
 #define FTM_MOD2_CH0_PIN	(COM_PORTA|10)	//A10  B18
 #define FTM_MOD2_CH1_PIN	(COM_PORTA|11)	//A11  B19
@@ -114,7 +114,7 @@
 //备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位ms，
 //     需满足48000/x*counter_period<=num，48000为这里使用的总线时钟频率，单位kHz，
 //     x为FTM_CLK_DIV_x的x，向上计数模式时num为65536，上下计数模式时num为65534，
-//     另外，上下计数模式时，若选择128分频，周期需为偶数;
+//     另外，上下计数模式时，若选择128分频，周期需为偶数(否则计数精度会丢失);
 //     当选择自由运行模式时，counter_period无效;
 //     当选择正交解码模式时，counter_period为每次产生中断时，计数器已经计数的个数，
 //     范围[1,65536];
@@ -267,8 +267,8 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode);
 //功能概要: 获取当满足捕捉条件时，计数器计数个数占整个计数周期的比例
 //备注: 返回值除以FTM_PERIOD_ACCURACY(10000)为百分比的比例;
 //     可以用来测量PWM波占空比，比如:
-//     上升沿捕捉模式:返回值为相同计数周期、边沿对齐模式、负极性PWM波占空比;
-//     下降沿捕捉模式:返回值为相同计数周期、边沿对齐模式、正极性PWM波占空比;
+//     上升沿捕捉模式:返回值为相同计数器、边沿对齐模式、负极性PWM波占空比;
+//     下降沿捕捉模式:返回值为相同计数器、边沿对齐模式、正极性PWM波占空比;
 //==========================================================================
 uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch);
 
@@ -279,7 +279,7 @@ uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch);
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 使能输入捕捉通道中断
+//功能概要: 使能输入捕捉通道中断，当输入的信号满足捕捉条件时，产生中断
 //==========================================================================
 void ftm_ic_enable_int(uint8 mod, uint8 ch);
 

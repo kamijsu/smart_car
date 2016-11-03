@@ -63,7 +63,7 @@ static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
 //备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位ms，
 //     需满足48000/x*counter_period<=num，48000为这里使用的总线时钟频率，单位kHz，
 //     x为FTM_CLK_DIV_x的x，向上计数模式时num为65536，上下计数模式时num为65534，
-//     另外，上下计数模式时，若选择128分频，周期需为偶数;
+//     另外，上下计数模式时，若选择128分频，周期需为偶数(否则计数精度会丢失);
 //     当选择自由运行模式时，counter_period无效;
 //     当选择正交解码模式时，counter_period为每次产生中断时，计数器已经计数的个数，
 //     范围[1,65536];
@@ -149,7 +149,7 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 void ftm_timer_enable_int(uint8 mod, uint8 time) {
 	//设置产生中断的频率
 	REG_CLR_MASK(FTM_CONF_REG(ftm_table[mod]), FTM_CONF_NUMTOF_MASK);
-	REG_SET_MASK(FTM_CONF_REG(ftm_table[mod]), FTM_CONF_NUMTOF(time-1));
+	REG_SET_MASK(FTM_CONF_REG(ftm_table[mod]), FTM_CONF_NUMTOF(time - 1));
 	//使能定时器溢出中断
 	REG_SET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_TOIE_MASK);
 	//允许接收该FTM模块中断请求
@@ -249,8 +249,7 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
 	}
 	//设置初始占空比
-	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
-			(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PERIOD_ACCURACY));
+	ftm_pwm_single_set(mod, ch, duty);
 }
 
 //==========================================================================
@@ -265,8 +264,15 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 //==========================================================================
 void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty) {
 	//设置占空比，会在下一个周期更新CnV的值
-	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
-			(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PERIOD_ACCURACY));
+	//中心对齐模式
+	if (REG_GET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK)) {
+		REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
+				(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PERIOD_ACCURACY));
+	} else {
+		//边沿对齐模式
+		REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
+				((FTM_MOD_REG(ftm_table[mod]) + 1) * duty / FTM_PERIOD_ACCURACY));
+	}
 }
 
 //==========================================================================
@@ -355,11 +361,11 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 //==========================================================================
 void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) {
 	//设置偶数通道占空比
-	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch_group<<1),
-			(FTM_MOD_REG(ftm_table[mod]) * duty1 / FTM_PERIOD_ACCURACY));
+	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch_group << 1),
+			((FTM_MOD_REG(ftm_table[mod]) + 1) * duty1 / FTM_PERIOD_ACCURACY));
 	//设置奇数通道占空比
-	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],(ch_group<<1)+1),
-			(FTM_MOD_REG(ftm_table[mod]) * duty2 / FTM_PERIOD_ACCURACY));
+	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],(ch_group << 1) + 1),
+			((FTM_MOD_REG(ftm_table[mod]) + 1) * duty2 / FTM_PERIOD_ACCURACY));
 	//软件触发下一个载入点同步更新CnV
 	REG_SET_MASK(FTM_SYNC_REG(ftm_table[mod]), FTM_SYNC_SWSYNC_MASK);
 }
@@ -428,12 +434,12 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 //功能概要: 获取当满足捕捉条件时，计数器计数个数占整个计数周期的比例
 //备注: 返回值除以FTM_PERIOD_ACCURACY(10000)为百分比的比例;
 //     可以用来测量PWM波占空比，比如:
-//     上升沿捕捉模式:返回值为相同计数周期、边沿对齐模式、负极性PWM波占空比;
-//     下降沿捕捉模式:返回值为相同计数周期、边沿对齐模式、正极性PWM波占空比;
+//     上升沿捕捉模式:返回值为相同计数器、边沿对齐模式、负极性PWM波占空比;
+//     下降沿捕捉模式:返回值为相同计数器、边沿对齐模式、正极性PWM波占空比;
 //==========================================================================
 uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch) {
 	return FTM_CnV_REG(ftm_table[mod],ch) * FTM_PERIOD_ACCURACY
-			/ FTM_MOD_REG(ftm_table[mod]);
+			/ (FTM_MOD_REG(ftm_table[mod]) + 1);
 }
 
 //==========================================================================
@@ -443,7 +449,7 @@ uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch) {
 //             FTM_MODx，x为模块号;
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
-//功能概要: 使能输入捕捉通道中断
+//功能概要: 使能输入捕捉通道中断，当输入的信号满足捕捉条件时，产生中断
 //==========================================================================
 void ftm_ic_enable_int(uint8 mod, uint8 ch) {
 	//使能通道事件中断
