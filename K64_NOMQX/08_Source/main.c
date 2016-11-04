@@ -32,89 +32,47 @@ uint32 run_counter;
 //	encoder_init(ENCODER2);		//右编码器初始化
 //	ems_init();					//电磁传感器初始化
 //	reed_switch_init();			//干簧管初始化
-	ftm_init(FTM_MOD1,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,50);
+	ftm_init(FTM_MOD1,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
 
-	ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_FREE_RUNNING,0);
+	ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
 //ftm_pwm_combine_init(FTM_MOD0,FTM_CH_GROUP2,FTM_PWM_MODE_COMBINE,FTM_PWM_POL_NEGATIVE,9998,10000);
 	//ftm_pwm_single_init(FTM_MOD0,FTM_CH4,FTM_PWM_MODE_CENTER_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
-	ftm_pwm_single_init(FTM_MOD1,FTM_CH1,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,2000);
+	ftm_pwm_single_init(FTM_MOD0,FTM_CH4,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 //ftm_pwm_single_set(FTM_MOD0,FTM_CH4,2);
 //ftm_ic_init(FTM_MOD0,FTM_CH1,FTM_CAPTURE_MODE_DOUBLE_EDGE);
 //
-//	ftm_oc_init(FTM_MOD0,FTM_CH0,FTM_OC_MODE_SET,9999);
+	ftm_oc_init(FTM_MOD0,FTM_CH0,FTM_OC_MODE_SET,9999);
 
 
-//	ftm_ic_init(FTM_MOD0,FTM_CH0,FTM_CAPTURE_MODE_DOUBLE_EDGE);
+	ftm_ic_init(FTM_MOD0,FTM_CH0,FTM_IC_MODE_DOUBLE_EDGE);
 
 	//4. 给有关变量赋初值
 	run_counter = 0;
 
-	car.angle.angle = 0;		//角度置0
 
-	/* PWM计算参数置0 */
-	car.angle.pwm.new_PWM = 0;
-	car.angle.pwm.last_PWM = 0;
-	car.angle.period_counter = 0;
-	car.speed.pwm.new_PWM = 0;
-	car.speed.pwm.last_PWM = 0;
-	car.speed.period_counter = 0;
-	car.turn.pwm.new_PWM = 0;
-	car.turn.pwm.last_PWM = 0;
-	car.turn.period_counter = 0;
-
-	/* 0m/s时参数 */
-	car.speed.aim_speed = 0.0;		//目标速度初始化，单位m/s
-	car.angle.acce_set = 0x0925;	//0m/s时平衡位置
-	car.angle.pid.p = 0.2;
-	car.angle.pid.i = 0;
-	car.angle.pid.d = 0.001;
-
-	car.speed.pid.p = 1;
-	car.speed.pid.i = 0;
-	car.speed.pid.d = 0;
-
-	car.turn.pid.p = 0;
-	car.turn.pid.i = 0;
-	car.turn.pid.d = 0;
-
-	/* 全局变量 */
-	encoder_counter.left = 0;	//左编码器脉冲计数器置0
-	encoder_counter.right = 0;	//右编码器脉冲计数器置0
-	car_flag.reed_switch = 0;	//干簧管未接通
-	car_flag.over_speed = 0;	//小车未超速
-	car_flag.is_starting = 1;	//小车正在起步
-	car_flag.can_stop = 0;		//不能停车
-
-	/* 时间标志参数置0 */
-	time0_flag.f_5ms = 0;
-	time0_flag.f_10ms = 0;
-	time0_flag.f_15ms = 0;
-	time0_flag.f_20ms = 0;
-	time0_flag.f_50ms = 0;
-	time0_flag.f_100ms = 0;
-	time0_flag.f_1s = 0;
-	time0_flag.f_5s = 0;
-	time0_flag.f_10s = 0;
-	time0_flag.f_15s = 0;
-	time0_flag.f_30s = 0;
-	time0_flag.f_1min = 0;
 
 	//5. 使能模块中断
 //	ftm_ch_enable_int(FTM_MOD0,FTM_CH1);
 //	ftm_ch_enable_int(FTM_MOD0,FTM_CH0);
 
+//gpio_pull(COM_PORTC|3,GPIO_LEVEL_LOW);
+//gpio_pull(COM_PORTC|4,GPIO_LEVEL_LOW);
+		ftm_decap_enable_int(FTM_MOD1,FTM_CH_GROUP0);
+
 	//pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	encoder_enable_int(ENCODER1);	//使能左编码器中断
 	encoder_enable_int(ENCODER2);	//使能右编码器中断
+	//ftm_timer_enable_int(FTM_MOD1,1);
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
-	ftm_decap_init(FTM_MOD0,FTM_CH_GROUP0,FTM_DECAP_MODE_CONTINUOUS,FTM_CAPTURE_MODE_FALLING_EDGE,FTM_CAPTURE_MODE_FALLING_EDGE);
-	ftm_decap_enable_int(FTM_MOD0,FTM_CH_GROUP0);
+	ftm_decap_reenable(FTM_MOD1,FTM_CH_GROUP0);
+
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-		run_counter = 3.14*5.123;
+
+		//run_counter = 3.14*5.123;
 //		if(run_counter++>=RUN_COUNTER_MAX){
 //			run_counter = 0;
 //			light_change(LIGHT_RED);

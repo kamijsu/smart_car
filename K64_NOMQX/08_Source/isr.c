@@ -27,15 +27,18 @@ void UART1_RX_TX_IRQHandler() {
 	ENABLE_INTERRUPTS;
 }
 
-void FTM0_IRQHandler() {
+void FTM1_IRQHandler() {
 	static uint16 radio = 0;
-	if(ftm_decap_get_int(FTM_MOD0,FTM_CH_GROUP0)){
-		radio = ftm_decap_get_ratio(FTM_MOD0,FTM_CH_GROUP0);
+	if(ftm_decap_get_int(FTM_MOD1,FTM_CH_GROUP0)){
+		radio = ftm_decap_get_ratio(FTM_MOD1,FTM_CH_GROUP0);
 		uart_send1(UART_USE,radio>>8);
 		uart_send1(UART_USE,radio);
-		ftm_decap_clear_int(FTM_MOD0,FTM_CH_GROUP0);
-	} else if(ftm_ch_get_int(FTM_MOD0,FTM_CH0)) {
-		uart_send_string(UART_USE,"shit");
+		ftm_decap_clear_int(FTM_MOD1,FTM_CH_GROUP0);
+	} else if(ftm_ch_get_int(FTM_MOD1,FTM_CH0)) {
+		radio = ftm_ic_get_ratio(FTM_MOD0,FTM_CH0);
+				uart_send1(UART_USE,radio>>8);
+				uart_send1(UART_USE,radio);
+				ftm_ch_clear_int(FTM_MOD1,FTM_CH0);
 	}else{
 		uart_send_string(UART_USE,"shit1");
 	}

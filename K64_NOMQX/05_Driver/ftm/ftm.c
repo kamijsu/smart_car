@@ -47,39 +47,6 @@ static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
 }
 
 //==========================================================================
-//函数名称: ftm_cap_set_mode
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch:FTM模块的通道号:
-//            FTM_CHx，x为通道号;
-//         mode:捕捉模式:
-//              FTM_CAPTURE_MODE_RISING_EDGE: 上升沿捕捉;
-//              FTM_CAPTURE_MODE_FALLING_EDGE:下降沿捕捉;
-//              FTM_CAPTURE_MODE_DOUBLE_EDGE: 双边沿捕捉;
-//功能概要: 设置通道的捕捉模式
-//==========================================================================
-static void ftm_cap_set_mode(uint8 mod, uint8 ch, uint8 mode) {
-	switch (mode) {
-	case FTM_CAPTURE_MODE_RISING_EDGE:
-		//ELSB=0;ELSA=1;
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
-		break;
-	case FTM_CAPTURE_MODE_FALLING_EDGE:
-		//ELSB=1;ELSA=0;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
-		break;
-	case FTM_CAPTURE_MODE_DOUBLE_EDGE:
-		//ELSB=1;ELSA=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
-		break;
-	}
-}
-
-//==========================================================================
 //函数名称: ftm_init
 //函数返回: 无
 //参数说明: mod:FTM模块号:
@@ -89,7 +56,6 @@ static void ftm_cap_set_mode(uint8 mod, uint8 ch, uint8 mode) {
 //         counter_mode:计数器模式:
 //                      FTM_COUNTER_MODE_UP:          向上计数;
 //                      FTM_COUNTER_MODE_UP_DOWN:     上下计数;
-//                      FTM_COUNTER_MODE_FREE_RUNNING:自由运行;
 //                      FTM_COUNTER_MODE_QD:          正交解码;
 //         counter_period:见备注
 //功能概要: 初始化FTM模块，默认未开启中断
@@ -97,8 +63,6 @@ static void ftm_cap_set_mode(uint8 mod, uint8 ch, uint8 mode) {
 //     需满足48000/x*counter_period<=num，48000为这里使用的总线时钟频率，单位kHz，
 //     x为FTM_CLK_DIV_x的x，向上计数模式时num为65536，上下计数模式时num为65534，
 //     另外，上下计数模式时，若选择128分频，周期需为偶数(否则计数精度会丢失);
-//     当选择自由运行模式时，counter_period无效，
-//     计数周期默认为65536/(48000/x)，单位ms，带小数点;
 //     当选择正交解码模式时，counter_period为每次产生中断时，计数器已经计数的个数，
 //     范围[1,65536];
 //==========================================================================
@@ -129,7 +93,7 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 	REG_SET_VAL(FTM_CNT_REG(ftm_table[mod]), 0);
 	//设置计数器每次的初始值为0，会写到缓冲中
 	REG_SET_VAL(FTM_CNTIN_REG(ftm_table[mod]), 0);
-	//配置计数器模式
+	//配置计数器模式(其实还有个自由运行模式，可以用来激活双边沿捕捉模式，但是经过测试无法使用该模式)
 	switch (counter_mode) {
 	case FTM_COUNTER_MODE_UP:
 		//向上计数:QUADEN=0;CPWMS=0;
@@ -144,13 +108,6 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		REG_SET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK);
 		//计数周期=2*(MOD-CNTIN)/时钟频率
 		modulo = ((FTM_CLK_FREQ >> clk_div) * counter_period) >> 1;
-		break;
-	case FTM_COUNTER_MODE_FREE_RUNNING:
-		//自由运行:FTMEN=1;QUADEN=0;CPWMS=0;CNTIN=0x0000;MOD=0xFFFF;
-		REG_SET_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
-		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADEN_MASK);
-		REG_CLR_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK);
-		modulo = 0xFFFF;
 		break;
 	case FTM_COUNTER_MODE_QD:
 		//正交解码:FTMEN=1;QUADEN=1;
@@ -417,9 +374,9 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) 
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
 //         mode:输入捕捉的模式:
-//              FTM_CAPTURE_MODE_RISING_EDGE: 上升沿捕捉;
-//              FTM_CAPTURE_MODE_FALLING_EDGE:下降沿捕捉;
-//              FTM_CAPTURE_MODE_DOUBLE_EDGE: 双边沿捕捉;
+//              FTM_IC_MODE_RISING_EDGE: 上升沿捕捉;
+//              FTM_IC_MODE_FALLING_EDGE:下降沿捕捉;
+//              FTM_IC_MODE_DOUBLE_EDGE: 双边沿捕捉;
 //功能概要: 初始化FTM模块的通道为输入捕捉功能，默认未开启中断
 //备注: 相应FTM模块的计数器需运行在向上计数模式下
 //==========================================================================
@@ -443,7 +400,23 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 			FTM_COMBINE_DECAPEN0_MASK<<shift);
 	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
 			FTM_COMBINE_SYNCEN0_MASK<<shift);
-	ftm_cap_set_mode(mod, ch, mode);
+	switch (mode) {
+	case FTM_IC_MODE_RISING_EDGE:
+		//ELSB=0;ELSA=1;
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	case FTM_IC_MODE_FALLING_EDGE:
+		//ELSB=1;ELSA=0;
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	case FTM_IC_MODE_DOUBLE_EDGE:
+		//ELSB=1;ELSA=1;
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		break;
+	}
 	//MSB=0;MSA=0;
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSB_MASK);
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSA_MASK);
@@ -617,153 +590,4 @@ bool ftm_ch_get_int(uint8 mod, uint8 ch) {
 //==========================================================================
 void ftm_ch_clear_int(uint8 mod, uint8 ch) {
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHF_MASK);
-}
-
-//==========================================================================
-//函数名称: ftm_decap_init
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//         decap_mode:双边沿捕捉模式:
-//                    FTM_DECAP_MODE_ONCE:      单次捕捉;
-//                    FTM_DECAP_MODE_CONTINUOUS:连续捕捉;
-//         ch_mode0:偶数通道捕捉模式:
-//                  FTM_CAPTURE_MODE_RISING_EDGE: 上升沿捕捉;
-//                  FTM_CAPTURE_MODE_FALLING_EDGE:下降沿捕捉;
-//                  FTM_CAPTURE_MODE_DOUBLE_EDGE: 双边沿捕捉;
-//         ch_mode1:奇数通道捕捉模式，参数同上
-//功能概要: 初始化FTM模块的通道组为双边沿捕捉功能
-//备注: 相应FTM模块的计数器需运行在自由运行模式下;
-//     仅有偶数通道会捕捉输入，奇数通道的输入会被忽略;
-//     ########################没写完！！！！！！！！！！！如果ch_mode0和ch_mode1
-//==========================================================================
-void ftm_decap_init(uint8 mod, uint8 ch_group, uint8 decap_mode, uint8 ch_mode0,
-		uint8 ch_mode1) {
-	uint8 ch0, ch1;	//两个通道号
-	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
-//	uint8 port0, pin0,port1,pin1;	//端口号与引脚号
-
-	ch0 = ch_group << 1;	//偶数通道
-	ch1 = ch0 + 1;			//奇数通道
-//	//根据通道号获取端口号与引脚号
-//			com_port_pin_resolution(ftm_pin_table[mod][ch0], &port0, &pin0);
-//			com_port_pin_resolution(ftm_pin_table[mod][ch1], &port1, &pin1);
-	shift = ch_group << 3;	//相邻COMBINEn相差8位
-	//使能FTM模块通道功能
-	ftm_ch_set_mux(mod, ch0);
-	ftm_ch_set_mux(mod, ch1);
-	//关闭通道中断
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_CHIE_MASK);
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_CHIE_MASK);
-	//配置通道为双边沿捕捉功能
-	if (decap_mode == FTM_DECAP_MODE_ONCE) {
-		//MSA=0;
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_MSA_MASK);
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_MSA_MASK);
-	} else {
-		//MSA=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_MSA_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_MSA_MASK);
-	}
-	//配置两个通道的捕捉模式
-	ftm_cap_set_mode(mod, ch0, ch_mode0);
-	ftm_cap_set_mode(mod, ch1, ch_mode1);
-	//COMBINEn=0;SYNCEN=0;COMPn=0;DECAPENn=1;
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMBINE0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_SYNCEN0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMP0_MASK<<shift);
-	REG_SET_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_DECAPEN0_MASK<<shift);
-//	REG_SET_MASK(PORT_PCR_REG(port_table[port0],pin0), PORT_PCR_PS_MASK);	//引脚上拉电阻使能
-//	REG_SET_MASK(PORT_PCR_REG(port_table[port0],pin0), PORT_PCR_PE_MASK);	//开启上下拉电阻
-//	REG_SET_MASK(PORT_PCR_REG(port_table[port1],pin1), PORT_PCR_PS_MASK);	//引脚上拉电阻使能
-//		REG_SET_MASK(PORT_PCR_REG(port_table[port1],pin1), PORT_PCR_PE_MASK);	//开启上下拉电阻
-}
-
-//==========================================================================
-//函数名称: ftm_decap_get_ratio
-//函数返回: 所要捕捉的测量量占整个计数周期的比例
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 获取所要捕捉的测量量占整个计数周期的比例
-//备注: 返回值除以FTM_PERIOD_ACCURACY(10000)为百分比的比例
-//==========================================================================
-uint16 ftm_decap_get_ratio(uint8 mod, uint8 ch_group) {
-	uint16 ratio0, ratio1;
-	//先读C(n)V，再读C(n+1)V
-	ratio0 = FTM_CnV_REG(ftm_table[mod], ch_group << 1);
-	ratio1 = FTM_CnV_REG(ftm_table[mod], (ch_group << 1) + 1);
-	return (ratio1 - ratio0) * FTM_PERIOD_ACCURACY / 0x10000;
-}
-
-//==========================================================================
-//函数名称: ftm_decap_enable_int
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 使能双边沿捕捉功能的通道组的中断，当两个通道的捕捉条件均被满足时，产生中断
-//==========================================================================
-void ftm_decap_enable_int(uint8 mod, uint8 ch_group) {
-	//使能通道事件中断
-//	REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch_group << 1),
-//			FTM_CnSC_CHIE_MASK);
-	REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],(ch_group << 1) + 1),
-			FTM_CnSC_CHIE_MASK);
-	//允许接收该FTM模块中断请求
-	ENABLE_IRQ(ftm_irq_table[mod]);
-}
-
-//==========================================================================
-//函数名称: ftm_decap_disable_int
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 关闭双边沿捕捉功能的通道组的中断
-//==========================================================================
-void ftm_decap_disable_int(uint8 mod, uint8 ch_group) {
-	//关闭通道事件中断
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch_group << 1),
-			FTM_CnSC_CHIE_MASK);
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],(ch_group << 1) + 1),
-			FTM_CnSC_CHIE_MASK);
-}
-
-//==========================================================================
-//函数名称: ftm_decap_get_int
-//函数返回: true:产生中断; false:未产生中断
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 获取双边沿捕捉功能的通道组的中断标志
-//==========================================================================
-bool ftm_decap_get_int(uint8 mod, uint8 ch_group) {
-	return (REG_GET_MASK(FTM_CnSC_REG(ftm_table[mod],(ch_group << 1) + 1),
-			FTM_CnSC_CHF_MASK)) ? true : false;
-}
-
-//==========================================================================
-//函数名称: ftm_decap_clear_int
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 清除双边沿捕捉功能的通道组的中断标志
-//==========================================================================
-void ftm_decap_clear_int(uint8 mod, uint8 ch_group) {
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch_group << 1), FTM_CnSC_CHF_MASK);
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],(ch_group << 1) + 1),
-			FTM_CnSC_CHF_MASK);
 }

@@ -35,8 +35,8 @@
 //可选择的引脚注释在相应通道后方。注意：B12|B13不要重复定义
 #define FTM_MOD0_CH0_PIN	(COM_PORTC|1)	//A3   C1
 #define FTM_MOD0_CH1_PIN	(COM_PORTC|2)	//A2   C2
-#define FTM_MOD0_CH2_PIN	(COM_PORTA|5)	//A5   C3   C5
-#define FTM_MOD0_CH3_PIN	(COM_PORTA|6)	//A6   C4
+#define FTM_MOD0_CH2_PIN	(COM_PORTC|3)	//A5   C3   C5
+#define FTM_MOD0_CH3_PIN	(COM_PORTC|4)	//A6   C4
 #define FTM_MOD0_CH4_PIN	(COM_PORTD|4)	//A7   B12  D4
 #define FTM_MOD0_CH5_PIN	(COM_PORTD|5)	//A0   B13  D5
 #define FTM_MOD0_CH6_PIN	(COM_PORTA|1)	//A1        D6
@@ -73,8 +73,7 @@
 //定义FTM模块计数器模式
 #define FTM_COUNTER_MODE_UP				(0)	//向上计数
 #define FTM_COUNTER_MODE_UP_DOWN		(1)	//上下计数
-#define FTM_COUNTER_MODE_FREE_RUNNING	(2)	//自由运行
-#define FTM_COUNTER_MODE_QD				(3)	//正交解码
+#define FTM_COUNTER_MODE_QD				(2)	//正交解码
 
 //定义FTM模块PWM功能的模式
 #define FTM_PWM_MODE_EDGE_ALIGNED	(0)	//单通道，PWM波边沿对齐
@@ -93,18 +92,14 @@
 #define FTM_DUTY_MAX				FTM_PERIOD_ACCURACY
 
 //定义FTM模块捕捉模式
-#define FTM_CAPTURE_MODE_RISING_EDGE		(0)		//上升沿捕捉
-#define FTM_CAPTURE_MODE_FALLING_EDGE		(1)		//下降沿捕捉
-#define FTM_CAPTURE_MODE_DOUBLE_EDGE		(2)		//双边沿捕捉
+#define FTM_IC_MODE_RISING_EDGE		(0)		//上升沿捕捉
+#define FTM_IC_MODE_FALLING_EDGE	(1)		//下降沿捕捉
+#define FTM_IC_MODE_DOUBLE_EDGE		(2)		//双边沿捕捉
 
 //定义FTM模块输出比较功能模式
 #define FTM_OC_MODE_TOGGLE		(0)		//比较成功后反转电平
 #define FTM_OC_MODE_SET			(1)		//比较成功后置高电平
 #define FTM_OC_MODE_CLEAR		(2)		//比较成功后置低电平
-
-//定义FTM模块双边沿捕捉模式
-#define FTM_DECAP_MODE_ONCE			(0)		//单次捕捉
-#define FTM_DECAP_MODE_CONTINUOUS	(1)		//连续捕捉
 
 //==========================================================================
 //函数名称: ftm_init
@@ -116,7 +111,6 @@
 //         counter_mode:计数器模式:
 //                      FTM_COUNTER_MODE_UP:          向上计数;
 //                      FTM_COUNTER_MODE_UP_DOWN:     上下计数;
-//                      FTM_COUNTER_MODE_FREE_RUNNING:自由运行;
 //                      FTM_COUNTER_MODE_QD:          正交解码;
 //         counter_period:见备注
 //功能概要: 初始化FTM模块，默认未开启中断
@@ -124,8 +118,6 @@
 //     需满足48000/x*counter_period<=num，48000为这里使用的总线时钟频率，单位kHz，
 //     x为FTM_CLK_DIV_x的x，向上计数模式时num为65536，上下计数模式时num为65534，
 //     另外，上下计数模式时，若选择128分频，周期需为偶数(否则计数精度会丢失);
-//     当选择自由运行模式时，counter_period无效，
-//     计数周期默认为65536/(48000/x)，单位ms，带小数点;
 //     当选择正交解码模式时，counter_period为每次产生中断时，计数器已经计数的个数，
 //     范围[1,65536];
 //==========================================================================
@@ -259,9 +251,9 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2);
 //         ch:FTM模块的通道号:
 //            FTM_CHx，x为通道号;
 //         mode:输入捕捉的模式:
-//              FTM_CAPTURE_MODE_RISING_EDGE: 上升沿捕捉;
-//              FTM_CAPTURE_MODE_FALLING_EDGE:下降沿捕捉;
-//              FTM_CAPTURE_MODE_DOUBLE_EDGE: 双边沿捕捉;
+//              FTM_IC_MODE_RISING_EDGE: 上升沿捕捉;
+//              FTM_IC_MODE_FALLING_EDGE:下降沿捕捉;
+//              FTM_IC_MODE_DOUBLE_EDGE: 双边沿捕捉;
 //功能概要: 初始化FTM模块的通道为输入捕捉功能，默认未开启中断
 //备注: 相应FTM模块的计数器需运行在向上计数模式下
 //==========================================================================
@@ -373,85 +365,6 @@ bool ftm_ch_get_int(uint8 mod, uint8 ch);
 //功能概要: 清除通道的中断标志
 //==========================================================================
 void ftm_ch_clear_int(uint8 mod, uint8 ch);
-
-//==========================================================================
-//函数名称: ftm_decap_init
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//         decap_mode:双边沿捕捉模式:
-//                    FTM_DECAP_MODE_ONCE:      单次捕捉;
-//                    FTM_DECAP_MODE_CONTINUOUS:连续捕捉;
-//         ch_mode0:偶数通道捕捉模式:
-//                  FTM_CAPTURE_MODE_RISING_EDGE: 上升沿捕捉;
-//                  FTM_CAPTURE_MODE_FALLING_EDGE:下降沿捕捉;
-//                  FTM_CAPTURE_MODE_DOUBLE_EDGE: 双边沿捕捉;
-//         ch_mode1:奇数通道捕捉模式，参数同上
-//功能概要: 初始化FTM模块的通道组为双边沿捕捉功能
-//备注: 相应FTM模块的计数器需运行在自由运行模式下;
-//     仅有偶数通道会捕捉输入，奇数通道的输入会被忽略;
-//     ########################没写完！！！！！！！！！！！如果ch_mode0和ch_mode1
-//==========================================================================
-void ftm_decap_init(uint8 mod, uint8 ch_group, uint8 decap_mode, uint8 ch_mode0,
-		uint8 ch_mode1);
-
-//==========================================================================
-//函数名称: ftm_decap_get_ratio
-//函数返回: 所要捕捉的测量量占整个计数周期的比例
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 获取所要捕捉的测量量占整个计数周期的比例
-//备注: 返回值除以FTM_PERIOD_ACCURACY(10000)为百分比的比例
-//==========================================================================
-uint16 ftm_decap_get_ratio(uint8 mod, uint8 ch_group);
-
-//==========================================================================
-//函数名称: ftm_decap_enable_int
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 使能双边沿捕捉功能的通道组的中断，当两个通道的捕捉条件均被满足时，产生中断
-//==========================================================================
-void ftm_decap_enable_int(uint8 mod, uint8 ch_group);
-
-//==========================================================================
-//函数名称: ftm_decap_disable_int
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 关闭双边沿捕捉功能的通道组的中断
-//==========================================================================
-void ftm_decap_disable_int(uint8 mod, uint8 ch_group);
-
-//==========================================================================
-//函数名称: ftm_decap_get_int
-//函数返回: true:产生中断; false:未产生中断
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 获取双边沿捕捉功能的通道组的中断标志
-//==========================================================================
-bool ftm_decap_get_int(uint8 mod, uint8 ch_group);
-
-//==========================================================================
-//函数名称: ftm_decap_clear_int
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch_group:FTM模块的通道组号:
-//                  FTM_CH_GROUPx，x为通道组号;
-//功能概要: 清除双边沿捕捉功能的通道组的中断标志
-//==========================================================================
-void ftm_decap_clear_int(uint8 mod, uint8 ch_group);
 
 //根据通道所设置的引脚号，定义相应的PCR的MUX值
 #ifdef FTM_MOD0_CH0_PIN
