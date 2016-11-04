@@ -8,14 +8,16 @@
 //FTM各模块基地址
 static FTM_Type * const ftm_table[] = { FTM0, FTM1, FTM2, FTM3 };
 //FTM各模块各通道引脚号
-static const uint8 ftm_pin_table[][8] = { { FTM_MOD0_CH0_PIN, FTM_MOD0_CH1_PIN,
+static const uint8 ftm_ch_pin_table[][8] = { { FTM_MOD0_CH0_PIN,
+FTM_MOD0_CH1_PIN,
 FTM_MOD0_CH2_PIN, FTM_MOD0_CH3_PIN, FTM_MOD0_CH4_PIN, FTM_MOD0_CH5_PIN,
-FTM_MOD0_CH6_PIN, FTM_MOD0_CH7_PIN }, { FTM_MOD1_CH0_PIN, FTM_MOD1_CH1_PIN }, {
+FTM_MOD0_CH6_PIN, FTM_MOD0_CH7_PIN }, { FTM_MOD1_CH0_PIN,
+FTM_MOD1_CH1_PIN }, {
 FTM_MOD2_CH0_PIN, FTM_MOD2_CH1_PIN }, { FTM_MOD3_CH0_PIN,
 FTM_MOD3_CH1_PIN, FTM_MOD3_CH2_PIN, FTM_MOD3_CH3_PIN, FTM_MOD3_CH4_PIN,
 FTM_MOD3_CH5_PIN, FTM_MOD3_CH6_PIN, FTM_MOD3_CH7_PIN } };
 //FTM各模块各通道PCR的MUX值
-static const uint8 ftm_pcr_mux_table[][8] = { { FTM_MOD0_CH0_PCR_MUX,
+static const uint8 ftm_ch_pcr_mux_table[][8] = { { FTM_MOD0_CH0_PCR_MUX,
 FTM_MOD0_CH1_PCR_MUX, FTM_MOD0_CH2_PCR_MUX, FTM_MOD0_CH3_PCR_MUX,
 FTM_MOD0_CH4_PCR_MUX, FTM_MOD0_CH5_PCR_MUX, FTM_MOD0_CH6_PCR_MUX,
 FTM_MOD0_CH7_PCR_MUX }, { FTM_MOD1_CH0_PCR_MUX, FTM_MOD1_CH1_PCR_MUX }, {
@@ -23,6 +25,15 @@ FTM_MOD2_CH0_PCR_MUX, FTM_MOD2_CH1_PCR_MUX }, {
 FTM_MOD3_CH0_PCR_MUX, FTM_MOD3_CH1_PCR_MUX, FTM_MOD3_CH2_PCR_MUX,
 FTM_MOD3_CH3_PCR_MUX, FTM_MOD3_CH4_PCR_MUX, FTM_MOD3_CH5_PCR_MUX,
 FTM_MOD3_CH6_PCR_MUX, FTM_MOD3_CH7_PCR_MUX } };
+//FTM正交分解功能PHA的引脚号
+static const uint8 ftm_qd_pha_pin_table[] = { FTM_MOD1_QD_PHA_PIN,
+FTM_MOD2_QD_PHA_PIN };
+//FTM正交分解功能PHB的引脚号
+static const uint8 ftm_qd_phb_pin_table[] = { FTM_MOD1_QD_PHB_PIN,
+FTM_MOD2_QD_PHB_PIN };
+//FTM正交分解功能PCR的MUX值
+static const uint8 ftm_qd_pcr_mux_table[] = { FTM_MOD1_QD_PCR_MUX,
+FTM_MOD2_QD_PCR_MUX };
 //FTM各模块中断请求号
 static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
 		FTM3_IRQn };
@@ -39,11 +50,11 @@ static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
 static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
 	uint8 port, pin;	//端口号与引脚号
 	//根据通道号获取端口号与引脚号
-	com_port_pin_resolution(ftm_pin_table[mod][ch], &port, &pin);
+	com_port_pin_resolution(ftm_ch_pin_table[mod][ch], &port, &pin);
 	//设置该端口的引脚为FTM通道功能
 	REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_MUX_MASK);
 	REG_SET_MASK(PORT_PCR_REG(port_table[port],pin),
-			PORT_PCR_MUX(ftm_pcr_mux_table[mod][ch]));
+			PORT_PCR_MUX(ftm_ch_pcr_mux_table[mod][ch]));
 }
 
 //==========================================================================
@@ -63,8 +74,9 @@ static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
 //     需满足48000/x*counter_period<=num，48000为这里使用的总线时钟频率，单位kHz，
 //     x为FTM_CLK_DIV_x的x，向上计数模式时num为65536，上下计数模式时num为65534，
 //     另外，上下计数模式时，若选择128分频，周期需为偶数(否则计数精度会丢失);
-//     当选择正交解码模式时，counter_period为每次产生中断时，计数器已经计数的个数，
-//     范围[1,65536];
+//
+//     当选择正交解码模式时，counter_period无效，且此时clk_div代表计数器分频数，
+//     (计数器计数个数*x)为正常计数个数，x为FTM_CLK_DIV_x的x;
 //==========================================================================
 void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		uint8 counter_period) {
@@ -110,11 +122,12 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		modulo = ((FTM_CLK_FREQ >> clk_div) * counter_period) >> 1;
 		break;
 	case FTM_COUNTER_MODE_QD:
-		//正交解码:FTMEN=1;QUADEN=1;
+		//正交解码:FTMEN=1;QUADEN=1;(CPWMS=0;)
 		REG_SET_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
 		REG_SET_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADEN_MASK);
-		//MOD需要减1
-		modulo = counter_period - 1;
+		REG_CLR_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK);
+		//MOD设为最大值，以方便直接通过CNT的值判断正负
+		modulo = FTM_MOD_MOD_MASK;
 		break;
 	}
 	//设置模数寄存器的值，会写到缓冲中
@@ -148,41 +161,38 @@ void ftm_timer_enable_int(uint8 mod, uint8 time) {
 }
 
 //==========================================================================
-//函数名称: ftm_disable_int
+//函数名称: ftm_timer_disable_int
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
-//功能概要: 关闭FTM模块中断，不会关闭FTM通道中断
-//备注: 可以关闭ftm_timer_enable_int使能的中断
+//功能概要: 关闭FTM模块计时中断
 //==========================================================================
-void ftm_disable_int(uint8 mod) {
+void ftm_timer_disable_int(uint8 mod) {
 	//关闭计数器溢出中断，未禁止接收该FTM模块中断请求，因为可能有通道会产生中断请求
 	REG_CLR_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_TOIE_MASK);
 }
 
 //==========================================================================
-//函数名称: ftm_get_int
+//函数名称: ftm_timer_get_int
 //函数返回: true:产生中断; false:未产生中断
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
-//功能概要: 获取FTM模块中断标志，不会获取FTM通道中断标志
-//备注: 可以获取ftm_timer_enable_int使能的中断的中断标志
+//功能概要: 获取FTM模块计时中断标志
 //==========================================================================
-bool ftm_get_int(uint8 mod) {
+bool ftm_timer_get_int(uint8 mod) {
 	//获取计数器溢出标志
 	return (REG_GET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_TOF_MASK)) ?
 			true : false;
 }
 
 //==========================================================================
-//函数名称: ftm_clear_int
+//函数名称: ftm_timer_clear_int
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
-//功能概要: 清除FTM模块中断标志，不会清除FTM通道中断标志
-//备注: 可以清除ftm_timer_enable_int使能的中断的中断标志
+//功能概要: 清除FTM模块计时中断标志
 //==========================================================================
-void ftm_clear_int(uint8 mod) {
+void ftm_timer_clear_int(uint8 mod) {
 	//清除计数器溢出标志
 	REG_CLR_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_TOF_MASK);
 }
@@ -203,7 +213,9 @@ void ftm_clear_int(uint8 mod) {
 //         duty:初始占空比，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 初始化FTM模块的通道为单通道的PWM功能
 //备注: 当选择边沿对齐模式时，相应FTM模块的计数器需运行在向上计数模式下;
+//
 //     当选择中心对齐模式时，相应FTM模块的计数器需运行在上下计数模式下;
+//
 //     PWM波的频率为(1000/counter_period)，单位Hz，
 //     counter_period为相应FTM模块的计数周期，单位ms
 //==========================================================================
@@ -378,7 +390,7 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) 
 //              FTM_IC_MODE_FALLING_EDGE:下降沿捕捉;
 //              FTM_IC_MODE_DOUBLE_EDGE: 双边沿捕捉;
 //功能概要: 初始化FTM模块的通道为输入捕捉功能，默认未开启中断
-//备注: 相应FTM模块的计数器需运行在向上计数模式下
+//备注: 相应FTM模块的计数器需运行在向上计数模式下;未上下拉引脚电阻
 //==========================================================================
 void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
@@ -590,4 +602,120 @@ bool ftm_ch_get_int(uint8 mod, uint8 ch) {
 //==========================================================================
 void ftm_ch_clear_int(uint8 mod, uint8 ch) {
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHF_MASK);
+}
+
+//==========================================================================
+//函数名称: ftm_qd_init
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;这里仅有FTM_MOD1和FTM_MOD2可以使用;
+//         mode:正交解码功能模式:
+//              FTM_QD_MODE_PHAB:           AB相编码器;
+//              FTM_QD_MODE_COUNT_DIRECTION:方向-脉冲型编码器;
+//         dir:正交解码功能方向(具体见备注):
+//             FTM_QD_DIR_POSITIVE:正方向;
+//             FTM_QD_DIR_NEGATIVE:负方向;
+//功能概要: 初始化FTM模块为正交解码功能，已上拉引脚电阻
+//备注: 相应FTM模块的计数器需运行在正交解码模式下;
+//     引脚号可以通过宏定义选择;
+//
+//     若选择AB相编码器模式，两个引脚分别接在编码器的AB相上;此时测量的为编码器的4倍频，
+//     即若编码器分辨率为500，即500个A相脉冲和500个B相脉冲每圈，计数器会计数2000次;
+//     编码器旋转圈数=(计数器计数个数*x)/4/编码器分辨率，x为FTM_CLK_DIV_x的x;
+//     当方向为正方向时，顺时针旋转时计数器增加，逆时针旋转时计数器减少;
+//     当方向为负方向时，顺时针旋转时计数器减少，逆时针旋转时计数器增加;
+//
+//     若选择方向-脉冲型编码器模式，A相引脚定义计数率，B相引脚决定计数器的方向，
+//     当B相引脚电平不改变时，编码器无论怎么旋转，计数器都是增加/减少的;
+//     当方向为正方向时，B相引脚为高电平时计数器增加，为低电平时计数器减少;
+//     当方向为负方向时，B相引脚为高电平时计数器减少，为低电平时计数器增加;
+//     编码器旋转圈数=(计数器计数个数*x)/编码器分辨率，x为FTM_CLK_DIV_x的x;
+//==========================================================================
+void ftm_qd_init(uint8 mod, uint8 mode, uint8 dir) {
+	uint8 pha_port, pha_pin, phb_port, phb_pin;	//端口号与引脚号
+
+	//获取端口号与引脚号
+	com_port_pin_resolution(ftm_qd_pha_pin_table[mod - FTM_MOD1], &pha_port,
+			&pha_pin);
+	com_port_pin_resolution(ftm_qd_phb_pin_table[mod - FTM_MOD1], &phb_port,
+			&phb_pin);
+	//设置引脚为FTM正交解码功能
+	REG_CLR_MASK(PORT_PCR_REG(port_table[pha_port],pha_pin), PORT_PCR_MUX_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_table[pha_port],pha_pin),
+			PORT_PCR_MUX(ftm_qd_pcr_mux_table[mod-FTM_MOD1]));
+	REG_CLR_MASK(PORT_PCR_REG(port_table[phb_port],phb_pin), PORT_PCR_MUX_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_table[phb_port],phb_pin),
+			PORT_PCR_MUX(ftm_qd_pcr_mux_table[mod-FTM_MOD1]));
+	//上拉引脚电阻
+	REG_SET_MASK(PORT_PCR_REG(port_table[pha_port],pha_pin), PORT_PCR_PS_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_table[pha_port],pha_pin), PORT_PCR_PE_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_table[phb_port],phb_pin), PORT_PCR_PS_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_table[phb_port],phb_pin), PORT_PCR_PE_MASK);
+	//配置正交解码模式
+	if (mode == FTM_QD_MODE_PHAB) {
+		//AB相
+		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADMODE_MASK);
+		//根据方向配置极性
+		if (dir == FTM_QD_DIR_POSITIVE) {
+			//AB相均为正常极性
+			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
+					(FTM_QDCTRL_PHAPOL_MASK|FTM_QDCTRL_PHBPOL_MASK));
+		} else {
+			//A相为正常极性，B相为倒置极性
+			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
+					FTM_QDCTRL_PHAPOL_MASK);
+			REG_SET_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
+					(FTM_QDCTRL_PHBPOL_MASK));
+		}
+	} else {
+		//方向-脉冲型
+		REG_SET_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADMODE_MASK);
+		if (dir == FTM_QD_DIR_POSITIVE) {
+			//AB相均为正常极性
+			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
+					(FTM_QDCTRL_PHAPOL_MASK|FTM_QDCTRL_PHBPOL_MASK));
+		} else {
+			//AB相均为倒置极性
+			REG_SET_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
+					(FTM_QDCTRL_PHAPOL_MASK|FTM_QDCTRL_PHBPOL_MASK));
+		}
+	}
+}
+
+//==========================================================================
+//函数名称: ftm_qd_get_count
+//函数返回: 计数器计数个数
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;这里仅有FTM_MOD1和FTM_MOD2可以使用;
+//功能概要: 获取计数器当前计数个数
+//备注: 计数个数带方向，正负分别代表不同方向，具体定义与设置有关
+//==========================================================================
+int16 ftm_qd_get_count(uint8 mod) {
+	return FTM_CNT_REG(ftm_table[mod]);
+}
+
+//==========================================================================
+//函数名称: ftm_qd_clear_count
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;这里仅有FTM_MOD1和FTM_MOD2可以使用;
+//功能概要: 清除计数器计数个数
+//==========================================================================
+void ftm_qd_clear_count(uint8 mod) {
+	REG_SET_VAL(FTM_CNT_REG(ftm_table[mod]), 0);
+}
+
+//==========================================================================
+//函数名称: ftm_qd_get_and_clear_count
+//函数返回: 计数器计数个数
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;这里仅有FTM_MOD1和FTM_MOD2可以使用;
+//功能概要: 获取计数器当前计数个数，并且清除计数个数
+//备注: 计数个数带方向，正负分别代表不同方向，具体定义与设置有关
+//==========================================================================
+int16 ftm_qd_get_and_clear_count(uint8 mod) {
+	int16 count;
+	count = FTM_CNT_REG(ftm_table[mod]);
+	REG_SET_VAL(FTM_CNT_REG(ftm_table[mod]), 0);
+	return count;
 }

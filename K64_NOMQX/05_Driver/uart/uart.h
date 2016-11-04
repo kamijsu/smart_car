@@ -18,17 +18,17 @@
 #define UART_MOD5	(5)
 
 //设置各串口模块所用引脚组，通过更改宏定义的值以选择引脚组，引脚组前者为TX，后者为RX
-//UART0:  0=PTA2-PTA1;  1=PTA14-PTA15;  2=PTB17-PTB16;  3=PTD7-PTD6;
+//UART0:  0=A2-A1;    1=A14-A15;  2=B17-B16;  3=D7-D6;
 #define UART_MOD0_SETUP		(1)
-//UART1:  0=PTC4-PTC3;  1=PTE0-PTE1;
+//UART1:  0=C4-C3;    1=E0-E1;
 #define UART_MOD1_SETUP		(1)
-//UART2:  0=PTD3-PTD2;
+//UART2:  0=D3-D2;
 #define UART_MOD2_SETUP		(0)
-//UART3:  0=PTB11-PTB10;  1=PTC17-PTC16;  2=PTE4-PTE5;
+//UART3:  0=B11-B10;  1=C17-C16;  2=E4-E5;
 #define UART_MOD3_SETUP		(0)
-//UART4:  0=PTC15-PTC14;  1=PTE24-PTE25;
+//UART4:  0=C15-C14;  1=E24-E25;
 #define UART_MOD4_SETUP		(1)
-//UART5:  0=PTD9-PTD8;  1=PTE8-PTE9;
+//UART5:  0=D9-D8;    1=E8-E9;
 #define UART_MOD5_SETUP		(0)
 
 //定义UART各模块工作时钟频率，单位Hz

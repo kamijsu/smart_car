@@ -9,6 +9,13 @@
 //包含公共头文件
 #include "common.h"
 
+//==========================================================================
+//说明: 在同一FTM模块内相互兼容的功能:
+//     (边沿对齐的PWM波、输入捕捉、输出比较、计时)
+//     (联合模式PWM波、互补模式PWM波)
+//     除这两组外任何功能无法兼容
+//==========================================================================
+
 //定义FTM模块号
 #define FTM_MOD0	(0)
 #define FTM_MOD1	(1)
@@ -57,6 +64,12 @@
 #define FTM_MOD3_CH6_PIN	(COM_PORTC|10)	//C10  E11
 #define FTM_MOD3_CH7_PIN	(COM_PORTC|11)	//C11  E12
 
+//定义FTM模块正交解码功能所用引脚组，通过更改宏定义的值以选择引脚组，引脚组前者为PHA，后者为PHB
+//FTM1_QD:  0:A8-A9;   1:A12-A13; 2:B0-B1; 3:B12-B13
+#define FTM_MOD1_QD_SETUP	(2)
+//FTM2_QD:  0:A10-A11; 1:B18-B19;
+#define FTM_MOD2_QD_SETUP	(0)
+
 //FTM模块所用时钟频率，这里使用的是总线时钟，单位kHz
 #define FTM_CLK_FREQ	BUS_CLK_KHZ
 
@@ -101,6 +114,14 @@
 #define FTM_OC_MODE_SET			(1)		//比较成功后置高电平
 #define FTM_OC_MODE_CLEAR		(2)		//比较成功后置低电平
 
+//定义FTM模块正交解码功能模式
+#define FTM_QD_MODE_PHAB				(0)		//AB相编码器
+#define FTM_QD_MODE_COUNT_DIRECTION		(1)		//方向-脉冲型编码器
+
+//定义FTM模块正交解码功能方向
+#define FTM_QD_DIR_POSITIVE		(0)		//正方向
+#define FTM_QD_DIR_NEGATIVE		(1)		//负方向
+
 //==========================================================================
 //函数名称: ftm_init
 //函数返回: 无
@@ -118,8 +139,9 @@
 //     需满足48000/x*counter_period<=num，48000为这里使用的总线时钟频率，单位kHz，
 //     x为FTM_CLK_DIV_x的x，向上计数模式时num为65536，上下计数模式时num为65534，
 //     另外，上下计数模式时，若选择128分频，周期需为偶数(否则计数精度会丢失);
-//     当选择正交解码模式时，counter_period为每次产生中断时，计数器已经计数的个数，
-//     范围[1,65536];
+//
+//     当选择正交解码模式时，counter_period无效，且此时clk_div代表计数器分频数，
+//     (计数器计数个数*x)为正常计数个数，x为FTM_CLK_DIV_x的x;
 //==========================================================================
 void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		uint8 counter_period);
@@ -138,34 +160,31 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 void ftm_timer_enable_int(uint8 mod, uint8 time);
 
 //==========================================================================
-//函数名称: ftm_disable_int
+//函数名称: ftm_timer_disable_int
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
-//功能概要: 关闭FTM模块中断，不会关闭FTM通道中断
-//备注: 可以关闭ftm_timer_enable_int使能的中断
+//功能概要: 关闭FTM模块计时中断
 //==========================================================================
-void ftm_disable_int(uint8 mod);
+void ftm_timer_disable_int(uint8 mod);
 
 //==========================================================================
-//函数名称: ftm_get_int
+//函数名称: ftm_timer_get_int
 //函数返回: true:产生中断; false:未产生中断
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
-//功能概要: 获取FTM模块中断标志，不会获取FTM通道中断标志
-//备注: 可以获取ftm_timer_enable_int使能的中断的中断标志
+//功能概要: 获取FTM模块计时中断标志
 //==========================================================================
-bool ftm_get_int(uint8 mod);
+bool ftm_timer_get_int(uint8 mod);
 
 //==========================================================================
-//函数名称: ftm_clear_int
+//函数名称: ftm_timer_clear_int
 //函数返回: 无
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
-//功能概要: 清除FTM模块中断标志，不会清除FTM通道中断标志
-//备注: 可以清除ftm_timer_enable_int使能的中断的中断标志
+//功能概要: 清除FTM模块计时中断标志
 //==========================================================================
-void ftm_clear_int(uint8 mod);
+void ftm_timer_clear_int(uint8 mod);
 
 //==========================================================================
 //函数名称: ftm_pwm_single_init
@@ -183,7 +202,9 @@ void ftm_clear_int(uint8 mod);
 //         duty:初始占空比，范围[FTM_DUTY_MIN(0),FTM_DUTY_MAX(10000)]，这里未限幅
 //功能概要: 初始化FTM模块的通道为单通道的PWM功能
 //备注: 当选择边沿对齐模式时，相应FTM模块的计数器需运行在向上计数模式下;
+//
 //     当选择中心对齐模式时，相应FTM模块的计数器需运行在上下计数模式下;
+//
 //     PWM波的频率为(1000/counter_period)，单位Hz，
 //     counter_period为相应FTM模块的计数周期，单位ms
 //==========================================================================
@@ -255,7 +276,7 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2);
 //              FTM_IC_MODE_FALLING_EDGE:下降沿捕捉;
 //              FTM_IC_MODE_DOUBLE_EDGE: 双边沿捕捉;
 //功能概要: 初始化FTM模块的通道为输入捕捉功能，默认未开启中断
-//备注: 相应FTM模块的计数器需运行在向上计数模式下
+//备注: 相应FTM模块的计数器需运行在向上计数模式下;未上下拉引脚电阻
 //==========================================================================
 void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode);
 
@@ -365,6 +386,64 @@ bool ftm_ch_get_int(uint8 mod, uint8 ch);
 //功能概要: 清除通道的中断标志
 //==========================================================================
 void ftm_ch_clear_int(uint8 mod, uint8 ch);
+
+//==========================================================================
+//函数名称: ftm_qd_init
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;这里仅有FTM_MOD1和FTM_MOD2可以使用;
+//         mode:正交解码功能模式:
+//              FTM_QD_MODE_PHAB:           AB相编码器;
+//              FTM_QD_MODE_COUNT_DIRECTION:方向-脉冲型编码器;
+//         dir:正交解码功能方向(具体见备注):
+//             FTM_QD_DIR_POSITIVE:正方向;
+//             FTM_QD_DIR_NEGATIVE:负方向;
+//功能概要: 初始化FTM模块为正交解码功能，已上拉引脚电阻
+//备注: 相应FTM模块的计数器需运行在正交解码模式下;
+//     引脚号可以通过宏定义选择;
+//
+//     若选择AB相编码器模式，两个引脚分别接在编码器的AB相上;此时测量的为编码器的4倍频，
+//     即若编码器分辨率为500，即500个A相脉冲和500个B相脉冲每圈，计数器会计数2000次;
+//     编码器旋转圈数=(计数器计数个数*x)/4/编码器分辨率，x为FTM_CLK_DIV_x的x;
+//     当方向为正方向时，顺时针旋转时计数器增加，逆时针旋转时计数器减少;
+//     当方向为负方向时，顺时针旋转时计数器减少，逆时针旋转时计数器增加;
+//
+//     若选择方向-脉冲型编码器模式，A相引脚定义计数率，B相引脚决定计数器的方向，
+//     当B相引脚电平不改变时，编码器无论怎么旋转，计数器都是增加/减少的;
+//     当方向为正方向时，B相引脚为高电平时计数器增加，为低电平时计数器减少;
+//     当方向为负方向时，B相引脚为高电平时计数器减少，为低电平时计数器增加;
+//     编码器旋转圈数=(计数器计数个数*x)/编码器分辨率，x为FTM_CLK_DIV_x的x;
+//==========================================================================
+void ftm_qd_init(uint8 mod, uint8 mode, uint8 dir);
+
+//==========================================================================
+//函数名称: ftm_qd_get_count
+//函数返回: 计数器计数个数
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;这里仅有FTM_MOD1和FTM_MOD2可以使用;
+//功能概要: 获取计数器当前计数个数
+//备注: 计数个数带方向，正负分别代表不同方向，具体定义与设置有关
+//==========================================================================
+int16 ftm_qd_get_count(uint8 mod);
+
+//==========================================================================
+//函数名称: ftm_qd_clear_count
+//函数返回: 无
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;这里仅有FTM_MOD1和FTM_MOD2可以使用;
+//功能概要: 清除计数器计数个数
+//==========================================================================
+void ftm_qd_clear_count(uint8 mod);
+
+//==========================================================================
+//函数名称: ftm_qd_get_and_clear_count
+//函数返回: 计数器计数个数
+//参数说明: mod:FTM模块号:
+//             FTM_MODx，x为模块号;这里仅有FTM_MOD1和FTM_MOD2可以使用;
+//功能概要: 获取计数器当前计数个数，并且清除计数个数
+//备注: 计数个数带方向，正负分别代表不同方向，具体定义与设置有关
+//==========================================================================
+int16 ftm_qd_get_and_clear_count(uint8 mod);
 
 //根据通道所设置的引脚号，定义相应的PCR的MUX值
 #ifdef FTM_MOD0_CH0_PIN
@@ -519,6 +598,39 @@ void ftm_ch_clear_int(uint8 mod, uint8 ch);
 #elif(FTM_MOD3_CH7_PIN == (COM_PORTE|12))
 #define FTM_MOD3_CH7_PCR_MUX	(6)
 #endif
+#endif
+
+//根据正交解码功能所选引脚组，设置PHA与PHB的引脚以及相应的PCR的MUX值
+#ifdef FTM_MOD1_QD_SETUP
+#if(FTM_MOD1_QD_SETUP == 0)
+#define FTM_MOD1_QD_PHA_PIN		(COM_PORTA|8)
+#define FTM_MOD1_QD_PHB_PIN		(COM_PORTA|9)
+#elif(FTM_MOD1_QD_SETUP == 1)
+#define FTM_MOD1_QD_PHA_PIN		(COM_PORTA|12)
+#define FTM_MOD1_QD_PHB_PIN		(COM_PORTA|13)
+#elif(FTM_MOD1_QD_SETUP == 2)
+#define FTM_MOD1_QD_PHA_PIN		(COM_PORTB|0)
+#define FTM_MOD1_QD_PHB_PIN		(COM_PORTB|1)
+#elif(FTM_MOD1_QD_SETUP == 3)
+#define FTM_MOD1_QD_PHA_PIN		(COM_PORTB|12)
+#define FTM_MOD1_QD_PHB_PIN		(COM_PORTB|13)
+#endif
+#if(FTM_MOD1_QD_SETUP == 1)
+#define FTM_MOD1_QD_PCR_MUX		(7)
+#else
+#define FTM_MOD1_QD_PCR_MUX		(6)
+#endif
+#endif
+
+#ifdef FTM_MOD2_QD_SETUP
+#if(FTM_MOD2_QD_SETUP == 0)
+#define FTM_MOD2_QD_PHA_PIN		(COM_PORTA|10)
+#define FTM_MOD2_QD_PHB_PIN		(COM_PORTA|11)
+#elif(FTM_MOD2_QD_SETUP == 1)
+#define FTM_MOD2_QD_PHA_PIN		(COM_PORTB|18)
+#define FTM_MOD2_QD_PHB_PIN		(COM_PORTB|19)
+#endif
+#define FTM_MOD2_QD_PCR_MUX		(6)
 #endif
 
 #endif
