@@ -1,16 +1,60 @@
-//============================================================================
+//==========================================================================
 //文件名称：adc.h
-//功能概要：adc构件源文件
-//版权所有：苏州大学飞思卡尔嵌入式中心(sumcu.suda.edu.cn)
-//版本更新：2011-11-13  V1.0   初始版本
-//         2011-11-21  V2.0   规范排版风格
-//         2014-11-9   V3.0   KDS
-//============================================================================
+//功能概要：K64 ADC底层驱动程序头文件
+//==========================================================================
 
 #ifndef _ADC_H
 #define _ADC_H
 
 #include "common.h"
+
+//定义ADC模块号
+#define ADC_MOD0	(0)
+#define ADC_MOD1	(1)
+
+//定义ADC差分输入通道组号
+#define ADC_DIFF_GROUP0		(0)
+#define ADC_DIFF_GROUP1		(1)
+#define ADC_DIFF_GROUP2		(2)
+#define ADC_DIFF_GROUP3		(3)
+
+//定义ADC单端输入通道号
+#define ADC_SE4				(4)
+#define ADC_SE5				(5)
+#define ADC_SE6				(6)
+#define ADC_SE7				(7)
+#define ADC_SE8				(8)
+#define ADC_SE9				(9)
+#define ADC_SE10			(10)
+#define ADC_SE11			(11)
+#define ADC_SE12			(12)
+#define ADC_SE13			(13)
+#define ADC_SE14			(14)
+#define ADC_SE15			(15)
+#define ADC_SE16			(16)
+#define ADC_SE17			(17)
+#define ADC_SE18			(18)
+
+//定义ADC单端输入通道选择
+#define ADC_SE_SEL_A		(0)
+#define ADC_SE_SEL_B		(1)
+
+//定义ADC采样模式
+#define ADC_MODE_SINGLE		(0)
+#define ADC_MODE_DIFF		(1)
+
+//定义ADC采样精度
+#define ADC_ACCURACY_SINGLE_8_DIFF_9	(0)
+#define ADC_ACCURACY_SINGLE_12_DIFF_13	(1)
+#define ADC_ACCURACY_SINGLE_10_DIFF_11	(2)
+#define ADC_ACCURACY_SINGLE_DIFF_16		(3)
+
+//定义ADC硬件采样均值数量
+#define ADC_HARDWARE_AVG_4			(0)
+#define ADC_HARDWARE_AVG_8			(1)
+#define ADC_HARDWARE_AVG_16			(2)
+#define ADC_HARDWARE_AVG_32			(3)
+#define ADC_HARDWARE_AVG_DISABLE	(4)
 
 #define U_ADC0		(0)
 #define U_ADC0_SE8	(8)		//PTB0

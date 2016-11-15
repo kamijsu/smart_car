@@ -14,7 +14,7 @@ static const IRQn_Type pit_irq_table[4] = { PIT0_IRQn, PIT1_IRQn, PIT2_IRQn,
 //函数返回: 无
 //参数说明: ch:PIT通道号:
 //            PIT_CHx，x为通道号;
-//         ms:该通道产生中断的时间周期，单位ms，范围0-89478ms
+//         ms:该通道产生中断的时间周期，单位ms，范围[1,89478]
 //功能概要: PIT模块通道初始化，默认关闭中断
 //==========================================================================
 void pit_init(uint8 ch, uint32 ms) {
@@ -23,7 +23,7 @@ void pit_init(uint8 ch, uint32 ms) {
 	REG_SET_MASK(SIM_SCGC6, SIM_SCGC6_PIT_MASK);	//开PIT时钟门
 	REG_CLR_MASK(PIT_MCR, PIT_MCR_MDIS_MASK);		//PIT模块定时器时钟使能
 	REG_SET_MASK(PIT_MCR, PIT_MCR_FRZ_MASK);		//在调试模式下定时器停止
-	load_value = PIT_WORK_FREQ * ms;	//根据产生中断的时间周期计算加载值寄存器的值
+	load_value = PIT_WORK_FREQ * ms - 1;	//根据产生中断的时间周期计算加载值寄存器的值
 	REG_SET_VAL(PIT_LDVAL(ch), load_value);			//设置该通道加载值寄存器的值
 	REG_CLR_MASK(PIT_TCTRL(ch), PIT_TCTRL_TIE_MASK);	//禁止该通道发送中断请求
 	REG_SET_MASK(PIT_TCTRL(ch), PIT_TCTRL_TEN_MASK);	//该通道定时器时钟使能

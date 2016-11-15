@@ -1,11 +1,7 @@
-//============================================================================
+//==========================================================================
 //ÎÄ¼şÃû³Æ£ºadc.c
-//¹¦ÄÜ¸ÅÒª£ºadc¹¹¼şÔ´ÎÄ¼ş
-//°æÈ¨ËùÓĞ£ºËÕÖİ´óÑ§·ÉË¼¿¨¶ûÇ¶ÈëÊ½ÖĞĞÄ(sumcu.suda.edu.cn)
-//°æ±¾¸üĞÂ£º2011-11-13  V1.0   ³õÊ¼°æ±¾
-//         2011-11-21  V2.0   ¹æ·¶ÅÅ°æ·ç¸ñ
-//         2014-11-9   V3.0   KDS
-//============================================================================
+//¹¦ÄÜ¸ÅÒª£ºK64 ADCµ×²ãÇı¶¯³ÌĞòÔ´ÎÄ¼ş
+//==========================================================================
 
 #include "adc.h"
 
@@ -15,20 +11,16 @@
 //²ÎÊıËµÃ÷£ºMoudelNumber£ºÄ£¿éºÅ
 //¹¦ÄÜ¸ÅÒª£ºAD³õÊ¼»¯
 //============================================================================
-uint8_t adc_init(int MoudelNumber)
-{
+uint8_t adc_init(int MoudelNumber) {
 	if (MoudelNumber == 0) //Ä£¿é0
-	{
+			{
 		//´ò¿ªADC0Ä£¿éÊ±ÖÓ
 		SIM_SCGC6 |= (SIM_SCGC6_ADC0_MASK);
-	}
-	else if (MoudelNumber == 1) //Ä£¿é1
-	{
+	} else if (MoudelNumber == 1) //Ä£¿é1
+			{
 		//´ò¿ªADC1Ä£¿éÊ±ÖÓ
 		SIM_SCGC3 |= (SIM_SCGC3_ADC1_MASK);
-	}
-	else
-	{
+	} else {
 		return 0;
 	}
 
@@ -49,8 +41,7 @@ uint16_t adc_once(int MoudelNumber, int Channel, uint8_t accuracy) //²É¼¯Ä³Â·Ä£Ä
 	uint8_t ADCCfg1Mode = 0;
 	ADC_MemMapPtr ADCMoudel; //±£´æADCÄ£¿éµØÖ·Ö¸Õë
 
-	switch (accuracy)
-	{
+	switch (accuracy) {
 	case 8:
 		ADCCfg1Mode = 0x00;
 		break;
@@ -68,10 +59,9 @@ uint16_t adc_once(int MoudelNumber, int Channel, uint8_t accuracy) //²É¼¯Ä³Â·Ä£Ä
 	}
 
 	if (MoudelNumber == 0) //Ñ¡ÔñADCÄ£¿é0
-	{
+			{
 		ADCMoudel = ADC0_BASE_PTR;
-	}
-	else               //Ñ¡ÔñADCÄ£¿é1
+	} else               //Ñ¡ÔñADCÄ£¿é1
 	{
 		ADCMoudel = ADC1_BASE_PTR;
 	}
@@ -88,8 +78,7 @@ uint16_t adc_once(int MoudelNumber, int Channel, uint8_t accuracy) //²É¼¯Ä³Â·Ä£Ä
 	//ÉèÖÃÍ¨µÀºÅ
 	ADC_SC1_REG(ADCMoudel,A) = AIEN_ON | DIFF_SINGLE | ADC_SC1_ADCH(Channel);
 	//µÈ´ı×ª»»Íê³É
-	while (( ADC_SC1_REG(ADCMoudel,A) & ADC_SC1_COCO_MASK) != ADC_SC1_COCO_MASK)
-	{
+	while (( ADC_SC1_REG(ADCMoudel,A) & ADC_SC1_COCO_MASK) != ADC_SC1_COCO_MASK) {
 
 	}
 	//¶ÁÈ¡×ª»¯½á¹û
@@ -108,16 +97,14 @@ uint16_t adc_once(int MoudelNumber, int Channel, uint8_t accuracy) //²É¼¯Ä³Â·Ä£Ä
 //              accuracy£º¾«¶È
 //¹¦ÄÜ¸ÅÒª£ºÖĞÖµÂË²¨ºóµÄ½á¹û(·¶Î§:0-4095) 
 //============================================================================
-uint16_t adc_mid(int MoudelNumber, int Channel, uint8_t accuracy)
-{
+uint16_t adc_mid(int MoudelNumber, int Channel, uint8_t accuracy) {
 	uint16_t i, j, k, tmp;
 	//1.È¡3´ÎA/D×ª»»½á¹û
 	i = adc_once(MoudelNumber, Channel, accuracy);
 	j = adc_once(MoudelNumber, Channel, accuracy);
 	k = adc_once(MoudelNumber, Channel, accuracy);
 	//2.È¡ÖĞÖµ
-	if (i > j)
-	{
+	if (i > j) {
 		tmp = i;
 		i = j;
 		j = tmp;
@@ -140,8 +127,7 @@ uint16_t adc_mid(int MoudelNumber, int Channel, uint8_t accuracy)
 //                     N:¾ùÖµÂË²¨´ÎÊı(·¶Î§:0~255)
 //¹¦ÄÜ¸ÅÒª£º¾ùÖµÂË²¨ºóµÄ½á¹û(·¶Î§:0-4095) 
 //============================================================================
-uint16_t adc_ave(int MoudelNumber, int Channel, uint8_t accuracy, uint8_t N)
-{
+uint16_t adc_ave(int MoudelNumber, int Channel, uint8_t accuracy, uint8_t N) {
 	uint32_t tmp = 0;
 	uint8_t i;
 	for (i = 0; i < N; i++)
