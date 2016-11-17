@@ -43,7 +43,7 @@ int main(void) {
 //	encoder_enable_int(ENCODER1);	//使能左编码器中断
 //	encoder_enable_int(ENCODER2);	//使能右编码器中断
 
-			//6. 开总中断
+	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
 
