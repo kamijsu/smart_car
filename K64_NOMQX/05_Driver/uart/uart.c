@@ -33,8 +33,8 @@ static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
 //              38400 | 56000 | 57600 | 115200
 //         parity_mode:校验模式:
 //                     UART_PARITY_DISABLED:不启用校验;
-//                     UART_PARITY_ODD:奇校验;
-//                     UART_PARITY_EVEN:偶校验;
+//                     UART_PARITY_ODD:     奇校验;
+//                     UART_PARITY_EVEN:    偶校验;
 //         stop_bit:停止位:
 //                  UART_STOP_BIT_1:1位停止位;
 //                  UART_STOP_BIT_2:2位停止位;

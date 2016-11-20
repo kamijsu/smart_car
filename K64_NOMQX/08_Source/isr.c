@@ -43,83 +43,85 @@ void FTM0_IRQHandler() {
 //功能概要：PIT0中断服务函数
 //==========================================================================
 void PIT0_IRQHandler() {
-	static TimeCounter time_counter = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-	DISABLE_INTERRUPTS; //关中断
-
+	time0_flag.f_10s = 1;
 	pit_clear_int(PIT_CH0); //清标志
-
-	//这里为了效率停用了没有使用的时间标志
-
-	++time_counter.c_5ms;
-//	++time_counter.c_10ms;
-//	++time_counter.c_15ms;
-	++time_counter.c_20ms;
-	++time_counter.c_50ms;
-//	++time_counter.c_100ms;
-	++time_counter.c_1s;
-	++time_counter.c_5s;
+//	static TimeCounter time_counter = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+//
+//	DISABLE_INTERRUPTS; //关中断
+//
+//	pit_clear_int(PIT_CH0); //清标志
+//
+//	//这里为了效率停用了没有使用的时间标志
+//
+//	++time_counter.c_5ms;
+////	++time_counter.c_10ms;
+////	++time_counter.c_15ms;
+//	++time_counter.c_20ms;
+//	++time_counter.c_50ms;
+////	++time_counter.c_100ms;
+//	++time_counter.c_1s;
+//	++time_counter.c_5s;
 //	++time_counter.c_10s;
-	++time_counter.c_15s;
-//	++time_counter.c_30s;
-//	++time_counter.c_1min;
-
-	if (time_counter.c_5ms >= 1) {
-		time_counter.c_5ms = 0;
-		time0_flag.f_5ms = 1;
-	}       //5ms置标志
-//	if (time_counter.c_10ms >= 2)
-//	{
-//		time_counter.c_10ms = 0;
-//		time0_flag.f_10ms = 1;
-//	}       //10ms置标志
-//	if (time_counter.c_15ms >= 3)
-//	{
-//		time_counter.c_15ms = 0;
-//		time0_flag.f_15ms = 1;
-//	}       //15ms置标志
-	if (time_counter.c_20ms >= 4) {
-		time_counter.c_20ms = 0;
-		time0_flag.f_20ms = 1;
-	}       //20ms置标志
-	if (time_counter.c_50ms >= 10) {
-		time_counter.c_50ms = 0;
-		time0_flag.f_50ms = 1;
-	}       //50ms置标志
-//	if (time_counter.c_100ms >= 20)
-//	{
-//		time_counter.c_100ms = 0;
-//		time0_flag.f_100ms = 1;
-//	}       //100ms置标志
-	if (time_counter.c_1s >= 200) {
-		time_counter.c_1s = 0;
-		time0_flag.f_1s = 1;
-	}       //1s置标志
-	if (time_counter.c_5s >= 1000) {
-		time_counter.c_5s = 0;
-		time0_flag.f_5s = 1;
-	}       //5s置标志
+//	++time_counter.c_15s;
+////	++time_counter.c_30s;
+////	++time_counter.c_1min;
+//
+//	if (time_counter.c_5ms >= 1) {
+//		time_counter.c_5ms = 0;
+//		time0_flag.f_5ms = 1;
+//	}       //5ms置标志
+////	if (time_counter.c_10ms >= 2)
+////	{
+////		time_counter.c_10ms = 0;
+////		time0_flag.f_10ms = 1;
+////	}       //10ms置标志
+////	if (time_counter.c_15ms >= 3)
+////	{
+////		time_counter.c_15ms = 0;
+////		time0_flag.f_15ms = 1;
+////	}       //15ms置标志
+//	if (time_counter.c_20ms >= 4) {
+//		time_counter.c_20ms = 0;
+//		time0_flag.f_20ms = 1;
+//	}       //20ms置标志
+//	if (time_counter.c_50ms >= 10) {
+//		time_counter.c_50ms = 0;
+//		time0_flag.f_50ms = 1;
+//	}       //50ms置标志
+////	if (time_counter.c_100ms >= 20)
+////	{
+////		time_counter.c_100ms = 0;
+////		time0_flag.f_100ms = 1;
+////	}       //100ms置标志
+//	if (time_counter.c_1s >= 200) {
+//		time_counter.c_1s = 0;
+//		time0_flag.f_1s = 1;
+//	}       //1s置标志
+//	if (time_counter.c_5s >= 1000) {
+//		time_counter.c_5s = 0;
+//		time0_flag.f_5s = 1;
+//	}       //5s置标志
 //	if (time_counter.c_10s >= 2000)
 //	{
 //		time_counter.c_10s = 0;
 //		time0_flag.f_10s = 1;
 //	}       //10s置标志
-	if (time_counter.c_15s >= 3000) {
-		time_counter.c_15s = 0;
-		time0_flag.f_15s = 1;
-	}       //15s置标志
-//	if (time_counter.c_30s >= 6000)
-//	{
-//		time_counter.c_30s = 0;
-//		time0_flag.f_30s = 1;
-//	}       //30s置标志
-//	if (time_counter.c_1min >= 12000)
-//	{
-//		time_counter.c_1min = 0;
-//		time0_flag.f_1min = 1;
-//	}       //1min置标志
-
-	ENABLE_INTERRUPTS; //恢复原总中断设置情况
+//	if (time_counter.c_15s >= 3000) {
+//		time_counter.c_15s = 0;
+//		time0_flag.f_15s = 1;
+//	}       //15s置标志
+////	if (time_counter.c_30s >= 6000)
+////	{
+////		time_counter.c_30s = 0;
+////		time0_flag.f_30s = 1;
+////	}       //30s置标志
+////	if (time_counter.c_1min >= 12000)
+////	{
+////		time_counter.c_1min = 0;
+////		time0_flag.f_1min = 1;
+////	}       //1min置标志
+//
+//	ENABLE_INTERRUPTS; //恢复原总中断设置情况
 }
 
 //============================================================================
@@ -149,7 +151,7 @@ void PORTD_IRQHandler() {
 	if (PORTD_ISFR & (1 << n)) {
 		PORTD_ISFR |= (1 << n);        //写1清中断标志位
 		car_flag.reed_switch = 1;	//干簧管接通
-		control_stop();				//停车
+//		control_stop();				//停车
 	}
 
 	ENABLE_INTERRUPTS; //恢复原总中断设置情况

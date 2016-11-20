@@ -15,7 +15,7 @@
 #define PIT_CH2 (2)			//PIT模块2通道
 #define PIT_CH3 (3)			//PIT模块3通道
 
-//定义PIT模块工作时钟频率，其使用的是总线时钟，单位kHz（FREQ为frequency简写）
+//定义PIT模块工作时钟频率，其使用的是总线时钟，单位kHz(FREQ为frequency简写)
 #define PIT_WORK_FREQ	BUS_CLK_KHZ
 
 //==========================================================================

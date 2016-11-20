@@ -44,7 +44,7 @@
 #define UART_STOP_BIT_1			(1)		//1位停止位
 #define UART_STOP_BIT_2			(2)		//2位停止位
 
-//定义发送与接收时轮询上限次数，最大32位（RP为roll poling简写）
+//定义发送与接收时轮询上限次数，最大32位(RP为roll poling简写)
 #define UART_RP_TIME_SEND		(0xFBBBu)	//发送轮询上限次数
 #define UART_RP_TIME_RECEIVE	(0xFBBBu)	//接收轮询上限次数
 
@@ -58,8 +58,8 @@
 //              38400 | 56000 | 57600 | 115200
 //         parity_mode:校验模式:
 //                     UART_PARITY_DISABLED:不启用校验;
-//                     UART_PARITY_ODD:奇校验;
-//                     UART_PARITY_EVEN:偶校验;
+//                     UART_PARITY_ODD:     奇校验;
+//                     UART_PARITY_EVEN:    偶校验;
 //         stop_bit:停止位:
 //                  UART_STOP_BIT_1:1位停止位;
 //                  UART_STOP_BIT_2:2位停止位;

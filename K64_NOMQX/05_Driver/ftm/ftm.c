@@ -65,9 +65,9 @@ static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
 //         clk_div:时钟分频因子:
 //                 FTM_CLK_DIV_x，x为分频因子大小;
 //         counter_mode:计数器模式:
-//                      FTM_COUNTER_MODE_UP:          向上计数;
-//                      FTM_COUNTER_MODE_UP_DOWN:     上下计数;
-//                      FTM_COUNTER_MODE_QD:          正交解码;
+//                      FTM_COUNTER_MODE_UP:     向上计数;
+//                      FTM_COUNTER_MODE_UP_DOWN:上下计数;
+//                      FTM_COUNTER_MODE_QD:     正交解码;
 //         counter_period:见备注
 //功能概要: 初始化FTM模块，默认未开启中断
 //备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位ms，

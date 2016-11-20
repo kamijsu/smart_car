@@ -124,8 +124,8 @@ void gpio_drive_strength(uint8 port_pin, uint8 status) {
 //参数说明: port_pin:(端口号)|(引脚号):
 //                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
 //         status:引脚上下拉状态:
-//                GPIO_LEVEL_LOW: 低电平;
-//                GPIO_LEVEL_HIGH:高电平;
+//                GPIO_LEVEL_LOW:    低电平;
+//                GPIO_LEVEL_HIGH:   高电平;
 //                GPIO_LEVEL_UNKNOWN:未知电平，即关闭上下拉电阻;
 //功能概要: 当引脚配置为输入时，设定其上下拉状态
 //==========================================================================
