@@ -17,8 +17,8 @@ static ADC_Type * const adc_table[] = { ADC0, ADC1 };
 //功能概要: 校对ADC模块
 //==========================================================================
 static bool adc_cal(uint8 mod) {
-	uint16 cal_var;	//校对值临时变量
 	ADC_Type * adc_ptr;	//ADC基地址
+	uint16 cal_var;	//校对值临时变量
 
 	//获取ADC基地址
 	adc_ptr = adc_table[mod];
@@ -123,12 +123,12 @@ static bool adc_cal(uint8 mod) {
 //==========================================================================
 bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 		uint8 adlsts, uint8 adhsc, uint8 cal) {
-	bool result;	//校对结果
 	ADC_Type * adc_ptr;	//ADC基地址
+	bool result;	//校对结果
 
-	result = true;	//默认校对成功
 	//获取ADC基地址
 	adc_ptr = adc_table[mod];
+	result = true;	//默认校对成功
 
 	//开启相应ADC模块时钟门
 	if (mod == ADC_MOD0) {

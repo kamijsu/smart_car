@@ -234,12 +234,12 @@ void ftm_timer_clear_int(uint8 mod) {
 //==========================================================================
 void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 		uint16 duty) {
-	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 	FTM_Type * ftm_ptr;	//FTM基地址
+	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 
-	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
@@ -323,15 +323,15 @@ void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty) {
 //==========================================================================
 void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 		uint16 duty1, uint16 duty2) {
+	FTM_Type * ftm_ptr;	//FTM基地址
 	uint8 ch0, ch1;	//两个通道号
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
-	FTM_Type * ftm_ptr;	//FTM基地址
 
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	ch0 = ch_group << 1;	//偶数通道
 	ch1 = ch0 + 1;			//奇数通道
 	shift = ch_group << 3;	//相邻COMBINEn相差8位
-	//获取FTM基地址
-	ftm_ptr = ftm_table[mod];
 
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch0);
@@ -415,12 +415,12 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) 
 //备注: 相应FTM模块的计数器需运行在向上计数模式下;未上下拉引脚电阻
 //==========================================================================
 void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
-	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 	FTM_Type * ftm_ptr;	//FTM基地址
+	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 
-	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
@@ -496,12 +496,12 @@ uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch) {
 //     ratio除以FTM_PERIOD_ACCURACY(10000)为百分比的比例
 //==========================================================================
 void ftm_oc_init(uint8 mod, uint8 ch, uint8 mode, uint16 ratio) {
-	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 	FTM_Type * ftm_ptr;	//FTM基地址
+	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 
-	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
