@@ -67,6 +67,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/light&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/motor&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/reed_switch&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/temp_sensor&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/common&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/control&quot;"/>

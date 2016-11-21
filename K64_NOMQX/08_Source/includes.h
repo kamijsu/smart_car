@@ -26,6 +26,7 @@
 #include "printf.h"
 #include "visual_scope.h"
 #include "ftm.h"
+#include "temp_sensor.h"
 
 //防止全局变量重复声明的前缀处理方法
 #ifdef GLOBLE_VAR                 //GLOBLE_VAR在main.c文件中宏定义

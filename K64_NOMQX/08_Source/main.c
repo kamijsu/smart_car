@@ -8,8 +8,8 @@
 int main(void) {
 	//1. 声明主函数使用的变量
 	uint32 run_counter;
-	int16 count;
-	int16 temp;
+	uint16 send;
+	float temp;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -34,10 +34,7 @@ int main(void) {
 //	ems_init();					//电磁传感器初始化
 //	reed_switch_init();			//干簧管初始化
 
-	gpio_init(COM_PORTD | 7, GPIO_OUTPUT, GPIO_LEVEL_HIGH);
-	adc_init(ADC_MOD0, ADC_CLK_DIV_4, ADC_ACCURACY_SINGLE_DIFF_16,
-	ADC_HARDWARE_AVG_16, ADC_ADLSTS_6, ADC_ADHSC_NORMAL,
-	ADC_CAL_DISABLE);
+	temp_sensor_init();
 
 	//4. 给有关变量赋初值
 	run_counter = 0;
@@ -57,14 +54,10 @@ int main(void) {
 
 		if (time0_flag.f_1s) {
 			time0_flag.f_1s = 0;
-			temp = adc_diff_get(ADC_MOD0, ADC_DIFF_GROUP_TEMP);
-			temp = temp * 3300 / ((1 << 15) - 1);
-			uart_send1(UART_USE, temp >> 8);
-			uart_send1(UART_USE, temp);
-			temp = adc_single_get(ADC_MOD0, ADC_SE_TEMP, ADC_SE_SEL_A);
-			temp = temp * 3300 / ((1 << 16) - 1);
-			uart_send1(UART_USE, temp >> 8);
-			uart_send1(UART_USE, temp);
+			temp = temp_sensor_get();
+			send = (uint16) (temp *1000);
+			uart_send1(UART_USE, send >> 8);
+			uart_send1(UART_USE, send);
 		}
 
 	} //主循环end_for
