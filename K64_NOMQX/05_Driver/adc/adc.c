@@ -22,6 +22,7 @@ static bool adc_cal(uint8 mod) {
 
 	//获取ADC基地址
 	adc_ptr = adc_table[mod];
+
 	//正常供电配置，选择输入时钟8分频，长时间采样，输入时钟为总线时钟/2
 	REG_SET_VAL(ADC_CFG1_REG(adc_ptr),
 			0|ADC_CFG1_ADIV(ADC_CLK_DIV_8)|ADC_CFG1_ADLSMP_MASK|ADC_CFG1_ADICLK(1));
@@ -125,9 +126,10 @@ bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 	bool result;	//校对结果
 	ADC_Type * adc_ptr;	//ADC基地址
 
+	result = true;	//默认校对成功
 	//获取ADC基地址
 	adc_ptr = adc_table[mod];
-	result = true;	//默认校对成功
+
 	//开启相应ADC模块时钟门
 	if (mod == ADC_MOD0) {
 		REG_SET_MASK(SIM_SCGC6, SIM_SCGC6_ADC0_MASK);
@@ -201,6 +203,7 @@ uint16 adc_single_get(uint8 mod, uint8 se_ch, uint8 se_sel) {
 
 	//获取ADC基地址
 	adc_ptr = adc_table[mod];
+
 	//选择AB通道
 	if (se_sel == ADC_SE_SEL_A) {
 		REG_CLR_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_MUXSEL_MASK);
@@ -233,6 +236,7 @@ int16 adc_diff_get(uint8 mod, uint8 diff_group) {
 
 	//获取ADC基地址
 	adc_ptr = adc_table[mod];
+
 	//配置差分输入
 	REG_SET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_DIFF_MASK);
 	//配置输入通道组

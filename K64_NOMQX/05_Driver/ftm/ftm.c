@@ -50,10 +50,12 @@ static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
 static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
 	uint8 port, pin;	//端口号与引脚号
 	PORT_Type * port_ptr;	//PORT基地址
+
 	//根据通道号获取端口号与引脚号
 	com_port_pin_resolution(ftm_ch_pin_table[mod][ch], &port, &pin);
 	//获取PORT基地址
 	port_ptr = port_table[port];
+
 	//设置该端口的引脚为FTM通道功能
 	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_MUX_MASK);
 	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin),
@@ -161,6 +163,7 @@ void ftm_timer_enable_int(uint8 mod, uint8 time) {
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+
 	//设置产生中断的频率
 	REG_CLR_MASK(FTM_CONF_REG(ftm_ptr), FTM_CONF_NUMTOF_MASK);
 	REG_SET_MASK(FTM_CONF_REG(ftm_ptr), FTM_CONF_NUMTOF(time - 1));
@@ -234,9 +237,10 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 	FTM_Type * ftm_ptr;	//FTM基地址
 
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
-	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
+
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
 	//关闭FTM功能，不关闭的话无法使用单通道
@@ -281,6 +285,7 @@ void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty) {
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+
 	//设置占空比，会在下一个周期更新CnV的值
 	//中心对齐模式
 	if (REG_GET_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK)) {
@@ -322,11 +327,12 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 	FTM_Type * ftm_ptr;	//FTM基地址
 
-	//获取FTM基地址
-	ftm_ptr = ftm_table[mod];
 	ch0 = ch_group << 1;	//偶数通道
 	ch1 = ch0 + 1;			//奇数通道
 	shift = ch_group << 3;	//相邻COMBINEn相差8位
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
+
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch0);
 	ftm_ch_set_mux(mod, ch1);
@@ -383,6 +389,7 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) 
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+
 	//设置偶数通道占空比
 	REG_SET_VAL(FTM_CnV_REG(ftm_ptr,ch_group << 1),
 			((FTM_MOD_REG(ftm_ptr) + 1) * duty1 / FTM_PERIOD_ACCURACY));
@@ -411,9 +418,10 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 	FTM_Type * ftm_ptr;	//FTM基地址
 
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
-	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
+
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
 	//关闭FTM功能，不关闭的话无法使用单通道
@@ -466,6 +474,7 @@ uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch) {
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+
 	return FTM_CnV_REG(ftm_ptr,ch) * FTM_PERIOD_ACCURACY
 			/ (FTM_MOD_REG(ftm_ptr) + 1);
 }
@@ -490,9 +499,10 @@ void ftm_oc_init(uint8 mod, uint8 ch, uint8 mode, uint16 ratio) {
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
 	FTM_Type * ftm_ptr;	//FTM基地址
 
+	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
-	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
+
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
 	//关闭FTM功能
@@ -531,6 +541,7 @@ void ftm_oc_change_mode(uint8 mod, uint8 ch, uint8 mode) {
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+
 	switch (mode) {
 	case FTM_OC_MODE_TOGGLE:
 		//ELSB=0;ELSA=1;
@@ -565,6 +576,7 @@ void ftm_oc_set_ratio(uint8 mod, uint8 ch, uint16 ratio) {
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+
 	REG_SET_VAL(FTM_CnV_REG(ftm_ptr,ch),
 			((FTM_MOD_REG(ftm_ptr) + 1) * ratio / FTM_PERIOD_ACCURACY));
 }
@@ -657,14 +669,13 @@ void ftm_ch_clear_int(uint8 mod, uint8 ch) {
 //     编码器旋转圈数=(计数器计数个数*x)/编码器分辨率，x为FTM_CLK_DIV_x的x;
 //==========================================================================
 void ftm_qd_init(uint8 mod, uint8 mode, uint8 dir) {
-	uint8 pha_port, pha_pin, phb_port, phb_pin;	//端口号与引脚号
 	FTM_Type * ftm_ptr;	//FTM基地址
-	uint8 pcr_mux;	//PCR的MUX值
+	uint8 pha_port, pha_pin, phb_port, phb_pin;	//端口号与引脚号
 	PORT_Type * pha_port_ptr, *phb_port_ptr;	//PORT基地址
+	uint8 pcr_mux;	//PCR的MUX值
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
-	pcr_mux = ftm_qd_pcr_mux_table[mod - FTM_MOD1];
 	//获取端口号与引脚号
 	com_port_pin_resolution(ftm_qd_pha_pin_table[mod - FTM_MOD1], &pha_port,
 			&pha_pin);
@@ -673,6 +684,9 @@ void ftm_qd_init(uint8 mod, uint8 mode, uint8 dir) {
 	//获取PORT基地址
 	pha_port_ptr = port_table[pha_port];
 	phb_port_ptr = port_table[phb_port];
+	//获取PCR的MUX值
+	pcr_mux = ftm_qd_pcr_mux_table[mod - FTM_MOD1];
+
 	//设置引脚为FTM正交解码功能
 	REG_CLR_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_MUX_MASK);
 	REG_SET_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_MUX(pcr_mux));
@@ -744,11 +758,12 @@ void ftm_qd_clear_count(uint8 mod) {
 //备注: 计数个数带方向，正负分别代表不同方向，具体定义与设置有关
 //==========================================================================
 int16 ftm_qd_get_and_clear_count(uint8 mod) {
-	int16 count;
 	FTM_Type * ftm_ptr;	//FTM基地址
+	int16 count;
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
+
 	count = FTM_CNT_REG(ftm_ptr);
 	REG_SET_VAL(FTM_CNT_REG(ftm_ptr), 0);
 	return count;

@@ -43,12 +43,12 @@ static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
 //==========================================================================
 void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 	uint8 rx_port, rx_pin, tx_port, tx_pin;	//rx与tx端口号与引脚号
+	PORT_Type * rx_port_ptr, *tx_port_ptr;	//rx与tx的PORT基地址
+	uint8 pcr_mux;	//PCR的MUX值
+	UART_Type * uart_ptr;	//UART基地址
 	uint16 sbr;	//波特率位，用来计算波特率
 	uint8 brfa;	//波特率微调
 	uint32 clk_freq;	//所用时钟频率
-	PORT_Type * rx_port_ptr, * tx_port_ptr;	//rx与tx的PORT基地址
-	uint8 pcr_mux;	//PCR的MUX值
-	UART_Type * uart_ptr;	//UART基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(uart_rx_pin_table[mod], &rx_port, &rx_pin);
@@ -146,12 +146,13 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 //功能概要: 发送1个字节数据
 //==========================================================================
 bool uart_send1(uint8 mod, uint8 byte) {
-	uint32 max = UART_RP_TIME_SEND;	//将上限次数转化为uint32类型
-	uint32 i;
 	UART_Type * uart_ptr;	//UART基地址
+	uint32 max, i;
 
 	//获取UART基地址
 	uart_ptr = uart_table[mod];
+	max = UART_RP_TIME_SEND;	//将上限次数转化为uint32类型
+
 	for (i = 0; i < max; i++) {
 		//判断发送缓冲区是否为空
 		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_TDRE_MASK)) {
@@ -174,6 +175,7 @@ bool uart_send1(uint8 mod, uint8 byte) {
 //==========================================================================
 bool uart_sendN(uint8 mod, uint32 len, uint8* buff) {
 	uint32 i;
+
 	for (i = 0; i < len; i++) {
 		//发送1个字节数据，失败则发送失败
 		if (!uart_send1(mod, buff[i])) {
@@ -210,12 +212,13 @@ bool uart_send_string(uint8 mod, uint8* str) {
 //功能概要: 接收1个字节数据
 //==========================================================================
 bool uart_re1(uint8 mod, uint8* byte) {
-	uint32 max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
-	uint32 i;
 	UART_Type * uart_ptr;	//UART基地址
+	uint32 max, i;
 
 	//获取UART基地址
 	uart_ptr = uart_table[mod];
+	max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
+
 	for (i = 0; i < max; i++) {
 		//判断接收缓冲区是否满
 		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_RDRF_MASK)) {
@@ -237,12 +240,13 @@ bool uart_re1(uint8 mod, uint8* byte) {
 //功能概要: 接收1个字节数据，并判断校验位有无错误
 //==========================================================================
 bool uart_re1_parity(uint8 mod, uint8* byte, bool* err) {
-	uint32 max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
-	uint32 i;
 	UART_Type * uart_ptr;	//UART基地址
+	uint32 max, i;
 
 	//获取UART基地址
 	uart_ptr = uart_table[mod];
+	max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
+
 	for (i = 0; i < max; i++) {
 		//判断接收缓冲区是否满
 		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_RDRF_MASK)) {
