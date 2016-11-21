@@ -34,9 +34,10 @@ int main(void) {
 //	ems_init();					//电磁传感器初始化
 //	reed_switch_init();			//干簧管初始化
 
-	adc_init(ADC_MOD0, ADC_CLK_DIV_4, ADC_ACCURACY_SINGLE_12_DIFF_13,
-			ADC_HARDWARE_AVG_16, ADC_ADLSTS_6, ADC_ADHSC_NORMAL,
-			ADC_CAL_DISABLE);
+	gpio_init(COM_PORTD | 7, GPIO_OUTPUT, GPIO_LEVEL_HIGH);
+	adc_init(ADC_MOD0, ADC_CLK_DIV_4, ADC_ACCURACY_SINGLE_DIFF_16,
+	ADC_HARDWARE_AVG_16, ADC_ADLSTS_6, ADC_ADHSC_NORMAL,
+	ADC_CAL_DISABLE);
 
 	//4. 给有关变量赋初值
 	run_counter = 0;
@@ -54,14 +55,16 @@ int main(void) {
 	//主循环开始==================================================================
 	for (;;) {
 
-
-
 		if (time0_flag.f_1s) {
 			time0_flag.f_1s = 0;
-			temp = adc_diff_get(ADC_MOD0,ADC_DIFF_GROUP1);
-			temp = temp * 3300 / ((1<<12) - 1);
-								uart_send1(UART_USE, temp >> 8);
-								uart_send1(UART_USE, temp);
+			temp = adc_diff_get(ADC_MOD0, ADC_DIFF_GROUP_TEMP);
+			temp = temp * 3300 / ((1 << 15) - 1);
+			uart_send1(UART_USE, temp >> 8);
+			uart_send1(UART_USE, temp);
+			temp = adc_single_get(ADC_MOD0, ADC_SE_TEMP, ADC_SE_SEL_A);
+			temp = temp * 3300 / ((1 << 16) - 1);
+			uart_send1(UART_USE, temp >> 8);
+			uart_send1(UART_USE, temp);
 		}
 
 	} //主循环end_for

@@ -17,6 +17,7 @@
 #define ADC_DIFF_GROUP1		(1)		//ADC0_DP1:14    ADC0_DM1:15    ADC1_DP1:16    ADC1_DM1:17
 #define ADC_DIFF_GROUP2		(2)		//ADC0_DP2:E2    ADC0_DM2:E3
 #define ADC_DIFF_GROUP3		(3)		//ADC0_DP3:20    ADC0_DM3:21    ADC1_DP3:18    ADC1_DM3:19
+#define ADC_DIFF_GROUP_TEMP	(26)	//内置温度传感器，无引脚
 
 //定义ADC单端输入通道号，引脚号说明同上
 #define ADC_SE4				(4)		//ADC0_SE4b:C2   ADC1_SE4a:E0   ADC1_SE4b:C8
@@ -37,6 +38,7 @@
 #define ADC_SE21			(21)	//ADC0_SE21:??
 #define ADC_SE22			(22)	//ADC0_SE22:??
 #define ADC_SE23			(23)	//ADC0_SE23:27   ADC1_SE23:??
+#define ADC_SE_TEMP			(26)	//内置温度传感器，无引脚
 
 //定义ADC单端输入通道选择
 #define ADC_SE_SEL_A		(0)		//选择A通道
