@@ -9,7 +9,7 @@ int main(void) {
 	//1. 声明主函数使用的变量
 	uint32 run_counter;
 	int16 count;
-	uint16 temp;
+	int16 temp;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -25,7 +25,7 @@ int main(void) {
 	//light_init(LIGHT_BLUE, LIGHT_OFF);
 	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
-	pit_init(PIT_CH0, 10000);  //pit0初始化，周期5ms
+	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 //	motor_init(MOTOR1);			//左电机初始化
 //	motor_init(MOTOR2);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
@@ -34,9 +34,9 @@ int main(void) {
 //	ems_init();					//电磁传感器初始化
 //	reed_switch_init();			//干簧管初始化
 
-	adc_init(ADC_MOD0, ADC_CLK_DIV_16, ADC_ACCURACY_SINGLE_8_DIFF_9,
-			ADC_HARDWARE_AVG_DISABLE, ADC_ADLSTS_DISABLE, ADC_ADHSC_NORMAL,
-			ADC_CAL_ENABLE);
+	adc_init(ADC_MOD0, ADC_CLK_DIV_4, ADC_ACCURACY_SINGLE_12_DIFF_13,
+			ADC_HARDWARE_AVG_16, ADC_ADLSTS_6, ADC_ADHSC_NORMAL,
+			ADC_CAL_DISABLE);
 
 	//4. 给有关变量赋初值
 	run_counter = 0;
@@ -54,16 +54,14 @@ int main(void) {
 	//主循环开始==================================================================
 	for (;;) {
 
-		adc_single_get(ADC_MOD0,ADC_SE9,ADC_SE_SEL_A);
-		run_counter++;
 
-		if (time0_flag.f_10s) {
-			time0_flag.f_10s = 0;
-			uart_send1(UART_USE, run_counter >> 24);
-			uart_send1(UART_USE, run_counter >> 16);
-			uart_send1(UART_USE, run_counter >> 8);
-			uart_send1(UART_USE, run_counter);
-			run_counter=0;
+
+		if (time0_flag.f_1s) {
+			time0_flag.f_1s = 0;
+			temp = adc_diff_get(ADC_MOD0,ADC_DIFF_GROUP1);
+			temp = temp * 3300 / ((1<<12) - 1);
+								uart_send1(UART_USE, temp >> 8);
+								uart_send1(UART_USE, temp);
 		}
 
 	} //主循环end_for

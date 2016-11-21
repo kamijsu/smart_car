@@ -8,9 +8,6 @@
 //ADC各模块基地址
 static ADC_Type * const adc_table[] = { ADC0, ADC1 };
 
-//ADC各模块中断请求号
-static const IRQn_Type adc_irq_table[] = { ADC0_IRQn, ADC1_IRQn };
-
 //==========================================================================
 //函数名称: adc_cal
 //函数返回: true: 校对功能配置成功;
