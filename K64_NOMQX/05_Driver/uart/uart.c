@@ -46,10 +46,20 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 	uint16 sbr;	//波特率位，用来计算波特率
 	uint8 brfa;	//波特率微调
 	uint32 clk_freq;	//所用时钟频率
+	PORT_Type * rx_port_ptr, * tx_port_ptr;	//rx与tx的PORT基地址
+	uint8 pcr_mux;	//PCR的MUX值
+	UART_Type * uart_ptr;	//UART基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(uart_rx_pin_table[mod], &rx_port, &rx_pin);
 	com_port_pin_resolution(uart_tx_pin_table[mod], &tx_port, &tx_pin);
+	//获取rx与tx的PORT基地址
+	rx_port_ptr = port_table[rx_port];
+	tx_port_ptr = port_table[tx_port];
+	//获取PCR的MUX值
+	pcr_mux = uart_pcr_mux_table[mod];
+	//获取UART基地址
+	uart_ptr = uart_table[mod];
 
 	//UART0和UART1使用系统时钟，其余UART模块使用总线时钟
 	if (mod == UART_MOD0 || mod == UART_MOD1) {
@@ -59,12 +69,10 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 	}
 
 	//使能引脚功能
-	REG_CLR_MASK(PORT_PCR_REG(port_table[rx_port],rx_pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[rx_port],rx_pin),
-			PORT_PCR_MUX(uart_pcr_mux_table[mod]));
-	REG_CLR_MASK(PORT_PCR_REG(port_table[tx_port],tx_pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[tx_port],tx_pin),
-			PORT_PCR_MUX(uart_pcr_mux_table[mod]));
+	REG_CLR_MASK(PORT_PCR_REG(rx_port_ptr,rx_pin), PORT_PCR_MUX_MASK);
+	REG_SET_MASK(PORT_PCR_REG(rx_port_ptr,rx_pin), PORT_PCR_MUX(pcr_mux));
+	REG_CLR_MASK(PORT_PCR_REG(tx_port_ptr,tx_pin), PORT_PCR_MUX_MASK);
+	REG_SET_MASK(PORT_PCR_REG(tx_port_ptr,tx_pin), PORT_PCR_MUX(pcr_mux));
 
 	//开相应的UART模块时钟门
 	switch (mod) {
@@ -89,48 +97,44 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 	}
 
 	//暂时关闭串口发送与接收功能
-	REG_CLR_MASK(UART_C2_REG(uart_table[mod]),
-			(UART_C2_TE_MASK | UART_C2_RE_MASK));
+	REG_CLR_MASK(UART_C2_REG(uart_ptr), (UART_C2_TE_MASK | UART_C2_RE_MASK));
 
 	//配置波特率，根据公式计算，UART波特率 = UART模块时钟/(16*(sbr+brfa/32))
 	sbr = (uint16) (clk_freq / (baud << 4));
 	brfa = ((clk_freq << 1) / baud) - (sbr << 5);
 	//清空原值
-	REG_CLR_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBR_MASK);
-	REG_CLR_MASK(UART_BDL_REG(uart_table[mod]), UART_BDL_SBR_MASK);
-	REG_CLR_MASK(UART_C4_REG(uart_table[mod]), UART_C4_BRFA_MASK);
+	REG_CLR_MASK(UART_BDH_REG(uart_ptr), UART_BDH_SBR_MASK);
+	REG_CLR_MASK(UART_BDL_REG(uart_ptr), UART_BDL_SBR_MASK);
+	REG_CLR_MASK(UART_C4_REG(uart_ptr), UART_C4_BRFA_MASK);
 	//设置计算出的值
-	REG_SET_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBR(sbr >> 8));
-	REG_SET_MASK(UART_BDL_REG(uart_table[mod]), UART_BDL_SBR(sbr));
-	REG_SET_MASK(UART_C4_REG(uart_table[mod]), UART_C4_BRFA(brfa));
+	REG_SET_MASK(UART_BDH_REG(uart_ptr), UART_BDH_SBR(sbr >> 8));
+	REG_SET_MASK(UART_BDL_REG(uart_ptr), UART_BDL_SBR(sbr));
+	REG_SET_MASK(UART_C4_REG(uart_ptr), UART_C4_BRFA(brfa));
 
 	//配置校验模式
 	if (parity_mode == UART_PARITY_DISABLED) {
-		REG_CLR_MASK(UART_C1_REG(uart_table[mod]),
-				(UART_C1_M_MASK|UART_C1_PE_MASK));	//8位数据，不开启校验
+		REG_CLR_MASK(UART_C1_REG(uart_ptr), (UART_C1_M_MASK|UART_C1_PE_MASK));//8位数据，不开启校验
 	} else {
-		REG_SET_MASK(UART_C1_REG(uart_table[mod]),
-				(UART_C1_M_MASK|UART_C1_PE_MASK));	//9位数据(连同校验位)，开启校验
+		REG_SET_MASK(UART_C1_REG(uart_ptr), (UART_C1_M_MASK|UART_C1_PE_MASK));//9位数据(连同校验位)，开启校验
 		if (parity_mode == UART_PARITY_ODD) {
-			REG_SET_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PT_MASK);//开启奇校验
+			REG_SET_MASK(UART_C1_REG(uart_ptr), UART_C1_PT_MASK);	//开启奇校验
 		} else {
-			REG_CLR_MASK(UART_C1_REG(uart_table[mod]), UART_C1_PT_MASK);//开启偶校验
+			REG_CLR_MASK(UART_C1_REG(uart_ptr), UART_C1_PT_MASK);	//开启偶校验
 		}
 	}
 
 	//设置数据位顺序，这里设置为LSB，即紧跟起始位传输的是位0
-	REG_CLR_MASK(UART_S2_REG(uart_table[mod]), UART_S2_MSBF_MASK);
+	REG_CLR_MASK(UART_S2_REG(uart_ptr), UART_S2_MSBF_MASK);
 
 	//设置停止位
 	if (stop_bit == UART_STOP_BIT_1) {
-		REG_CLR_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBNS_MASK);//1位停止位
+		REG_CLR_MASK(UART_BDH_REG(uart_ptr), UART_BDH_SBNS_MASK);	//1位停止位
 	} else {
-		REG_SET_MASK(UART_BDH_REG(uart_table[mod]), UART_BDH_SBNS_MASK);//2位停止位
+		REG_SET_MASK(UART_BDH_REG(uart_ptr), UART_BDH_SBNS_MASK);	//2位停止位
 	}
 
 	//启动发送接收
-	REG_SET_MASK(UART_C2_REG(uart_table[mod]),
-			(UART_C2_TE_MASK | UART_C2_RE_MASK));
+	REG_SET_MASK(UART_C2_REG(uart_ptr), (UART_C2_TE_MASK | UART_C2_RE_MASK));
 }
 
 //==========================================================================
@@ -144,11 +148,15 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 bool uart_send1(uint8 mod, uint8 byte) {
 	uint32 max = UART_RP_TIME_SEND;	//将上限次数转化为uint32类型
 	uint32 i;
+	UART_Type * uart_ptr;	//UART基地址
+
+	//获取UART基地址
+	uart_ptr = uart_table[mod];
 	for (i = 0; i < max; i++) {
 		//判断发送缓冲区是否为空
-		if (REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_TDRE_MASK)) {
+		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_TDRE_MASK)) {
 			//为空时，设置数据寄存器为byte
-			REG_SET_VAL(UART_D_REG(uart_table[mod]), byte);
+			REG_SET_VAL(UART_D_REG(uart_ptr), byte);
 			return true;
 		}
 	}
@@ -204,11 +212,15 @@ bool uart_send_string(uint8 mod, uint8* str) {
 bool uart_re1(uint8 mod, uint8* byte) {
 	uint32 max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
 	uint32 i;
+	UART_Type * uart_ptr;	//UART基地址
+
+	//获取UART基地址
+	uart_ptr = uart_table[mod];
 	for (i = 0; i < max; i++) {
 		//判断接收缓冲区是否满
-		if (REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_RDRF_MASK)) {
+		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_RDRF_MASK)) {
 			//满时获取数据寄存器数据
-			*byte = UART_D_REG(uart_table[mod]);
+			*byte = UART_D_REG(uart_ptr);
 			return true;
 		}
 	}
@@ -227,14 +239,18 @@ bool uart_re1(uint8 mod, uint8* byte) {
 bool uart_re1_parity(uint8 mod, uint8* byte, bool* err) {
 	uint32 max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
 	uint32 i;
+	UART_Type * uart_ptr;	//UART基地址
+
+	//获取UART基地址
+	uart_ptr = uart_table[mod];
 	for (i = 0; i < max; i++) {
 		//判断接收缓冲区是否满
-		if (REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_RDRF_MASK)) {
+		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_RDRF_MASK)) {
 			//查看奇偶校验错误标志
-			*err = REG_GET_MASK(UART_S1_REG(uart_table[mod]), UART_S1_PF_MASK) ?
+			*err = REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_PF_MASK) ?
 					true : false;
 			//满时获取数据寄存器数据
-			*byte = UART_D_REG(uart_table[mod]);
+			*byte = UART_D_REG(uart_ptr);
 			return true;
 		}
 	}

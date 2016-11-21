@@ -49,11 +49,14 @@ static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
 //==========================================================================
 static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
 	uint8 port, pin;	//端口号与引脚号
+	PORT_Type * port_ptr;	//PORT基地址
 	//根据通道号获取端口号与引脚号
 	com_port_pin_resolution(ftm_ch_pin_table[mod][ch], &port, &pin);
+	//获取PORT基地址
+	port_ptr = port_table[port];
 	//设置该端口的引脚为FTM通道功能
-	REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[port],pin),
+	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_MUX_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin),
 			PORT_PCR_MUX(ftm_ch_pcr_mux_table[mod][ch]));
 }
 
@@ -81,6 +84,10 @@ static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
 void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		uint8 counter_period) {
 	uint16 modulo;	//模数寄存器的值
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 
 	//开启相应FTM模块时钟门
 	switch (mod) {
@@ -98,45 +105,44 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		break;
 	}
 	//禁止写保护，即允许更改写保护的寄存器的值
-	REG_SET_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_WPDIS_MASK);
+	REG_SET_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_WPDIS_MASK);
 	//先禁止FTM计数器，清除预分频因子，并且禁止中断
-	REG_SET_VAL(FTM_SC_REG(ftm_table[mod]), 0);
+	REG_SET_VAL(FTM_SC_REG(ftm_ptr), 0);
 	//清除当前计数器寄存器的值
-	REG_SET_VAL(FTM_CNT_REG(ftm_table[mod]), 0);
+	REG_SET_VAL(FTM_CNT_REG(ftm_ptr), 0);
 	//设置计数器每次的初始值为0，会写到缓冲中
-	REG_SET_VAL(FTM_CNTIN_REG(ftm_table[mod]), 0);
+	REG_SET_VAL(FTM_CNTIN_REG(ftm_ptr), 0);
 	//配置计数器模式(其实还有个自由运行模式，可以用来激活双边沿捕捉模式，但是经过测试无法使用该模式)
 	switch (counter_mode) {
 	case FTM_COUNTER_MODE_UP:
 		//向上计数:QUADEN=0;CPWMS=0;
-		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADEN_MASK);
-		REG_CLR_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK);
+		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADEN_MASK);
+		REG_CLR_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK);
 		//计数周期=(MOD-CNTIN+1)/时钟频率
 		modulo = (FTM_CLK_FREQ >> clk_div) * counter_period - 1;
 		break;
 	case FTM_COUNTER_MODE_UP_DOWN:
 		//上下计数:QUADEN=0;CPWMS=1
-		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADEN_MASK);
-		REG_SET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK);
+		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADEN_MASK);
+		REG_SET_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK);
 		//计数周期=2*(MOD-CNTIN)/时钟频率
 		modulo = ((FTM_CLK_FREQ >> clk_div) * counter_period) >> 1;
 		break;
 	case FTM_COUNTER_MODE_QD:
 		//正交解码:FTMEN=1;QUADEN=1;(CPWMS=0;)
-		REG_SET_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
-		REG_SET_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADEN_MASK);
-		REG_CLR_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK);
+		REG_SET_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
+		REG_SET_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADEN_MASK);
+		REG_CLR_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK);
 		//MOD设为最大值，以方便直接通过CNT的值判断正负
 		modulo = FTM_MOD_MOD_MASK;
 		break;
 	}
 	//设置模数寄存器的值，会写到缓冲中
-	REG_SET_VAL(FTM_MOD_REG(ftm_table[mod]), modulo);
+	REG_SET_VAL(FTM_MOD_REG(ftm_ptr), modulo);
 	//使能PWM的自动载入功能，MOD、CNTIN、C(n)V、C(n+1)V在计数器到达MOD时载入缓冲器中的值
-	REG_SET_VAL(FTM_PWMLOAD_REG(ftm_table[mod]), 0xFFFFFFFF);
+	REG_SET_VAL(FTM_PWMLOAD_REG(ftm_ptr), 0xFFFFFFFF);
 	//设置时钟源为总线时钟，并且设置预分频因子
-	REG_SET_MASK(FTM_SC_REG(ftm_table[mod]),
-			(FTM_SC_CLKS(1) | FTM_SC_PS(clk_div)));
+	REG_SET_MASK(FTM_SC_REG(ftm_ptr), (FTM_SC_CLKS(1) | FTM_SC_PS(clk_div)));
 }
 
 //==========================================================================
@@ -151,11 +157,15 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 //     counter_period为相应FTM模块的计数周期，单位ms
 //==========================================================================
 void ftm_timer_enable_int(uint8 mod, uint8 time) {
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	//设置产生中断的频率
-	REG_CLR_MASK(FTM_CONF_REG(ftm_table[mod]), FTM_CONF_NUMTOF_MASK);
-	REG_SET_MASK(FTM_CONF_REG(ftm_table[mod]), FTM_CONF_NUMTOF(time - 1));
+	REG_CLR_MASK(FTM_CONF_REG(ftm_ptr), FTM_CONF_NUMTOF_MASK);
+	REG_SET_MASK(FTM_CONF_REG(ftm_ptr), FTM_CONF_NUMTOF(time - 1));
 	//使能定时器溢出中断
-	REG_SET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_TOIE_MASK);
+	REG_SET_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_TOIE_MASK);
 	//允许接收该FTM模块中断请求
 	ENABLE_IRQ(ftm_irq_table[mod]);
 }
@@ -222,36 +232,35 @@ void ftm_timer_clear_int(uint8 mod) {
 void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 		uint16 duty) {
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
+	FTM_Type * ftm_ptr;	//FTM基地址
 
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
 	//关闭FTM功能，不关闭的话无法使用单通道
-	REG_CLR_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
+	REG_CLR_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
 	//关闭通道中断
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHIE_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_CHIE_MASK);
 	//配置通道为相应的PWM功能
 	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMBINE0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMP0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_DECAPEN0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_SYNCEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMBINE0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_DECAPEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_SYNCEN0_MASK<<shift);
 	if (mode == FTM_PWM_MODE_EDGE_ALIGNED) {
 		//MSB=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSB_MASK);
 	}
 	//配置PWM波极性
 	if (pol == FTM_PWM_POL_POSITIVE) {
 		//ELSB=1;ELSA=0;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
 	} else {
 		//ELSA=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
 	}
 	//设置初始占空比
 	ftm_pwm_single_set(mod, ch, duty);
@@ -268,15 +277,19 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 //功能概要: 设置该通道的占空比，将在下一个计数周期更新
 //==========================================================================
 void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty) {
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	//设置占空比，会在下一个周期更新CnV的值
 	//中心对齐模式
-	if (REG_GET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_CPWMS_MASK)) {
-		REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
-				(FTM_MOD_REG(ftm_table[mod]) * duty / FTM_PERIOD_ACCURACY));
+	if (REG_GET_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK)) {
+		REG_SET_VAL(FTM_CnV_REG(ftm_ptr,ch),
+				(FTM_MOD_REG(ftm_ptr) * duty / FTM_PERIOD_ACCURACY));
 	} else {
 		//边沿对齐模式
-		REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
-				((FTM_MOD_REG(ftm_table[mod]) + 1) * duty / FTM_PERIOD_ACCURACY));
+		REG_SET_VAL(FTM_CnV_REG(ftm_ptr,ch),
+				((FTM_MOD_REG(ftm_ptr) + 1) * duty / FTM_PERIOD_ACCURACY));
 	}
 }
 
@@ -307,7 +320,10 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 		uint16 duty1, uint16 duty2) {
 	uint8 ch0, ch1;	//两个通道号
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
+	FTM_Type * ftm_ptr;	//FTM基地址
 
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	ch0 = ch_group << 1;	//偶数通道
 	ch1 = ch0 + 1;			//奇数通道
 	shift = ch_group << 3;	//相邻COMBINEn相差8位
@@ -315,41 +331,36 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 	ftm_ch_set_mux(mod, ch0);
 	ftm_ch_set_mux(mod, ch1);
 	//使能FTM功能
-	REG_SET_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
+	REG_SET_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
 	//关闭通道中断
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_CHIE_MASK);
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_CHIE_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch0), FTM_CnSC_CHIE_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch1), FTM_CnSC_CHIE_MASK);
 	//配置通道为相应的PWM功能
 	//COMBINEn=1;DECAPENn=0;SYNCEN=1;
-	REG_SET_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMBINE0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_DECAPEN0_MASK<<shift);
-	REG_SET_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_SYNCEN0_MASK<<shift);
+	REG_SET_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMBINE0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_DECAPEN0_MASK<<shift);
+	REG_SET_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_SYNCEN0_MASK<<shift);
 	if (mode == FTM_PWM_MODE_COMBINE) {
 		//COMPn=0;
-		REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-				FTM_COMBINE_COMP0_MASK<<shift);
+		REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
 	} else {
 		//COMPn=1;
-		REG_SET_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-				FTM_COMBINE_COMP0_MASK<<shift);
+		REG_SET_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
 	}
 	//配置PWM波极性
 	if (pol == FTM_PWM_POL_POSITIVE) {
 		//ELSB=1;ELSA=0;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_ELSB_MASK);
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_ELSA_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_ELSB_MASK);
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch0), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch0), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch1), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch1), FTM_CnSC_ELSA_MASK);
 	} else {
 		//ELSA=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch0), FTM_CnSC_ELSA_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch1), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch0), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch1), FTM_CnSC_ELSA_MASK);
 	}
 	//最小装载点使能，即计数器达到CNTIN值时，为同步的一个载入点;禁止硬件触发同步;同步时计数器继续计数
-	REG_SET_VAL(FTM_SYNC_REG(ftm_table[mod]), FTM_SYNC_CNTMIN_MASK);
+	REG_SET_VAL(FTM_SYNC_REG(ftm_ptr), FTM_SYNC_CNTMIN_MASK);
 	//设置初始占空比
 	ftm_pwm_combine_set(mod, ch_group, duty1, duty2);
 }
@@ -368,14 +379,18 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 //     PWM波极性将再次反转
 //==========================================================================
 void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) {
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	//设置偶数通道占空比
-	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch_group << 1),
-			((FTM_MOD_REG(ftm_table[mod]) + 1) * duty1 / FTM_PERIOD_ACCURACY));
+	REG_SET_VAL(FTM_CnV_REG(ftm_ptr,ch_group << 1),
+			((FTM_MOD_REG(ftm_ptr) + 1) * duty1 / FTM_PERIOD_ACCURACY));
 	//设置奇数通道占空比
-	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],(ch_group << 1) + 1),
-			((FTM_MOD_REG(ftm_table[mod]) + 1) * duty2 / FTM_PERIOD_ACCURACY));
+	REG_SET_VAL(FTM_CnV_REG(ftm_ptr,(ch_group << 1) + 1),
+			((FTM_MOD_REG(ftm_ptr) + 1) * duty2 / FTM_PERIOD_ACCURACY));
 	//软件触发下一个载入点同步更新CnV
-	REG_SET_MASK(FTM_SYNC_REG(ftm_table[mod]), FTM_SYNC_SWSYNC_MASK);
+	REG_SET_MASK(FTM_SYNC_REG(ftm_ptr), FTM_SYNC_SWSYNC_MASK);
 }
 
 //==========================================================================
@@ -394,44 +409,43 @@ void ftm_pwm_combine_set(uint8 mod, uint8 ch_group, uint16 duty1, uint16 duty2) 
 //==========================================================================
 void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
+	FTM_Type * ftm_ptr;	//FTM基地址
 
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
 	//关闭FTM功能，不关闭的话无法使用单通道
-	REG_CLR_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
+	REG_CLR_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
 	//关闭通道中断
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHIE_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_CHIE_MASK);
 	//配置通道为输入捕捉功能
 	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMBINE0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMP0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_DECAPEN0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_SYNCEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMBINE0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_DECAPEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_SYNCEN0_MASK<<shift);
 	switch (mode) {
 	case FTM_IC_MODE_RISING_EDGE:
 		//ELSB=0;ELSA=1;
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
 		break;
 	case FTM_IC_MODE_FALLING_EDGE:
 		//ELSB=1;ELSA=0;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
 		break;
 	case FTM_IC_MODE_DOUBLE_EDGE:
 		//ELSB=1;ELSA=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
 		break;
 	}
 	//MSB=0;MSA=0;
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSB_MASK);
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSA_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSB_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSA_MASK);
 }
 
 //==========================================================================
@@ -448,8 +462,12 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 //     下降沿捕捉模式:返回值为相同计数器、边沿对齐模式、正极性PWM波占空比;
 //==========================================================================
 uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch) {
-	return FTM_CnV_REG(ftm_table[mod],ch) * FTM_PERIOD_ACCURACY
-			/ (FTM_MOD_REG(ftm_table[mod]) + 1);
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
+	return FTM_CnV_REG(ftm_ptr,ch) * FTM_PERIOD_ACCURACY
+			/ (FTM_MOD_REG(ftm_ptr) + 1);
 }
 
 //==========================================================================
@@ -470,28 +488,27 @@ uint16 ftm_ic_get_ratio(uint8 mod, uint8 ch) {
 //==========================================================================
 void ftm_oc_init(uint8 mod, uint8 ch, uint8 mode, uint16 ratio) {
 	uint8 shift;	//设置FTMx_COMBINE寄存器时的偏移量
+	FTM_Type * ftm_ptr;	//FTM基地址
 
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 	//使能FTM模块通道功能
 	ftm_ch_set_mux(mod, ch);
 	//关闭FTM功能
-	REG_CLR_MASK(FTM_MODE_REG(ftm_table[mod]), FTM_MODE_FTMEN_MASK);
+	REG_CLR_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
 	//关闭通道中断
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHIE_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_CHIE_MASK);
 	//配置通道为输出比较功能
 	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMBINE0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_COMP0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_DECAPEN0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_table[mod]),
-			FTM_COMBINE_SYNCEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMBINE0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_DECAPEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_SYNCEN0_MASK<<shift);
 	ftm_oc_change_mode(mod, ch, mode);
 	//MSB=0;MSA=1;
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSB_MASK);
-	REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_MSA_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSB_MASK);
+	REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSA_MASK);
 	//设置比较成功点
 	ftm_oc_set_ratio(mod, ch, ratio);
 }
@@ -510,21 +527,25 @@ void ftm_oc_init(uint8 mod, uint8 ch, uint8 mode, uint16 ratio) {
 //功能概要: 更改输出比较功能通道的模式
 //==========================================================================
 void ftm_oc_change_mode(uint8 mod, uint8 ch, uint8 mode) {
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
 	switch (mode) {
 	case FTM_OC_MODE_TOGGLE:
 		//ELSB=0;ELSA=1;
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
 		break;
 	case FTM_OC_MODE_SET:
 		//ELSB=1;ELSA=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
 		break;
 	case FTM_OC_MODE_CLEAR:
 		//ELSB=1;ELSA=0;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSB_MASK);
-		REG_CLR_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
+		REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
 		break;
 	}
 }
@@ -540,8 +561,12 @@ void ftm_oc_change_mode(uint8 mod, uint8 ch, uint8 mode) {
 //功能概要: 更改输出比较功能通道的比较成功时间
 //==========================================================================
 void ftm_oc_set_ratio(uint8 mod, uint8 ch, uint16 ratio) {
-	REG_SET_VAL(FTM_CnV_REG(ftm_table[mod],ch),
-			((FTM_MOD_REG(ftm_table[mod]) + 1) * ratio / FTM_PERIOD_ACCURACY));
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
+	REG_SET_VAL(FTM_CnV_REG(ftm_ptr,ch),
+			((FTM_MOD_REG(ftm_ptr) + 1) * ratio / FTM_PERIOD_ACCURACY));
 }
 
 //==========================================================================
@@ -633,50 +658,55 @@ void ftm_ch_clear_int(uint8 mod, uint8 ch) {
 //==========================================================================
 void ftm_qd_init(uint8 mod, uint8 mode, uint8 dir) {
 	uint8 pha_port, pha_pin, phb_port, phb_pin;	//端口号与引脚号
+	FTM_Type * ftm_ptr;	//FTM基地址
+	uint8 pcr_mux;	//PCR的MUX值
+	PORT_Type * pha_port_ptr, *phb_port_ptr;	//PORT基地址
 
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
+	pcr_mux = ftm_qd_pcr_mux_table[mod - FTM_MOD1];
 	//获取端口号与引脚号
 	com_port_pin_resolution(ftm_qd_pha_pin_table[mod - FTM_MOD1], &pha_port,
 			&pha_pin);
 	com_port_pin_resolution(ftm_qd_phb_pin_table[mod - FTM_MOD1], &phb_port,
 			&phb_pin);
+	//获取PORT基地址
+	pha_port_ptr = port_table[pha_port];
+	phb_port_ptr = port_table[phb_port];
 	//设置引脚为FTM正交解码功能
-	REG_CLR_MASK(PORT_PCR_REG(port_table[pha_port],pha_pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[pha_port],pha_pin),
-			PORT_PCR_MUX(ftm_qd_pcr_mux_table[mod-FTM_MOD1]));
-	REG_CLR_MASK(PORT_PCR_REG(port_table[phb_port],phb_pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[phb_port],phb_pin),
-			PORT_PCR_MUX(ftm_qd_pcr_mux_table[mod-FTM_MOD1]));
+	REG_CLR_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_MUX_MASK);
+	REG_SET_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_MUX(pcr_mux));
+	REG_CLR_MASK(PORT_PCR_REG(phb_port_ptr,phb_pin), PORT_PCR_MUX_MASK);
+	REG_SET_MASK(PORT_PCR_REG(phb_port_ptr,phb_pin), PORT_PCR_MUX(pcr_mux));
 	//上拉引脚电阻
-	REG_SET_MASK(PORT_PCR_REG(port_table[pha_port],pha_pin), PORT_PCR_PS_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[pha_port],pha_pin), PORT_PCR_PE_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[phb_port],phb_pin), PORT_PCR_PS_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[phb_port],phb_pin), PORT_PCR_PE_MASK);
+	REG_SET_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_PS_MASK);
+	REG_SET_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_PE_MASK);
+	REG_SET_MASK(PORT_PCR_REG(phb_port_ptr,phb_pin), PORT_PCR_PS_MASK);
+	REG_SET_MASK(PORT_PCR_REG(phb_port_ptr,phb_pin), PORT_PCR_PE_MASK);
 	//配置正交解码模式
 	if (mode == FTM_QD_MODE_PHAB) {
 		//AB相
-		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADMODE_MASK);
+		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADMODE_MASK);
 		//根据方向配置极性
 		if (dir == FTM_QD_DIR_POSITIVE) {
 			//AB相均为正常极性
-			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
+			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr),
 					(FTM_QDCTRL_PHAPOL_MASK|FTM_QDCTRL_PHBPOL_MASK));
 		} else {
 			//A相为正常极性，B相为倒置极性
-			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
-					FTM_QDCTRL_PHAPOL_MASK);
-			REG_SET_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
-					(FTM_QDCTRL_PHBPOL_MASK));
+			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_PHAPOL_MASK);
+			REG_SET_MASK(FTM_QDCTRL_REG(ftm_ptr), (FTM_QDCTRL_PHBPOL_MASK));
 		}
 	} else {
 		//方向-脉冲型
-		REG_SET_MASK(FTM_QDCTRL_REG(ftm_table[mod]), FTM_QDCTRL_QUADMODE_MASK);
+		REG_SET_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADMODE_MASK);
 		if (dir == FTM_QD_DIR_POSITIVE) {
 			//AB相均为正常极性
-			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
+			REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr),
 					(FTM_QDCTRL_PHAPOL_MASK|FTM_QDCTRL_PHBPOL_MASK));
 		} else {
 			//AB相均为倒置极性
-			REG_SET_MASK(FTM_QDCTRL_REG(ftm_table[mod]),
+			REG_SET_MASK(FTM_QDCTRL_REG(ftm_ptr),
 					(FTM_QDCTRL_PHAPOL_MASK|FTM_QDCTRL_PHBPOL_MASK));
 		}
 	}
@@ -715,7 +745,11 @@ void ftm_qd_clear_count(uint8 mod) {
 //==========================================================================
 int16 ftm_qd_get_and_clear_count(uint8 mod) {
 	int16 count;
-	count = FTM_CNT_REG(ftm_table[mod]);
-	REG_SET_VAL(FTM_CNT_REG(ftm_table[mod]), 0);
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
+	count = FTM_CNT_REG(ftm_ptr);
+	REG_SET_VAL(FTM_CNT_REG(ftm_ptr), 0);
 	return count;
 }

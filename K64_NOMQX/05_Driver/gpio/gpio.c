@@ -27,20 +27,25 @@ static const IRQn_Type gpio_irq_table[] = { PORTA_IRQn, PORTB_IRQn, PORTC_IRQn,
 //==========================================================================
 void gpio_init(uint8 port_pin, uint8 dir, uint8 status) {
 	uint8 port, pin;		//端口号与引脚号
+	PORT_Type * port_ptr;	//PORT基地址
+	GPIO_Type * gpio_ptr;	//GPIO基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
+	//获取该端口PORT和GPIO基地址
+	port_ptr = port_table[port];
+	gpio_ptr = gpio_table[port];
 
 	//指定该引脚功能为GPIO
-	REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_MUX_MASK);//清空MUX位
-	REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_MUX(1));//使MUX=0b001
+	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_MUX_MASK);//清空MUX位
+	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_MUX(1));	//使MUX=0b001
 
 	//配置引脚方向
 	if (dir == GPIO_INPUT) {
-		REG_CLR_SHIFT(GPIO_PDDR_REG(gpio_table[port]), pin);	//配置为输入
+		REG_CLR_SHIFT(GPIO_PDDR_REG(gpio_ptr), pin);	//配置为输入
 		gpio_pull(port_pin, status);  //设定引脚上下拉状态
 	} else {
-		REG_SET_SHIFT(GPIO_PDDR_REG(gpio_table[port]), pin);	//配置为输出
+		REG_SET_SHIFT(GPIO_PDDR_REG(gpio_ptr), pin);	//配置为输出
 		gpio_set(port_pin, status);  //设定引脚电平状态
 	}
 }
@@ -57,17 +62,20 @@ void gpio_init(uint8 port_pin, uint8 dir, uint8 status) {
 //==========================================================================
 void gpio_set(uint8 port_pin, uint8 status) {
 	uint8 port, pin;		//端口号与引脚号
+	GPIO_Type * gpio_ptr;	//GPIO基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
+	//获取该端口GPIO基地址
+	gpio_ptr = gpio_table[port];
 
 	//设定引脚状态为指定状态
 	switch (status) {
 	case GPIO_LEVEL_LOW:
-		REG_CLR_SHIFT(GPIO_PDOR_REG(gpio_table[port]), pin);	//设定为低电平
+		REG_CLR_SHIFT(GPIO_PDOR_REG(gpio_ptr), pin);	//设定为低电平
 		break;
 	case GPIO_LEVEL_HIGH:
-		REG_SET_SHIFT(GPIO_PDOR_REG(gpio_table[port]), pin);	//设定为高电平
+		REG_SET_SHIFT(GPIO_PDOR_REG(gpio_ptr), pin);	//设定为高电平
 		break;
 	default:
 		break;
@@ -104,17 +112,20 @@ void gpio_reverse(uint8 port_pin) {
 //==========================================================================
 void gpio_drive_strength(uint8 port_pin, uint8 status) {
 	uint8 port, pin;		//端口号与引脚号
+	PORT_Type * port_ptr;	//PORT基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
+	//获取该端口PORT基地址
+	port_ptr = port_table[port];
 
 	//设定驱动能力
 	if (status == GPIO_DRIVE_LOW) {
 		//正常驱动能力
-		REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_DSE_MASK);
+		REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_DSE_MASK);
 	} else {
 		//高驱动能力
-		REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_DSE_MASK);
+		REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_DSE_MASK);
 	}
 }
 
@@ -131,19 +142,22 @@ void gpio_drive_strength(uint8 port_pin, uint8 status) {
 //==========================================================================
 void gpio_pull(uint8 port_pin, uint8 status) {
 	uint8 port, pin;		//端口号与引脚号
+	PORT_Type * port_ptr;	//PORT基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
+	//获取该端口PORT基地址
+	port_ptr = port_table[port];
 
 	if (status == GPIO_LEVEL_UNKNOWN) {
-		REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_PE_MASK);	//关闭上下拉电阻
+		REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PE_MASK);	//关闭上下拉电阻
 	} else {
 		if (status == GPIO_LEVEL_LOW) {
-			REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_PS_MASK);	//引脚下拉电阻使能
+			REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PS_MASK);	//引脚下拉电阻使能
 		} else {
-			REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_PS_MASK);	//引脚上拉电阻使能
+			REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PS_MASK);	//引脚上拉电阻使能
 		}
-		REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_PE_MASK);	//开启上下拉电阻
+		REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PE_MASK);	//开启上下拉电阻
 	}
 }
 
@@ -179,14 +193,18 @@ uint8 gpio_get(uint8 port_pin) {
 //==========================================================================
 void gpio_enable_int(uint8 port_pin, uint8 int_type) {
 	uint8 port, pin;		//端口号与引脚号
+	PORT_Type * port_ptr;	//PORT基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
+	//获取该端口PORT基地址
+	port_ptr = port_table[port];
+
 	//清除引脚中断标志
-	REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_ISF_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_ISF_MASK);
 	//设置引脚中断类型
-	REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_IRQC_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_IRQC(int_type));
+	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_IRQC_MASK);
+	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_IRQC(int_type));
 	//允许接收该端口发送的中断请求
 	ENABLE_IRQ(gpio_irq_table[port]);
 }

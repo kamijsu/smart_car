@@ -18,50 +18,51 @@ static ADC_Type * const adc_table[] = { ADC0, ADC1 };
 //==========================================================================
 static bool adc_cal(uint8 mod) {
 	uint16 cal_var;	//校对值临时变量
+	ADC_Type * adc_ptr;	//ADC基地址
 
+	//获取ADC基地址
+	adc_ptr = adc_table[mod];
 	//正常供电配置，选择输入时钟8分频，长时间采样，输入时钟为总线时钟/2
-	REG_SET_VAL(ADC_CFG1_REG(adc_table[mod]),
+	REG_SET_VAL(ADC_CFG1_REG(adc_ptr),
 			0|ADC_CFG1_ADIV(ADC_CLK_DIV_8)|ADC_CFG1_ADLSMP_MASK|ADC_CFG1_ADICLK(1));
 	//高速转换，长时间采样20个额外ADCK周期
-	REG_SET_VAL(ADC_CFG2_REG(adc_table[mod]), 0|ADC_CFG2_ADHSC_MASK);
+	REG_SET_VAL(ADC_CFG2_REG(adc_ptr), 0|ADC_CFG2_ADHSC_MASK);
 	//选择软件触发，并设置参考电压为VREFH和VREFL
-	REG_CLR_MASK(ADC_SC2_REG(adc_table[mod]),
-			ADC_SC2_ADTRG_MASK|ADC_SC2_REFSEL_MASK);
+	REG_CLR_MASK(ADC_SC2_REG(adc_ptr), ADC_SC2_ADTRG_MASK|ADC_SC2_REFSEL_MASK);
 	//设置单次转换，清除采样均值数
-	REG_CLR_MASK(ADC_SC3_REG(adc_table[mod]),
-			ADC_SC3_ADCO_MASK|ADC_SC3_AVGS_MASK);
+	REG_CLR_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_ADCO_MASK|ADC_SC3_AVGS_MASK);
 	//使能硬件计算均值，并设置采样均值数为32
-	REG_SET_MASK(ADC_SC3_REG(adc_table[mod]),
+	REG_SET_MASK(ADC_SC3_REG(adc_ptr),
 			ADC_SC3_AVGE_MASK|ADC_SC3_AVGS(ADC_HARDWARE_AVG_32));
 	//开始校对
-	REG_SET_MASK(ADC_SC3_REG(adc_table[mod]), ADC_SC3_CAL_MASK);
+	REG_SET_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_CAL_MASK);
 	//等待校对完成
-	while (!REG_GET_MASK(ADC_SC1_REG(adc_table[mod],0), ADC_SC1_COCO_MASK)) {
+	while (!REG_GET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_COCO_MASK)) {
 	}
 	//校对失败
-	if (REG_GET_MASK(ADC_SC3_REG(adc_table[mod]), ADC_SC3_CALF_MASK)) {
+	if (REG_GET_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_CALF_MASK)) {
 		return false;
 	}
 	//设置正向增益寄存器
-	cal_var = ADC_CLP0_REG(adc_table[mod]);
-	cal_var += ADC_CLP1_REG(adc_table[mod]);
-	cal_var += ADC_CLP2_REG(adc_table[mod]);
-	cal_var += ADC_CLP3_REG(adc_table[mod]);
-	cal_var += ADC_CLP4_REG(adc_table[mod]);
-	cal_var += ADC_CLPS_REG(adc_table[mod]);
+	cal_var = ADC_CLP0_REG(adc_ptr);
+	cal_var += ADC_CLP1_REG(adc_ptr);
+	cal_var += ADC_CLP2_REG(adc_ptr);
+	cal_var += ADC_CLP3_REG(adc_ptr);
+	cal_var += ADC_CLP4_REG(adc_ptr);
+	cal_var += ADC_CLPS_REG(adc_ptr);
 	cal_var = 0x8000 | (cal_var >> 1);
-	REG_SET_VAL(ADC_PG_REG(adc_table[mod]), cal_var);
+	REG_SET_VAL(ADC_PG_REG(adc_ptr), cal_var);
 	//设置负向增益寄存器
-	cal_var = ADC_CLM0_REG(adc_table[mod]);
-	cal_var += ADC_CLM1_REG(adc_table[mod]);
-	cal_var += ADC_CLM2_REG(adc_table[mod]);
-	cal_var += ADC_CLM3_REG(adc_table[mod]);
-	cal_var += ADC_CLM4_REG(adc_table[mod]);
-	cal_var += ADC_CLMS_REG(adc_table[mod]);
+	cal_var = ADC_CLM0_REG(adc_ptr);
+	cal_var += ADC_CLM1_REG(adc_ptr);
+	cal_var += ADC_CLM2_REG(adc_ptr);
+	cal_var += ADC_CLM3_REG(adc_ptr);
+	cal_var += ADC_CLM4_REG(adc_ptr);
+	cal_var += ADC_CLMS_REG(adc_ptr);
 	cal_var = 0x8000 | (cal_var >> 1);
-	REG_SET_VAL(ADC_MG_REG(adc_table[mod]), cal_var);
+	REG_SET_VAL(ADC_MG_REG(adc_ptr), cal_var);
 	//清除校对标志
-	REG_CLR_MASK(ADC_SC3_REG(adc_table[mod]), ADC_SC3_CAL_MASK);
+	REG_CLR_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_CAL_MASK);
 	return true;
 }
 
@@ -122,7 +123,10 @@ static bool adc_cal(uint8 mod) {
 bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 		uint8 adlsts, uint8 adhsc, uint8 cal) {
 	bool result;	//校对结果
+	ADC_Type * adc_ptr;	//ADC基地址
 
+	//获取ADC基地址
+	adc_ptr = adc_table[mod];
 	result = true;	//默认校对成功
 	//开启相应ADC模块时钟门
 	if (mod == ADC_MOD0) {
@@ -131,51 +135,49 @@ bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 		REG_SET_MASK(SIM_SCGC3, SIM_SCGC3_ADC1_MASK);
 	}
 	//重置PG与MG的值
-	REG_SET_VAL(ADC_PG_REG(adc_table[mod]), 0x8200);
-	REG_SET_VAL(ADC_MG_REG(adc_table[mod]), 0x8200);
+	REG_SET_VAL(ADC_PG_REG(adc_ptr), 0x8200);
+	REG_SET_VAL(ADC_MG_REG(adc_ptr), 0x8200);
 	//校对ADC模块
 	if (cal == ADC_CAL_ENABLE) {
 		result = adc_cal(mod);
 	}
 	//正常供电模式，并且清除时钟分频选择、采样时间配置(即选择短时间采样)、转换模式选择、输入时钟选择(即选择总线时钟)
-	REG_SET_VAL(ADC_CFG1_REG(adc_table[mod]), 0);
+	REG_SET_VAL(ADC_CFG1_REG(adc_ptr), 0);
 	//配置时钟频率
 	if (clk_div == ADC_CLK_DIV_16) {
 		//输入时钟8分频，且输入时钟为总线时钟/2
-		REG_SET_MASK(ADC_CFG1_REG(adc_table[mod]),
+		REG_SET_MASK(ADC_CFG1_REG(adc_ptr),
 				ADC_CFG1_ADIV(ADC_CLK_DIV_8)|ADC_CFG1_ADICLK(1));
 	} else {
 		//配置分频数
-		REG_SET_MASK(ADC_CFG1_REG(adc_table[mod]), ADC_CFG1_ADIV(clk_div));
+		REG_SET_MASK(ADC_CFG1_REG(adc_ptr), ADC_CFG1_ADIV(clk_div));
 	}
 	//配置采样精度
-	REG_SET_MASK(ADC_CFG1_REG(adc_table[mod]), ADC_CFG1_MODE(accuracy));
+	REG_SET_MASK(ADC_CFG1_REG(adc_ptr), ADC_CFG1_MODE(accuracy));
 	//配置长时间采样
 	if (adlsts != ADC_ADLSTS_DISABLE) {
-		REG_SET_MASK(ADC_CFG1_REG(adc_table[mod]), ADC_CFG1_ADLSMP_MASK);
-		REG_CLR_MASK(ADC_CFG2_REG(adc_table[mod]), ADC_CFG2_ADLSTS_MASK);
-		REG_SET_MASK(ADC_CFG2_REG(adc_table[mod]), ADC_CFG2_ADLSTS(adlsts));
+		REG_SET_MASK(ADC_CFG1_REG(adc_ptr), ADC_CFG1_ADLSMP_MASK);
+		REG_CLR_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_ADLSTS_MASK);
+		REG_SET_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_ADLSTS(adlsts));
 	}
 	//配置高速配置
 	if (adhsc == ADC_ADHSC_NORMAL) {
-		REG_CLR_MASK(ADC_CFG2_REG(adc_table[mod]), ADC_CFG2_ADHSC_MASK);
+		REG_CLR_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_ADHSC_MASK);
 	} else {
-		REG_SET_MASK(ADC_CFG2_REG(adc_table[mod]), ADC_CFG2_ADHSC_MASK);
+		REG_SET_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_ADHSC_MASK);
 	}
 	//选择软件触发，并设置参考电压为VREFH和VREFL
-	REG_CLR_MASK(ADC_SC2_REG(adc_table[mod]),
-			ADC_SC2_ADTRG_MASK|ADC_SC2_REFSEL_MASK);
+	REG_CLR_MASK(ADC_SC2_REG(adc_ptr), ADC_SC2_ADTRG_MASK|ADC_SC2_REFSEL_MASK);
 	//配置硬件计算均值
 	if (hardware_avg == ADC_HARDWARE_AVG_DISABLE) {
 		//禁止硬件计算均值
-		REG_CLR_MASK(ADC_SC3_REG(adc_table[mod]), ADC_SC3_AVGE_MASK);
+		REG_CLR_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_AVGE_MASK);
 	} else {
 		//使能硬件计算均值，并使能持续转换
-		REG_SET_MASK(ADC_SC3_REG(adc_table[mod]),
-				ADC_SC3_AVGE_MASK|ADC_SC3_ADCO_MASK);
+		REG_SET_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_AVGE_MASK|ADC_SC3_ADCO_MASK);
 		//选择计算均值
-		REG_CLR_MASK(ADC_SC3_REG(adc_table[mod]), ADC_SC3_AVGS_MASK);
-		REG_SET_MASK(ADC_SC3_REG(adc_table[mod]), ADC_SC3_AVGS(hardware_avg));
+		REG_CLR_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_AVGS_MASK);
+		REG_SET_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_AVGS(hardware_avg));
 	}
 	return result;
 }
@@ -195,22 +197,25 @@ bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 //     未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能
 //==========================================================================
 uint16 adc_single_get(uint8 mod, uint8 se_ch, uint8 se_sel) {
+	ADC_Type * adc_ptr;	//ADC基地址
+
+	//获取ADC基地址
+	adc_ptr = adc_table[mod];
 	//选择AB通道
 	if (se_sel == ADC_SE_SEL_A) {
-		REG_CLR_MASK(ADC_CFG2_REG(adc_table[mod]), ADC_CFG2_MUXSEL_MASK);
+		REG_CLR_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_MUXSEL_MASK);
 	} else {
-		REG_SET_MASK(ADC_CFG2_REG(adc_table[mod]), ADC_CFG2_MUXSEL_MASK);
+		REG_SET_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_MUXSEL_MASK);
 	}
 	//配置单端输入，并清除通道选择
-	REG_CLR_MASK(ADC_SC1_REG(adc_table[mod],0),
-			ADC_SC1_DIFF_MASK|ADC_SC1_ADCH_MASK);
+	REG_CLR_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_DIFF_MASK|ADC_SC1_ADCH_MASK);
 	//配置输入通道
-	REG_SET_MASK(ADC_SC1_REG(adc_table[mod],0), ADC_SC1_ADCH(se_ch));
+	REG_SET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_ADCH(se_ch));
 	//等待ADC转换完成
-	while (!REG_GET_MASK(ADC_SC1_REG(adc_table[mod],0), ADC_SC1_COCO_MASK)) {
+	while (!REG_GET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_COCO_MASK)) {
 	}
 	//返回转换结果
-	return ADC_R_REG(adc_table[mod], 0);
+	return ADC_R_REG(adc_ptr, 0);
 }
 
 //==========================================================================
@@ -224,14 +229,18 @@ uint16 adc_single_get(uint8 mod, uint8 se_ch, uint8 se_sel) {
 //备注: 未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能
 //==========================================================================
 int16 adc_diff_get(uint8 mod, uint8 diff_group) {
+	ADC_Type * adc_ptr;	//ADC基地址
+
+	//获取ADC基地址
+	adc_ptr = adc_table[mod];
 	//配置差分输入
-	REG_SET_MASK(ADC_SC1_REG(adc_table[mod],0), ADC_SC1_DIFF_MASK);
+	REG_SET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_DIFF_MASK);
 	//配置输入通道组
-	REG_CLR_MASK(ADC_SC1_REG(adc_table[mod],0), ADC_SC1_ADCH_MASK);
-	REG_SET_MASK(ADC_SC1_REG(adc_table[mod],0), ADC_SC1_ADCH(diff_group));
+	REG_CLR_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_ADCH_MASK);
+	REG_SET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_ADCH(diff_group));
 	//等待ADC转换完成
-	while (!REG_GET_MASK(ADC_SC1_REG(adc_table[mod],0), ADC_SC1_COCO_MASK)) {
+	while (!REG_GET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_COCO_MASK)) {
 	}
 	//返回转换结果
-	return ADC_R_REG(adc_table[mod], 0);
+	return ADC_R_REG(adc_ptr, 0);
 }
