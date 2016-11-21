@@ -39,7 +39,7 @@ float temp_sensor_get() {
 	//获取采样AD值
 	ad = adc_diff_get(TEMP_SENSOR_ADC_MOD, TEMP_SENSOR_ADC_DIFF_GROUP);
 	//转化为电压值
-	vtemp = ad * 1.0f * TEMP_SENSOR_ADC_VTG
+	vtemp = ad * TEMP_SENSOR_ADC_VTG * 1.0f
 			/ ((1 << TEMP_SENSOR_ADC_DATA_BITS) - 1);
 	//转化为温度
 	temp = 25 - ((vtemp - TEMP_SENSOR_VTEMP25) / TEMP_SENSOR_M);
