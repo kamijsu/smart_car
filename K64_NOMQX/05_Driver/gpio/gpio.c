@@ -109,20 +109,17 @@ void gpio_reverse(uint8 port_pin) {
 //==========================================================================
 void gpio_drive_strength(uint8 port_pin, uint8 status) {
 	uint8 port, pin;		//端口号与引脚号
-	PORT_Type * port_ptr;	//PORT基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
-	//获取该端口PORT基地址
-	port_ptr = port_table[port];
 
 	//设定驱动能力
 	if (status == GPIO_DRIVE_LOW) {
 		//正常驱动能力
-		REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_DSE_MASK);
+		REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_DSE_MASK);
 	} else {
 		//高驱动能力
-		REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_DSE_MASK);
+		REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_DSE_MASK);
 	}
 }
 
