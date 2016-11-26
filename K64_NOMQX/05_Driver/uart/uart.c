@@ -42,20 +42,12 @@ static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
 //备注: 波特率为600时，UART0与UART1无法使用
 //==========================================================================
 void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
-	uint8 rx_port, rx_pin, tx_port, tx_pin;	//rx与tx端口号与引脚号
-	PORT_Type * rx_port_ptr, *tx_port_ptr;	//rx与tx的PORT基地址
 	uint8 pcr_mux;	//PCR的MUX值
 	UART_Type * uart_ptr;	//UART基地址
 	uint16 sbr;	//波特率位，用来计算波特率
 	uint8 brfa;	//波特率微调
 	uint32 clk_freq;	//所用时钟频率
 
-	//获得端口号与引脚号
-	com_port_pin_resolution(uart_rx_pin_table[mod], &rx_port, &rx_pin);
-	com_port_pin_resolution(uart_tx_pin_table[mod], &tx_port, &tx_pin);
-	//获取rx与tx的PORT基地址
-	rx_port_ptr = port_table[rx_port];
-	tx_port_ptr = port_table[tx_port];
 	//获取PCR的MUX值
 	pcr_mux = uart_pcr_mux_table[mod];
 	//获取UART基地址
@@ -69,10 +61,8 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 	}
 
 	//使能引脚功能
-	REG_CLR_MASK(PORT_PCR_REG(rx_port_ptr,rx_pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(rx_port_ptr,rx_pin), PORT_PCR_MUX(pcr_mux));
-	REG_CLR_MASK(PORT_PCR_REG(tx_port_ptr,tx_pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(tx_port_ptr,tx_pin), PORT_PCR_MUX(pcr_mux));
+	com_port_pin_set_mux(uart_rx_pin_table[mod],pcr_mux);
+	com_port_pin_set_mux(uart_tx_pin_table[mod],pcr_mux);
 
 	//开相应的UART模块时钟门
 	switch (mod) {

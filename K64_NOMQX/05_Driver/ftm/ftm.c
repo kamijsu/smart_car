@@ -39,30 +39,6 @@ static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
 		FTM3_IRQn };
 
 //==========================================================================
-//函数名称: ftm_ch_set_mux
-//函数返回: 无
-//参数说明: mod:FTM模块号:
-//             FTM_MODx，x为模块号;
-//         ch:FTM模块的通道号:
-//            FTM_CHx，x为通道号;
-//功能概要: 设置该模块的该通道所对应的引脚为FTM模块通道功能
-//==========================================================================
-static void ftm_ch_set_mux(uint8 mod, uint8 ch) {
-	uint8 port, pin;	//端口号与引脚号
-	PORT_Type * port_ptr;	//PORT基地址
-
-	//根据通道号获取端口号与引脚号
-	com_port_pin_resolution(ftm_ch_pin_table[mod][ch], &port, &pin);
-	//获取PORT基地址
-	port_ptr = port_table[port];
-
-	//设置该端口的引脚为FTM通道功能
-	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin),
-			PORT_PCR_MUX(ftm_ch_pcr_mux_table[mod][ch]));
-}
-
-//==========================================================================
 //函数名称: ftm_init
 //函数返回: 无
 //参数说明: mod:FTM模块号:
@@ -242,7 +218,8 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 
 	//使能FTM模块通道功能
-	ftm_ch_set_mux(mod, ch);
+	com_port_pin_set_mux(ftm_ch_pin_table[mod][ch],
+			ftm_ch_pcr_mux_table[mod][ch]);
 	//关闭FTM功能，不关闭的话无法使用单通道
 	REG_CLR_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
 	//关闭通道中断
@@ -334,8 +311,10 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 	shift = ch_group << 3;	//相邻COMBINEn相差8位
 
 	//使能FTM模块通道功能
-	ftm_ch_set_mux(mod, ch0);
-	ftm_ch_set_mux(mod, ch1);
+	com_port_pin_set_mux(ftm_ch_pin_table[mod][ch0],
+			ftm_ch_pcr_mux_table[mod][ch0]);
+	com_port_pin_set_mux(ftm_ch_pin_table[mod][ch1],
+			ftm_ch_pcr_mux_table[mod][ch1]);
 	//使能FTM功能
 	REG_SET_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
 	//关闭通道中断
@@ -423,7 +402,8 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 
 	//使能FTM模块通道功能
-	ftm_ch_set_mux(mod, ch);
+	com_port_pin_set_mux(ftm_ch_pin_table[mod][ch],
+			ftm_ch_pcr_mux_table[mod][ch]);
 	//关闭FTM功能，不关闭的话无法使用单通道
 	REG_CLR_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
 	//关闭通道中断
@@ -504,7 +484,8 @@ void ftm_oc_init(uint8 mod, uint8 ch, uint8 mode, uint16 ratio) {
 	shift = (ch >> 1) << 3;	//相邻COMBINEn相差8位
 
 	//使能FTM模块通道功能
-	ftm_ch_set_mux(mod, ch);
+	com_port_pin_set_mux(ftm_ch_pin_table[mod][ch],
+			ftm_ch_pcr_mux_table[mod][ch]);
 	//关闭FTM功能
 	REG_CLR_MASK(FTM_MODE_REG(ftm_ptr), FTM_MODE_FTMEN_MASK);
 	//关闭通道中断
@@ -670,33 +651,23 @@ void ftm_ch_clear_int(uint8 mod, uint8 ch) {
 //==========================================================================
 void ftm_qd_init(uint8 mod, uint8 mode, uint8 dir) {
 	FTM_Type * ftm_ptr;	//FTM基地址
-	uint8 pha_port, pha_pin, phb_port, phb_pin;	//端口号与引脚号
-	PORT_Type * pha_port_ptr, *phb_port_ptr;	//PORT基地址
+	uint8 pha_port_pin, phb_port_pin;	//pha与phb的端口号与引脚号
 	uint8 pcr_mux;	//PCR的MUX值
 
 	//获取FTM基地址
 	ftm_ptr = ftm_table[mod];
 	//获取端口号与引脚号
-	com_port_pin_resolution(ftm_qd_pha_pin_table[mod - FTM_MOD1], &pha_port,
-			&pha_pin);
-	com_port_pin_resolution(ftm_qd_phb_pin_table[mod - FTM_MOD1], &phb_port,
-			&phb_pin);
-	//获取PORT基地址
-	pha_port_ptr = port_table[pha_port];
-	phb_port_ptr = port_table[phb_port];
+	pha_port_pin = ftm_qd_pha_pin_table[mod - FTM_MOD1];
+	phb_port_pin = ftm_qd_phb_pin_table[mod - FTM_MOD1];
 	//获取PCR的MUX值
 	pcr_mux = ftm_qd_pcr_mux_table[mod - FTM_MOD1];
 
 	//设置引脚为FTM正交解码功能
-	REG_CLR_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_MUX(pcr_mux));
-	REG_CLR_MASK(PORT_PCR_REG(phb_port_ptr,phb_pin), PORT_PCR_MUX_MASK);
-	REG_SET_MASK(PORT_PCR_REG(phb_port_ptr,phb_pin), PORT_PCR_MUX(pcr_mux));
+	com_port_pin_set_mux(pha_port_pin, pcr_mux);
+	com_port_pin_set_mux(phb_port_pin, pcr_mux);
 	//上拉引脚电阻
-	REG_SET_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_PS_MASK);
-	REG_SET_MASK(PORT_PCR_REG(pha_port_ptr,pha_pin), PORT_PCR_PE_MASK);
-	REG_SET_MASK(PORT_PCR_REG(phb_port_ptr,phb_pin), PORT_PCR_PS_MASK);
-	REG_SET_MASK(PORT_PCR_REG(phb_port_ptr,phb_pin), PORT_PCR_PE_MASK);
+	gpio_pull(pha_port_pin, GPIO_LEVEL_HIGH);
+	gpio_pull(phb_port_pin, GPIO_LEVEL_HIGH);
 	//配置正交解码模式
 	if (mode == FTM_QD_MODE_PHAB) {
 		//AB相

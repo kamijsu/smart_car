@@ -84,4 +84,14 @@ static PORT_Type * const port_table[] = { PORTA, PORTB, PORTC, PORTD, PORTE };
 //===========================================================================
 void com_port_pin_resolution(uint8 port_pin, uint8* port, uint8* pin);
 
+//===========================================================================
+//函数名称: com_port_pin_set_mux
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号):
+//                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
+//         mux:相应引脚控制寄存器所要设置的MUX值
+//功能概要: 设置相应引脚控制寄存器的MUX值
+//===========================================================================
+void com_port_pin_set_mux(uint8 port_pin, uint8 mux);
+
 #endif
