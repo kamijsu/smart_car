@@ -28,7 +28,7 @@ void UART1_RX_TX_IRQHandler() {
 }
 
 void FTM0_IRQHandler() {
-	if(ftm_timer_get_int(0)){
+	if (ftm_timer_get_int(0)) {
 		ftm_timer_clear_int(0);
 		time0_flag.f_1s = 1;
 
@@ -99,8 +99,7 @@ void PIT0_IRQHandler() {
 		time_counter.c_5s = 0;
 		time0_flag.f_5s = 1;
 	}       //5s置标志
-	if (time_counter.c_10s >= 2000)
-	{
+	if (time_counter.c_10s >= 2000) {
 		time_counter.c_10s = 0;
 		time0_flag.f_10s = 1;
 	}       //10s置标志
@@ -133,23 +132,9 @@ void PORTD_IRQHandler() {
 
 	DISABLE_INTERRUPTS; //关中断
 
-	n = (uint8_t) (ENCODER1 & 0xFF);  //获取引脚号
-	if (PORTD_ISFR & (1 << n))         //设定的引脚触发中断
-			{
-		PORTD_ISFR |= (1 << n);        //写1清中断标志位
-		++encoder_counter.left;
-	}
-	n = (uint8_t) (ENCODER2 & 0xFF);  //获取引脚号
-	if (PORTD_ISFR & (1 << n))         //设定的引脚触发中断
-			{
-		PORTD_ISFR |= (1 << n);        //写1清中断标志位
-		++encoder_counter.right;
-	}
-	n = (uint8_t) (REED_SWITCH_INPUT & 0xFF);  //获取引脚号
-	if (PORTD_ISFR & (1 << n)) {
-		PORTD_ISFR |= (1 << n);        //写1清中断标志位
-		car_flag.reed_switch = 1;	//干簧管接通
-//		control_stop();				//停车
+	if (reed_switch_get_int()) {
+		reed_switch_clear_int();
+		uart_send_string(UART_USE,"产生中断！\n");
 	}
 
 	ENABLE_INTERRUPTS; //恢复原总中断设置情况

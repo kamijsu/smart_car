@@ -58,7 +58,6 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/ftm&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/gpio&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/pit&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/pwm&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/uart&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/ems&quot;"/>
@@ -145,4 +144,5 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

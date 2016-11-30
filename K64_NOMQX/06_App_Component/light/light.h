@@ -6,6 +6,7 @@
 #ifndef _LIGHT_H
 #define _LIGHT_H
 
+#include "common.h"
 #include "gpio.h"
 
 //定义小灯所使用引脚
