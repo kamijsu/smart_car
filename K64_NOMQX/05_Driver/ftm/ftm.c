@@ -60,7 +60,7 @@ static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
 //     (计数器计数个数*x)为正常计数个数，x为FTM_CLK_DIV_x的x;
 //==========================================================================
 void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
-		uint8 counter_period) {
+		uint8 counter_period_unit, uint8 counter_period) {
 	uint16 modulo;	//模数寄存器的值
 	FTM_Type * ftm_ptr;	//FTM基地址
 
@@ -97,7 +97,11 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADEN_MASK);
 		REG_CLR_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK);
 		//计数周期=(MOD-CNTIN+1)/时钟频率
+		if(counter_period_unit == FTM_COUNTER_PERIOD_MS){
 		modulo = (FTM_CLK_FREQ >> clk_div) * counter_period - 1;
+		} else {
+
+		}
 		break;
 	case FTM_COUNTER_MODE_UP_DOWN:
 		//上下计数:QUADEN=0;CPWMS=1
