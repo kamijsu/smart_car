@@ -26,8 +26,8 @@ int main(void) {
 	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
-//	motor_init(MOTOR1);			//左电机初始化
-//	motor_init(MOTOR2);			//右电机初始化
+	motor_init(MOTOR0);			//左电机初始化
+	motor_init(MOTOR1);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
 //	encoder_init(ENCODER1);		//左编码器初始化
 //	encoder_init(ENCODER2);		//右编码器初始化
@@ -51,11 +51,13 @@ int main(void) {
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-
+		motor_set(MOTOR0, 4000);
+		motor_set(MOTOR1, 4000);
 		if (time0_flag.f_1s) {
+			uart_send_string(UART_USE, "中文测试");
 			time0_flag.f_1s = 0;
 			temp = temp_sensor_get();
-			send = (uint16) (temp *1000);
+			send = (uint16) (temp * 1000);
 			uart_send1(UART_USE, send >> 8);
 			uart_send1(UART_USE, send);
 		}

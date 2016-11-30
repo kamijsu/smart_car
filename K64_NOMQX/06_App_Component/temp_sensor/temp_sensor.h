@@ -6,6 +6,7 @@
 #ifndef _TEMP_SENSOR_H
 #define _TEMP_SENSOR_H
 
+#include "common.h"
 #include "adc.h"
 
 //定义温度传感器所使用的ADC模块配置，可选配置见adc.h(注意:若相同ADC模块被用于不同应用构件，请保证它们的配置相同)

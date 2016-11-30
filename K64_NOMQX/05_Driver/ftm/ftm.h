@@ -88,6 +88,10 @@
 #define FTM_COUNTER_MODE_UP_DOWN		(1)	//上下计数
 #define FTM_COUNTER_MODE_QD				(2)	//正交解码
 
+//定义FTM模块计数器计数周期单位
+#define FTM_COUNTER_PERIOD_MS		(0)		//ms，毫秒
+#define FTM_COUNTER_PERIOD_US		(1)		//μs，微秒
+
 //定义FTM模块PWM功能的模式
 #define FTM_PWM_MODE_EDGE_ALIGNED	(0)	//单通道，PWM波边沿对齐
 #define FTM_PWM_MODE_CENTER_ALIGNED	(1)	//单通道，PWM波中心对齐
