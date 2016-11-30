@@ -27,18 +27,15 @@ static const IRQn_Type gpio_irq_table[] = { PORTA_IRQn, PORTB_IRQn, PORTC_IRQn,
 //==========================================================================
 void gpio_init(uint8 port_pin, uint8 dir, uint8 status) {
 	uint8 port, pin;		//端口号与引脚号
-	PORT_Type * port_ptr;	//PORT基地址
 	GPIO_Type * gpio_ptr;	//GPIO基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
-	//获取该端口PORT和GPIO基地址
-	port_ptr = port_table[port];
+	//获取GPIO基地址
 	gpio_ptr = gpio_table[port];
 
-	//指定该引脚功能为GPIO
-	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_MUX_MASK);//清空MUX位
-	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_MUX(1));	//使MUX=0b001
+	//指定该引脚功能为GPIO，使MUX=0b001
+	com_port_pin_set_mux(port_pin, 1);
 
 	//配置引脚方向
 	if (dir == GPIO_INPUT) {
@@ -112,20 +109,17 @@ void gpio_reverse(uint8 port_pin) {
 //==========================================================================
 void gpio_drive_strength(uint8 port_pin, uint8 status) {
 	uint8 port, pin;		//端口号与引脚号
-	PORT_Type * port_ptr;	//PORT基地址
 
 	//获得端口号与引脚号
 	com_port_pin_resolution(port_pin, &port, &pin);
-	//获取该端口PORT基地址
-	port_ptr = port_table[port];
 
 	//设定驱动能力
 	if (status == GPIO_DRIVE_LOW) {
 		//正常驱动能力
-		REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_DSE_MASK);
+		REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_DSE_MASK);
 	} else {
 		//高驱动能力
-		REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_DSE_MASK);
+		REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_DSE_MASK);
 	}
 }
 

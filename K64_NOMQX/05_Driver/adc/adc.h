@@ -6,6 +6,7 @@
 #ifndef _ADC_H
 #define _ADC_H
 
+//包含公共头文件
 #include "common.h"
 
 //定义ADC模块号

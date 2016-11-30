@@ -33,7 +33,8 @@ int main(void) {
 //	encoder_init(ENCODER2);		//右编码器初始化
 //	ems_init();					//电磁传感器初始化
 //	reed_switch_init();			//干簧管初始化
-
+ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
+ftm_pwm_single_init(FTM_MOD0,FTM_CH5,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 	temp_sensor_init();
 
 	//4. 给有关变量赋初值
@@ -56,6 +57,7 @@ int main(void) {
 		if (time0_flag.f_1s) {
 			uart_send_string(UART_USE, "中文测试");
 			time0_flag.f_1s = 0;
+			light_change(LIGHT_RED);
 			temp = temp_sensor_get();
 			send = (uint16) (temp * 1000);
 			uart_send1(UART_USE, send >> 8);
