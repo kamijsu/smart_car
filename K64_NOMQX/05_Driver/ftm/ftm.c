@@ -51,16 +51,17 @@ static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
 //                      FTM_COUNTER_MODE_QD:     正交解码;
 //         counter_period:见备注
 //功能概要: 初始化FTM模块，默认未开启中断
-//备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位ms，
-//     需满足48000/x*counter_period<=num，48000为这里使用的总线时钟频率，单位kHz，
-//     x为FTM_CLK_DIV_x的x，向上计数模式时num为65536，上下计数模式时num为65534，
-//     另外，上下计数模式时，若选择128分频，周期需为偶数(否则计数精度会丢失);
+//备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位μs，
+//     当选择向上计数模式时，需满足48000/x*counter_period/1000<=65536，
+//     当选择上下计数模式时，需满足48000/x*counter_period/1000/2<=65535，
+//     48000为这里使用的总线时钟频率，单位kHz，x为FTM_CLK_DIV_x的x，
+//     请注意counter_period的值，以防止计数精度丢失;
 //
 //     当选择正交解码模式时，counter_period无效，且此时clk_div代表计数器分频数，
 //     (计数器计数个数*x)为正常计数个数，x为FTM_CLK_DIV_x的x;
 //==========================================================================
 void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
-		uint8 counter_period_unit, uint8 counter_period) {
+		uint32 counter_period) {
 	uint16 modulo;	//模数寄存器的值
 	FTM_Type * ftm_ptr;	//FTM基地址
 
@@ -97,18 +98,14 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADEN_MASK);
 		REG_CLR_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK);
 		//计数周期=(MOD-CNTIN+1)/时钟频率
-		if(counter_period_unit == FTM_COUNTER_PERIOD_MS){
-		modulo = (FTM_CLK_FREQ >> clk_div) * counter_period - 1;
-		} else {
-
-		}
+		modulo = (FTM_CLK_FREQ >> clk_div) * counter_period / 1000 - 1;
 		break;
 	case FTM_COUNTER_MODE_UP_DOWN:
 		//上下计数:QUADEN=0;CPWMS=1
 		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADEN_MASK);
 		REG_SET_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK);
 		//计数周期=2*(MOD-CNTIN)/时钟频率
-		modulo = ((FTM_CLK_FREQ >> clk_div) * counter_period) >> 1;
+		modulo = ((FTM_CLK_FREQ >> clk_div) * counter_period / 1000) >> 1;
 		break;
 	case FTM_COUNTER_MODE_QD:
 		//正交解码:FTMEN=1;QUADEN=1;(CPWMS=0;)
@@ -135,8 +132,8 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 //         time:FTM模块每time个计数周期产生一个中断请求，范围[1,32]
 //功能概要: 使能FTM模块计时中断
 //备注: 相应FTM模块的计数器需运行在向上计数模式下，
-//     中断时间周期为counter_period*time，单位ms，
-//     counter_period为相应FTM模块的计数周期，单位ms
+//     中断时间周期为counter_period*time，单位μs，
+//     counter_period为相应FTM模块的计数周期，单位μs
 //==========================================================================
 void ftm_timer_enable_int(uint8 mod, uint8 time) {
 	FTM_Type * ftm_ptr;	//FTM基地址
@@ -209,8 +206,8 @@ void ftm_timer_clear_int(uint8 mod) {
 //
 //     当选择中心对齐模式时，相应FTM模块的计数器需运行在上下计数模式下;
 //
-//     PWM波的频率为(1000/counter_period)，单位Hz，
-//     counter_period为相应FTM模块的计数周期，单位ms
+//     PWM波的频率为(1000000/counter_period)，单位Hz，
+//     counter_period为相应FTM模块的计数周期，单位μs
 //==========================================================================
 void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 		uint16 duty) {
@@ -298,8 +295,8 @@ void ftm_pwm_single_set(uint8 mod, uint8 ch, uint16 duty) {
 //备注: 相应FTM模块的计数器需运行在向上计数模式下;
 //     最终PWM波的占空比为(duty2-duty1)，duty1需小于duty2，若duty1大于duty2，
 //     PWM波极性将再次反转;
-//     PWM波的频率为(1000/counter_period)，单位Hz，
-//     counter_period为相应FTM模块的计数周期，单位ms;
+//     PWM波的频率为(1000000/counter_period)，单位Hz，
+//     counter_period为相应FTM模块的计数周期，单位μs;
 //     偶数通道输出的PWM波，无论选择哪种模式，都是一样的，即互补模式只针对奇数通道
 //==========================================================================
 void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
