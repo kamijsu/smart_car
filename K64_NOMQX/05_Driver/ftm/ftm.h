@@ -147,7 +147,7 @@
 //     (计数器计数个数*x)为正常计数个数，x为FTM_CLK_DIV_x的x;
 //==========================================================================
 void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
-		uint8 counter_period);
+		uint32 counter_period);
 
 //==========================================================================
 //函数名称: ftm_timer_enable_int

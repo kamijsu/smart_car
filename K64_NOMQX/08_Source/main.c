@@ -33,8 +33,9 @@ int main(void) {
 //	encoder_init(ENCODER2);		//右编码器初始化
 //	ems_init();					//电磁传感器初始化
 //	reed_switch_init();			//干簧管初始化
-ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP,100);
-ftm_pwm_single_init(FTM_MOD0,FTM_CH5,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
+//ftm_init(FTM_MOD0,FTM_CLK_DIV_128,FTM_COUNTER_MODE_UP_DOWN,100000);
+//
+//ftm_pwm_single_init(FTM_MOD0,FTM_CH5,FTM_PWM_MODE_CENTER_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 	temp_sensor_init();
 
 	//4. 给有关变量赋初值
@@ -52,8 +53,8 @@ ftm_pwm_single_init(FTM_MOD0,FTM_CH5,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGAT
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-		motor_set(MOTOR0, 4000);
-		motor_set(MOTOR1, 4000);
+		motor_set(MOTOR0, 1000);
+		motor_set(MOTOR1, 1000);
 		if (time0_flag.f_1s) {
 			uart_send_string(UART_USE, "中文测试");
 			time0_flag.f_1s = 0;
