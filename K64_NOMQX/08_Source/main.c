@@ -11,6 +11,8 @@ int main(void) {
 	uint16 send;
 	float temp;
 
+	int16 test;
+
 	/* 小车相关参数变量 */
 	Car car;
 
@@ -40,6 +42,7 @@ int main(void) {
 
 	//4. 给有关变量赋初值
 	run_counter = 0;
+	test = 0xF0;
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
@@ -62,6 +65,8 @@ int main(void) {
 //			uart_send_string(UART_USE, "中文测试");
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
+			temp = (float)test;
+			printf("%f\n",temp);
 //			temp = temp_sensor_get();
 //			send = (uint16) (temp * 1000);
 //			uart_send1(UART_USE, send >> 8);

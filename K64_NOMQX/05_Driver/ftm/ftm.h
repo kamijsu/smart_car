@@ -70,7 +70,7 @@
 //FTM1_QD:  0:A8-A9;   1:A12-A13; 2:B0-B1; 3:B12-B13
 #define FTM_MOD1_QD_SETUP	(2)
 //FTM2_QD:  0:A10-A11; 1:B18-B19;
-#define FTM_MOD2_QD_SETUP	(0)
+#define FTM_MOD2_QD_SETUP	(1)
 
 //FTM模块所用时钟频率，这里使用的是总线时钟，单位kHz
 #define FTM_CLK_FREQ	BUS_CLK_KHZ

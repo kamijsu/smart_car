@@ -134,6 +134,7 @@ void PORTD_IRQHandler() {
 
 	if (reed_switch_get_int()) {
 		reed_switch_clear_int();
+		reed_switch_disable_int();
 		uart_send_string(UART_USE,"²úÉúÖĞ¶Ï£¡\n");
 	}
 

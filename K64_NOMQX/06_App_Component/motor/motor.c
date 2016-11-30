@@ -5,9 +5,9 @@
 
 #include "motor.h"
 
-//电机PWM0通道号
+//各电机PWM0通道号
 static const uint8 motor_pwm0_table[] = { MOTOR0_PWM0_CH, MOTOR1_PWM0_CH };
-//电机PWM1通道号
+//各电机PWM1通道号
 static const uint8 motor_pwm1_table[] = { MOTOR0_PWM1_CH, MOTOR1_PWM1_CH };
 
 //==========================================================================
