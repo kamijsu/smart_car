@@ -31,21 +31,61 @@ void encoder_init(uint8 encoder) {
 }
 
 //==========================================================================
-//函数名称: encoder_get
+//函数名称: encoder_get_count
+//函数返回: 计数器正常计数个数
+//参数说明: encoder:编码器号:
+//                 ENCODERx，x为编码器号;
+//功能概要: 获取计数器正常计数个数，相应配置在encoder.h中
+//备注: 正常计数个数带方向，正负分别代表不同方向，具体定义与设置有关;
+//     若为AB相编码器，则编码器旋转一圈时，正常计数个数为4*编码器分辨率;
+//     若为方向-脉冲型编码器，则编码器旋转一圈时，正常计数个数为编码器分辨率;
+//     用于测试编码器
+//==========================================================================
+int32 encoder_get_count(uint8 encoder) {
+	return ftm_qd_get_count(encoder_ftm_mod_table[encoder])
+			<< ENCODER_FTM_CLK_DIV;
+}
+
+//==========================================================================
+//函数名称: encoder_clear_count
+//函数返回: 无
+//参数说明: encoder:编码器号:
+//                 ENCODERx，x为编码器号;
+//功能概要: 清除计数器正常计数个数
+//备注: 用于测试编码器
+//==========================================================================
+void encoder_clear_count(uint8 encoder) {
+	ftm_qd_clear_count(encoder_ftm_mod_table[encoder]);
+}
+
+//==========================================================================
+//函数名称: encoder_get_and_clear_count
+//函数返回: 计数器正常计数个数
+//参数说明: encoder:编码器号:
+//                 ENCODERx，x为编码器号;
+//功能概要: 获取并清除计数器正常计数个数，相应配置在encoder.h中
+//备注: 正常计数个数带方向，正负分别代表不同方向，具体定义与设置有关;
+//     若为AB相编码器，则编码器旋转一圈时，正常计数个数为4*编码器分辨率;
+//     若为方向-脉冲型编码器，则编码器旋转一圈时，正常计数个数为编码器分辨率;
+//     用于测试编码器
+//==========================================================================
+int32 encoder_get_and_clear_count(uint8 encoder) {
+	return ftm_qd_get_and_clear_count(encoder_ftm_mod_table[encoder])
+			<< ENCODER_FTM_CLK_DIV;
+}
+
+//==========================================================================
+//函数名称: encoder_get_speed
 //函数返回: 当前速度，单位m/s
 //参数说明: encoder:编码器号:
 //                 ENCODERx，x为编码器号;
 //功能概要: 获取编码器对应轮胎的当前速度，单位m/s，相应配置在encoder.h中
 //备注: 该函数需每 ENCODER_PERIOD ms调用一次，否则获取的速度不准确;
+//     速度带方向，正负分别代表不同方向，具体定义与设置有关;
 //     已清除计数器计数个数
 //==========================================================================
-float encoder_get(uint8 encoder) {
-	int16 count;	//计数器计数个数
-
-	//获取并清除计数器计数个数
-	count = ftm_qd_get_and_clear_count(encoder_ftm_mod_table[encoder]);
-
-	//根据齿轮半径求出速度，速度=(正常计数个数/编码器分辨率)*2π*齿轮半径/采集速度周期
-	return (count << ENCODER_FTM_CLK_DIV) * ENCODER_GEAR_R * 6.28f
-			/ (ENCODER_RES * ENCODER_PERIOD);
+float encoder_get_speed(uint8 encoder) {
+	//获取速度，速度=(正常计数个数/计数器倍频数/编码器分辨率)*2π*齿轮半径/采集速度周期
+	return encoder_get_and_clear_count(encoder) * ENCODER_GEAR_R * 6.28f
+			/ (ENCODER_FTM_FREQ_MUL * ENCODER_RES * ENCODER_PERIOD);
 }

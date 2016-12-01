@@ -22,27 +22,34 @@ bool temp_sensor_init() {
 }
 
 //==========================================================================
-//函数名称: temp_sensor_get
+//函数名称: temp_sensor_get_vtg
+//函数返回: 当前ADC采样的电压值，单位mV
+//参数说明: 无
+//功能概要: 获取当前ADC采样的电压值，单位mV，相应配置在temp_sensor.h中
+//备注: 可以用于设置TEMP_SENSOR_VTEMP25
+//==========================================================================
+float temp_sensor_get_vtg() {
+	int16 ad;		//采样AD值
+
+	//获取采样AD值
+	ad = adc_diff_get(TEMP_SENSOR_ADC_MOD, TEMP_SENSOR_ADC_DIFF_GROUP);
+
+	//转化为电压值
+	return ad * TEMP_SENSOR_ADC_VTG * 1.0f
+			/ ((1 << TEMP_SENSOR_ADC_DATA_BITS) - 1);
+}
+
+//==========================================================================
+//函数名称: temp_sensor_get_temp
 //函数返回: 温度传感器所测温度，单位°C
 //参数说明: 无
-//功能概要: 获取温度传感器所测温度，单位°C
+//功能概要: 获取温度传感器所测温度，单位°C，相应配置在temp_sensor.h中
 //备注: 当使用差分9位转换时，分辨率约为7.99°C，即温度变化约7.99°C时，才可以检测出来;
 //     当使用差分11位转换时，分辨率约为1.99°C;
 //     当使用差分13位转换时，分辨率约为0.50°C;
 //     当使用差分16位转换时，分辨率约为0.06°C;
 //==========================================================================
-float temp_sensor_get() {
-	int16 ad;		//采样AD值
-	float vtemp;	//根据采样AD值转化出的电压值，单位mV
-	float temp;		//实际温度，单位°C
-
-	//获取采样AD值
-	ad = adc_diff_get(TEMP_SENSOR_ADC_MOD, TEMP_SENSOR_ADC_DIFF_GROUP);
-	//转化为电压值
-	vtemp = ad * TEMP_SENSOR_ADC_VTG * 1.0f
-			/ ((1 << TEMP_SENSOR_ADC_DATA_BITS) - 1);
-	//转化为温度
-	temp = 25 - ((vtemp - TEMP_SENSOR_VTEMP25) / TEMP_SENSOR_M);
-
-	return temp;
+float temp_sensor_get_temp() {
+	//转化为温度，温度 = 25 - ((VTEMP - VTEMP25) / m)
+	return 25 - ((temp_sensor_get_vtg() - TEMP_SENSOR_VTEMP25) / TEMP_SENSOR_M);
 }

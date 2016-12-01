@@ -12,6 +12,7 @@ int main(void) {
 	float temp;
 
 	int16 test;
+	int32 test2;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -42,14 +43,12 @@ int main(void) {
 
 	//4. 给有关变量赋初值
 	run_counter = 0;
-	test = 0x8FFF;
+	test = 0xFFFF;
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	reed_switch_enable_int();
-//	encoder_enable_int(ENCODER1);	//使能左编码器中断
-//	encoder_enable_int(ENCODER2);	//使能右编码器中断
 
 	uart_send_string(UART_USE,"test！\n");
 
@@ -61,13 +60,14 @@ int main(void) {
 	for (;;) {
 		if(time0_flag.f_50ms){
 			time0_flag.f_50ms = 0;
-			data_out[0] = encoder_get(ENCODER0) * 1000;
+			data_out[0] = encoder_get_speed(ENCODER0) * 1000;
 			visual_scope_output(UART_USE,data_out);
 		}
 		if (time0_flag.f_1s) {
 //			uart_send_string(UART_USE, "中文测试");
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
+//			printf("%d\n",encoder_get_and_clear_count(ENCODER0));
 //			temp = temp_sensor_get();
 //			send = (uint16) (temp * 1000);
 //			uart_send1(UART_USE, send >> 8);
