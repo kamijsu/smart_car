@@ -6,9 +6,10 @@
 #include "encoder.h"
 
 //各编码器所用FTM模块号
-static const encoder_ftm_mod_table[] = { ENCODER0_FTM_MOD, ENCODER1_FTM_MOD };
+static const uint8 encoder_ftm_mod_table[] = { ENCODER0_FTM_MOD,
+ENCODER1_FTM_MOD };
 //各编码器方向
-static const encoder_dir_table[] = { ENCODER0_DIR, ENCODER1_DIR };
+static const uint8 encoder_dir_table[] = { ENCODER0_DIR, ENCODER1_DIR };
 
 //==========================================================================
 //函数名称: encoder_init
@@ -44,8 +45,7 @@ float encoder_get(uint8 encoder) {
 	//获取并清除计数器计数个数
 	count = ftm_qd_get_and_clear_count(encoder_ftm_mod_table[encoder]);
 
-	// 根据齿轮半径求出速度
-//	*speed = (conter / (ENCODER_RES * 1.0))
-//			* (6.28 * ENCODER_GEAR_R)/ ENCODER_PERIOD;			//2 * PI = 6.28
-	return 0;
+	//根据齿轮半径求出速度，速度=(正常计数个数/编码器分辨率)*2π*齿轮半径/采集速度周期
+	return (count << ENCODER_FTM_CLK_DIV) * ENCODER_GEAR_R * 6.28f
+			/ (ENCODER_RES * ENCODER_PERIOD);
 }
