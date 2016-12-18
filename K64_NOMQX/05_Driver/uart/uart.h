@@ -92,11 +92,11 @@ bool uart_send1(uint8 mod, uint8 byte);
 //函数返回: true:发送成功; false:发送失败
 //参数说明: mod:UART模块号:
 //             UART_MODx，x为模块号;
+//         buff:发送缓冲区首地址
 //         len:发送的字节数
-//         buff:发送缓冲区
 //功能概要: 发送N个字节数据
 //==========================================================================
-bool uart_sendN(uint8 mod, uint32 len, uint8* buff);
+bool uart_sendN(uint8 mod, uint8* buff, uint32 len);
 
 //==========================================================================
 //函数名称: uart_send_string
