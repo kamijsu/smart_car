@@ -44,6 +44,10 @@
 #define UART_STOP_BIT_1			(1)		//1位停止位
 #define UART_STOP_BIT_2			(2)		//2位停止位
 
+//定义UART模块位传输顺序
+#define UART_BIT_ORDER_LSB		(0)		//最低有效位，即紧跟起始位的为位0
+#define UART_BIT_ORDER_MSB		(1)		//最高有效位，即紧跟起始位的为位7
+
 //定义发送与接收时轮询上限次数，最大32位(RP为roll poling简写)
 #define UART_RP_TIME_SEND		(0xFBBBu)	//发送轮询上限次数
 #define UART_RP_TIME_RECEIVE	(0xFBBBu)	//接收轮询上限次数
@@ -63,10 +67,15 @@
 //         stop_bit:停止位:
 //                  UART_STOP_BIT_1:1位停止位;
 //                  UART_STOP_BIT_2:2位停止位;
+//         bit_order:位传输顺序:
+//                   UART_BIT_ORDER_LSB:最低有效位;
+//                   UART_BIT_ORDER_MSB:最高有效位;
 //功能概要: 初始化UART模块
-//备注: 波特率为600时，UART0与UART1无法使用
+//备注: 波特率为600时，UART0与UART1无法使用;
+//     位传输顺序仅影响数据位，对起始位、校验位、停止位均无影响
 //==========================================================================
-void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit);
+void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit,
+		uint8 bit_order);
 
 //==========================================================================
 //函数名称: uart_send1

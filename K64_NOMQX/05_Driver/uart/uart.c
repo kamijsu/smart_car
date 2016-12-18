@@ -38,10 +38,15 @@ static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
 //         stop_bit:停止位:
 //                  UART_STOP_BIT_1:1位停止位;
 //                  UART_STOP_BIT_2:2位停止位;
+//         bit_order:位传输顺序:
+//                   UART_BIT_ORDER_LSB:最低有效位;
+//                   UART_BIT_ORDER_MSB:最高有效位;
 //功能概要: 初始化UART模块
-//备注: 波特率为600时，UART0与UART1无法使用
+//备注: 波特率为600时，UART0与UART1无法使用;
+//     位传输顺序仅影响数据位，对起始位、校验位、停止位均无影响
 //==========================================================================
-void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
+void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit,
+		uint8 bit_order) {
 	uint8 pcr_mux;	//PCR的MUX值
 	UART_Type * uart_ptr;	//UART基地址
 	uint16 sbr;	//波特率位，用来计算波特率
@@ -61,8 +66,8 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 	}
 
 	//使能引脚功能
-	com_port_pin_set_mux(uart_rx_pin_table[mod],pcr_mux);
-	com_port_pin_set_mux(uart_tx_pin_table[mod],pcr_mux);
+	com_port_pin_set_mux(uart_rx_pin_table[mod], pcr_mux);
+	com_port_pin_set_mux(uart_tx_pin_table[mod], pcr_mux);
 
 	//开相应的UART模块时钟门
 	switch (mod) {
@@ -113,8 +118,12 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit) {
 		}
 	}
 
-	//设置数据位顺序，这里设置为LSB，即紧跟起始位传输的是位0
-	REG_CLR_MASK(UART_S2_REG(uart_ptr), UART_S2_MSBF_MASK);
+	//设置位传输顺序
+	if (bit_order == UART_BIT_ORDER_LSB) {
+		REG_CLR_MASK(UART_S2_REG(uart_ptr), UART_S2_MSBF_MASK);
+	} else {
+		REG_SET_MASK(UART_S2_REG(uart_ptr), UART_S2_MSBF_MASK);
+	}
 
 	//设置停止位
 	if (stop_bit == UART_STOP_BIT_1) {
