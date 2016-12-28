@@ -7,10 +7,16 @@
 
 int main(void) {
 	//1. 声明主函数使用的变量
+	uint8 light_state;		//当前灯状态
 	uint32 crc;
 	uint8 data[50];
 	uint32 stream;
 	uint8 i;
+
+	FrameInfo frame;
+	FrameCmdInfo cmd;
+//	FrameDataInfo data;
+
 	/* 小车相关参数变量 */
 	Car car;
 
@@ -22,9 +28,11 @@ int main(void) {
 
 	//3. 初始化外设模块
 	light_init(LIGHT_BLUE, LIGHT_OFF); //蓝灯初始化
-	//light_init(LIGHT_BLUE, LIGHT_OFF);
-	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
-	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
+//	light_init(LIGHT_GREEN, LIGHT_OFF);
+//	light_init(LIGHT_RED, LIGHT_OFF);
+			//light_init(LIGHT_BLUE, LIGHT_OFF);
+//	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
+//	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 //	motor_init(MOTOR0);			//左电机初始化
@@ -38,13 +46,15 @@ int main(void) {
 //
 //ftm_pwm_single_init(FTM_MOD0,FTM_CH5,FTM_PWM_MODE_CENTER_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 //	temp_sensor_init();
-	crc_init_protocol(CRC_CRC16_IBM);
 	crc_init_protocol(CRC_CRC16_MODBUS);
+	frame_init();
+
 	//4. 给有关变量赋初值
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
-	uart_enable_re_int(UART_USE);   //使能uart1接收中断
+//	uart_enable_re_int(UART_USE);   //使能uart1接收中断
+	frame_enable_re_int();
 //	reed_switch_enable_int();
 
 //	uart_send_string(UART_USE,"test！\n");
@@ -53,15 +63,19 @@ int main(void) {
 	data[1] = 0x96;
 	data[2] = 0xFA;
 	data[3] = 0x01;
-	data[4] = 0x45;
-	data[5] = 0x96;
-	data[6] = 0xFA;
-	data[7] = 0x01;
+	data[4] = 0x72;
+	data[5] = 0xB1;
+	data[6] = 0xAF;
+	data[7] = 0x04;
 
-	data[8] = 0x45;
-	data[9] = 0x96;
-	data[10] = 0xFA;
-	data[11] = 0x01;
+	data[8] = 0x92;
+	data[9] = 0x91;
+	data[10] = 0x73;
+	data[11] = 0x88;
+
+	cmd.type = 0x00;
+	cmd.len = 1;
+	cmd.data[0] = 7;
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -70,12 +84,6 @@ int main(void) {
 	//主循环开始==================================================================
 	for (;;) {
 
-		crc = crc_cal(data, 12);
-		uart_send1(UART_USE, crc >> 24);
-		uart_send1(UART_USE, crc >> 16);
-		uart_send1(UART_USE, crc >> 8);
-		uart_send1(UART_USE, crc);
-
 		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 //			data_out[0] = encoder_get_speed(ENCODER0) * 1000;
@@ -83,15 +91,13 @@ int main(void) {
 		}
 		if (time0_flag.f_1s) {
 
-//			for(i=1;i<=12;i++){
-//
-//			crc = crc_cal(data, i);
-//			uart_send1(UART_USE, crc >> 24);
-//			uart_send1(UART_USE, crc >> 16);
-//			uart_send1(UART_USE, crc >> 8);
-//			uart_send1(UART_USE, crc);
-//			}
 
+//			frame_send_info(frame);
+//			crc = crc_cal(&frame.type,frame.len+2);
+//			uart_sendN(UART_MOD1,&crc,2);
+//
+//			frame_cmd_send(cmd);
+//			frame_string_send("啦啦啦\r\n");
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 //			printf("%d\n",encoder_get_and_clear_count(ENCODER0));
@@ -99,6 +105,38 @@ int main(void) {
 //			send = (uint16) (temp * 1000);
 //			uart_send1(UART_USE, send >> 8);
 //			uart_send1(UART_USE, send);
+		}
+
+		//处理接收到的帧
+		if (frame_get_info(&frame)) {
+			//根据帧的类型做相应操作
+			switch (frame.type) {
+			case FRAME_STRING_TYPE:	//字符串帧
+				//发送字符串回去
+				frame_send_info(frame);
+				break;
+			case FRAME_CMD_TYPE:	//命令帧
+				//解帧，获取命令信息
+				if (frame_cmd_parse(frame, &cmd) == CmdParseSuccess) {
+					//解帧成功时，根据命令类型做相应操作
+					switch (cmd.type) {
+					case 0x00:	//设置灯状态
+
+						//light_state位0表示蓝灯状态，位1表示绿灯状态，位2表示红灯状态
+						cmd.data[0] & 0x1 ?
+								light_set(LIGHT_BLUE, LIGHT_ON) :
+								light_set(LIGHT_BLUE, LIGHT_OFF);
+						cmd.data[0] & 0x2 ?
+								light_set(LIGHT_GREEN, LIGHT_ON) :
+								light_set(LIGHT_GREEN, LIGHT_OFF);
+						cmd.data[0] & 0x4 ?
+								light_set(LIGHT_RED, LIGHT_ON) :
+								light_set(LIGHT_RED, LIGHT_OFF);
+						break;
+					}
+				}
+				break;
+			}
 		}
 
 	} //主循环end_for

@@ -27,6 +27,12 @@
 #include "ftm.h"
 #include "temp_sensor.h"
 #include "crc.h"
+#include "crc16_modbus.h"
+#include "frame.h"
+#include "frame_string.h"
+#include "frame_cmd.h"
+#include "frame_data.h"
+#include "frame_bytes.h"
 
 //防止全局变量重复声明的前缀处理方法
 #ifdef GLOBLE_VAR                 //GLOBLE_VAR在main.c文件中宏定义

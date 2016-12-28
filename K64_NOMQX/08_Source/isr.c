@@ -14,21 +14,11 @@
 //功能概要：UART1中断服务函数
 //==========================================================================
 void UART1_RX_TX_IRQHandler() {
-	uint8 ch;
-	bool err;
-	uint32 res;
+	FrameFramingResult res;
 	DISABLE_INTERRUPTS;
 
-	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
-		if (!err) {
-//			uart_send1(UART_MOD1, ch);
-			res = crc_cal(&ch,1);
-			uart_send1(UART_MOD1, res>>24);
-			uart_send1(UART_MOD1, res>>16);
-			uart_send1(UART_MOD1, res>>8);
-			uart_send1(UART_MOD1, res);
-		}
-	}
+	res = frame_framing();
+	uart_send1(UART_MOD1, res);
 
 	ENABLE_INTERRUPTS;
 }
@@ -141,7 +131,7 @@ void PORTD_IRQHandler() {
 	if (reed_switch_get_int()) {
 		reed_switch_clear_int();
 		reed_switch_disable_int();
-		uart_send_string(UART_USE,"产生中断！\n");
+		uart_send_string(UART_USE, "产生中断！\n");
 	}
 
 	ENABLE_INTERRUPTS; //恢复原总中断设置情况
