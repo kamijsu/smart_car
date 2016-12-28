@@ -8,7 +8,9 @@
 int main(void) {
 	//1. 声明主函数使用的变量
 	uint32 crc;
-
+	uint8 data[50];
+	uint32 stream;
+	uint8 i;
 	/* 小车相关参数变量 */
 	Car car;
 
@@ -36,6 +38,7 @@ int main(void) {
 //
 //ftm_pwm_single_init(FTM_MOD0,FTM_CH5,FTM_PWM_MODE_CENTER_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 //	temp_sensor_init();
+	crc_init_protocol(CRC_CRC16_IBM);
 	crc_init_protocol(CRC_CRC16_MODBUS);
 	//4. 给有关变量赋初值
 
@@ -46,39 +49,51 @@ int main(void) {
 
 //	uart_send_string(UART_USE,"test！\n");
 
+	data[0] = 0x45;
+	data[1] = 0x96;
+	data[2] = 0xFA;
+	data[3] = 0x01;
+	data[4] = 0x45;
+	data[5] = 0x96;
+	data[6] = 0xFA;
+	data[7] = 0x01;
+
+	data[8] = 0x45;
+	data[9] = 0x96;
+	data[10] = 0xFA;
+	data[11] = 0x01;
+
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
+
+		crc = crc_cal(data, 12);
+		uart_send1(UART_USE, crc >> 24);
+		uart_send1(UART_USE, crc >> 16);
+		uart_send1(UART_USE, crc >> 8);
+		uart_send1(UART_USE, crc);
+
 		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 //			data_out[0] = encoder_get_speed(ENCODER0) * 1000;
 //			visual_scope_output(UART_USE,data_out);
 		}
 		if (time0_flag.f_1s) {
-			REG_CLR_MASK(CRC_CTRL, CRC_CTRL_WAS_MASK);
-			CRC_DATALL = 0x46;
-//			crc = crc_get();
-			uart_send1(UART_USE, crc >> 24);
-			uart_send1(UART_USE, crc >> 16);
-			uart_send1(UART_USE, crc >> 8);
-			uart_send1(UART_USE, crc);
 
-			crc = CRC_DATA;
-			uart_send1(UART_USE, crc >> 24);
-			uart_send1(UART_USE, crc >> 16);
-			uart_send1(UART_USE, crc >> 8);
-			uart_send1(UART_USE, crc);
-			crc = CRC_CTRL;
-			uart_send1(UART_USE, crc >> 24);
-			uart_send1(UART_USE, crc >> 16);
-			uart_send1(UART_USE, crc >> 8);
-			uart_send1(UART_USE, crc);
+//			for(i=1;i<=12;i++){
+//
+//			crc = crc_cal(data, i);
+//			uart_send1(UART_USE, crc >> 24);
+//			uart_send1(UART_USE, crc >> 16);
+//			uart_send1(UART_USE, crc >> 8);
+//			uart_send1(UART_USE, crc);
+//			}
 
 			time0_flag.f_1s = 0;
-//			light_change(LIGHT_BLUE);
+			light_change(LIGHT_BLUE);
 //			printf("%d\n",encoder_get_and_clear_count(ENCODER0));
 //			temp = temp_sensor_get();
 //			send = (uint16) (temp * 1000);

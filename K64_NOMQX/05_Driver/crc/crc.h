@@ -74,12 +74,14 @@ void crc_init(uint8 width, uint32 seed, uint32 poly, uint8 write_trans,
 void crc_init_protocol(uint8 protocol_type);
 
 //==========================================================================
-//函数名称: crc_cal_block
+//函数名称: crc_cal
 //函数返回: CRC校验码，16位协议时仅低16位有效
 //参数说明: data:校验数据的首地址
 //         len:校验数据的字节数
 //功能概要: 校验一定长度的数据，返回生成的CRC校验码
+//备注: 校验过程是中断安全的;
+//     硬件CRC仅适合块式校验数据，流式校验数据时效率低下，建议用软件CRC进行流式校验
 //==========================================================================
-uint32 crc_cal_block(uint8* data, uint32 len);
+uint32 crc_cal(uint8* data, uint32 len);
 
 #endif

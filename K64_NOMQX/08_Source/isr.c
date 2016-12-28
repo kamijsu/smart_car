@@ -16,11 +16,17 @@
 void UART1_RX_TX_IRQHandler() {
 	uint8 ch;
 	bool err;
+	uint32 res;
 	DISABLE_INTERRUPTS;
 
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
-			uart_send1(UART_MOD1, ch);
+//			uart_send1(UART_MOD1, ch);
+			res = crc_cal(&ch,1);
+			uart_send1(UART_MOD1, res>>24);
+			uart_send1(UART_MOD1, res>>16);
+			uart_send1(UART_MOD1, res>>8);
+			uart_send1(UART_MOD1, res);
 		}
 	}
 
