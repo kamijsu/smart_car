@@ -7,12 +7,7 @@
 
 int main(void) {
 	//1. 声明主函数使用的变量
-	uint32 run_counter;
-	uint16 send;
-	float temp;
-
-	int16 test;
-	int32 test2;
+	uint32 crc;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -26,7 +21,8 @@ int main(void) {
 	//3. 初始化外设模块
 	light_init(LIGHT_BLUE, LIGHT_OFF); //蓝灯初始化
 	//light_init(LIGHT_BLUE, LIGHT_OFF);
-	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
+	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
+	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 //	motor_init(MOTOR0);			//左电机初始化
@@ -40,15 +36,13 @@ int main(void) {
 //
 //ftm_pwm_single_init(FTM_MOD0,FTM_CH5,FTM_PWM_MODE_CENTER_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 //	temp_sensor_init();
-
+	crc_init_protocol(CRC_CRC16_MODBUS);
 	//4. 给有关变量赋初值
-	run_counter = 0;
-	test = 0xFFFF;
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
-	reed_switch_enable_int();
+//	reed_switch_enable_int();
 
 //	uart_send_string(UART_USE,"test！\n");
 
@@ -58,16 +52,33 @@ int main(void) {
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-		if(time0_flag.f_50ms){
+		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 //			data_out[0] = encoder_get_speed(ENCODER0) * 1000;
 //			visual_scope_output(UART_USE,data_out);
 		}
 		if (time0_flag.f_1s) {
-//			uart_send_string(UART_USE, "中文测试");
-			uart_send1(UART_USE,0x45);
+			REG_CLR_MASK(CRC_CTRL, CRC_CTRL_WAS_MASK);
+			CRC_DATALL = 0x46;
+//			crc = crc_get();
+			uart_send1(UART_USE, crc >> 24);
+			uart_send1(UART_USE, crc >> 16);
+			uart_send1(UART_USE, crc >> 8);
+			uart_send1(UART_USE, crc);
+
+			crc = CRC_DATA;
+			uart_send1(UART_USE, crc >> 24);
+			uart_send1(UART_USE, crc >> 16);
+			uart_send1(UART_USE, crc >> 8);
+			uart_send1(UART_USE, crc);
+			crc = CRC_CTRL;
+			uart_send1(UART_USE, crc >> 24);
+			uart_send1(UART_USE, crc >> 16);
+			uart_send1(UART_USE, crc >> 8);
+			uart_send1(UART_USE, crc);
+
 			time0_flag.f_1s = 0;
-			light_change(LIGHT_BLUE);
+//			light_change(LIGHT_BLUE);
 //			printf("%d\n",encoder_get_and_clear_count(ENCODER0));
 //			temp = temp_sensor_get();
 //			send = (uint16) (temp * 1000);
