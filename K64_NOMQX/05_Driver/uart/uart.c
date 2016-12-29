@@ -204,58 +204,50 @@ bool uart_send_string(uint8 mod, uint8* str) {
 
 //==========================================================================
 //函数名称: uart_re1
-//函数返回: true:接收成功; false:接收失败
+//函数返回: true:接收成功; false:接收失败，即接收缓冲区无数据
 //参数说明: mod:UART模块号:
 //             UART_MODx，x为模块号;
 //         byte:想要接收字节数据的地址
-//功能概要: 接收1个字节数据
+//功能概要: 接收1个字节数据，成功时存储该字节数据
 //==========================================================================
 bool uart_re1(uint8 mod, uint8* byte) {
 	UART_Type * uart_ptr;	//UART基地址
-	uint32 max, i;
 
 	//获取UART基地址
 	uart_ptr = uart_table[mod];
-	max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
 
-	for (i = 0; i < max; i++) {
-		//判断接收缓冲区是否满
-		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_RDRF_MASK)) {
-			//满时获取数据寄存器数据
-			*byte = UART_D_REG(uart_ptr);
-			return true;
-		}
+	//判断接收缓冲区是否满
+	if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_RDRF_MASK)) {
+		//满时获取数据寄存器数据
+		*byte = UART_D_REG(uart_ptr);
+		return true;
 	}
 	return false;
 }
 
 //==========================================================================
 //函数名称: uart_re1_parity
-//函数返回: true:接收成功; false:接收失败
+//函数返回: true:接收成功; false:接收失败，即接收缓冲区无数据
 //参数说明: mod:UART模块号:
 //             UART_MODx，x为模块号;
 //         byte:想要接收字节数据的地址
 //         err:接收成功时，奇偶校验有无错误，若未开启校验，则始终无错误
-//功能概要: 接收1个字节数据，并判断校验位有无错误
+//功能概要: 接收1个字节数据，成功时存储该字节数据，并判断校验位有无错误
 //==========================================================================
 bool uart_re1_parity(uint8 mod, uint8* byte, bool* err) {
 	UART_Type * uart_ptr;	//UART基地址
-	uint32 max, i;
 
 	//获取UART基地址
 	uart_ptr = uart_table[mod];
-	max = UART_RP_TIME_RECEIVE;	//将上限次数转化为uint32类型
 
-	for (i = 0; i < max; i++) {
-		//判断接收缓冲区是否满
-		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_RDRF_MASK)) {
-			//查看奇偶校验错误标志
-			*err = REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_PF_MASK) ?
-					true : false;
-			//满时获取数据寄存器数据
-			*byte = UART_D_REG(uart_ptr);
-			return true;
-		}
+	//判断接收缓冲区是否满
+	if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_RDRF_MASK)) {
+		//查看奇偶校验错误标志
+		*err = REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_PF_MASK) ?
+				true : false;
+		//满时获取数据寄存器数据
+		*byte = UART_D_REG(uart_ptr);
+		return true;
 	}
 	return false;
 }
