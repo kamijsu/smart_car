@@ -31,8 +31,8 @@ int main(void) {
 //	light_init(LIGHT_GREEN, LIGHT_OFF);
 //	light_init(LIGHT_RED, LIGHT_OFF);
 			//light_init(LIGHT_BLUE, LIGHT_OFF);
-//	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
-//	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
+	uart_init(UART_USE, 115200, UART_PARITY_ODD, UART_STOP_BIT_1,
+	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 //	motor_init(MOTOR0);			//左电机初始化
@@ -46,14 +46,14 @@ int main(void) {
 //
 //ftm_pwm_single_init(FTM_MOD0,FTM_CH5,FTM_PWM_MODE_CENTER_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 //	temp_sensor_init();
-	crc_init_protocol(CRC_CRC16_MODBUS);
-	frame_init();
+//	crc_init_protocol(CRC_CRC16_MODBUS);
+//	frame_init();
 
 	//4. 给有关变量赋初值
 
 	//5. 使能模块中断
-	pit_enable_int(PIT_CH0);   		//使能pit中断
-//	uart_enable_re_int(UART_USE);   //使能uart1接收中断
+//	pit_enable_int(PIT_CH0);   		//使能pit中断
+	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	frame_enable_re_int();
 //	reed_switch_enable_int();
 
@@ -107,37 +107,37 @@ int main(void) {
 //			uart_send1(UART_USE, send);
 		}
 
-		//处理接收到的帧
-		if (frame_get_info(&frame)) {
-			//根据帧的类型做相应操作
-			switch (frame.type) {
-			case FRAME_STRING_TYPE:	//字符串帧
-				//发送字符串回去
-				frame_send_info(frame);
-				break;
-			case FRAME_CMD_TYPE:	//命令帧
-				//解帧，获取命令信息
-				if (frame_cmd_parse(frame, &cmd) == CmdParseSuccess) {
-					//解帧成功时，根据命令类型做相应操作
-					switch (cmd.type) {
-					case 0x00:	//设置灯状态
-
-						//light_state位0表示蓝灯状态，位1表示绿灯状态，位2表示红灯状态
-						cmd.data[0] & 0x1 ?
-								light_set(LIGHT_BLUE, LIGHT_ON) :
-								light_set(LIGHT_BLUE, LIGHT_OFF);
-						cmd.data[0] & 0x2 ?
-								light_set(LIGHT_GREEN, LIGHT_ON) :
-								light_set(LIGHT_GREEN, LIGHT_OFF);
-						cmd.data[0] & 0x4 ?
-								light_set(LIGHT_RED, LIGHT_ON) :
-								light_set(LIGHT_RED, LIGHT_OFF);
-						break;
-					}
-				}
-				break;
-			}
-		}
+//		//处理接收到的帧
+//		if (frame_get_info(&frame)) {
+//			//根据帧的类型做相应操作
+//			switch (frame.type) {
+//			case FRAME_STRING_TYPE:	//字符串帧
+//				//发送字符串回去
+//				frame_send_info(frame);
+//				break;
+//			case FRAME_CMD_TYPE:	//命令帧
+//				//解帧，获取命令信息
+//				if (frame_cmd_parse(frame, &cmd) == CmdParseSuccess) {
+//					//解帧成功时，根据命令类型做相应操作
+//					switch (cmd.type) {
+//					case 0x00:	//设置灯状态
+//
+//						//light_state位0表示蓝灯状态，位1表示绿灯状态，位2表示红灯状态
+//						cmd.data[0] & 0x1 ?
+//								light_set(LIGHT_BLUE, LIGHT_ON) :
+//								light_set(LIGHT_BLUE, LIGHT_OFF);
+//						cmd.data[0] & 0x2 ?
+//								light_set(LIGHT_GREEN, LIGHT_ON) :
+//								light_set(LIGHT_GREEN, LIGHT_OFF);
+//						cmd.data[0] & 0x4 ?
+//								light_set(LIGHT_RED, LIGHT_ON) :
+//								light_set(LIGHT_RED, LIGHT_OFF);
+//						break;
+//					}
+//				}
+//				break;
+//			}
+//		}
 
 	} //主循环end_for
 	  //主循环结束==================================================================

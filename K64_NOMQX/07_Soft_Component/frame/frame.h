@@ -51,7 +51,7 @@ typedef struct {
 
 //定义组帧结果枚举类型
 typedef enum {
-	FramingErr,			//接收字节失败
+	FramingNone,		//未接收到字节
 	FramingFull,		//帧缓冲区满，字节被丢弃
 	FramingInvalid,		//收到无效字节
 	FramingHeadLow,		//收到帧头低字节
@@ -99,17 +99,17 @@ bool frame_send_info(FrameInfo info);
 //==========================================================================
 //函数名称: frame_framing
 //函数返回: 组帧结果:
-//         FramingErr:     接收字节失败
-//         FramingFull:    帧缓冲区满，字节被丢弃
-//         FramingInvalid: 收到无效字节
-//         FramingHeadLow: 收到帧头低字节
-//         FramingHeadHigh:收到帧头高字节
-//         FramingType:    收到帧类型
-//         FramingLen:     收到数据长度
-//         FramingData:    收到数据
-//         FramingFCS:     收到FCS低字节
-//         FramingSuccess: 收到FCS高字节，且校验成功
-//         FramingFail:    收到FCS高字节，且校验失败，帧被丢弃
+//         FramingNone:    未接收到字节;
+//         FramingFull:    帧缓冲区满，字节被丢弃;
+//         FramingInvalid: 收到无效字节;
+//         FramingHeadLow: 收到帧头低字节;
+//         FramingHeadHigh:收到帧头高字节;
+//         FramingType:    收到帧类型;
+//         FramingLen:     收到数据长度;
+//         FramingData:    收到数据;
+//         FramingFCS:     收到FCS低字节;
+//         FramingSuccess: 收到FCS高字节，且校验成功;
+//         FramingFail:    收到FCS高字节，且校验失败，帧被丢弃;
 //参数说明: 无
 //功能概要: 从UART接收缓冲区中读取一个字节数据，并进行组帧，组的帧存至帧缓冲区中
 //==========================================================================
