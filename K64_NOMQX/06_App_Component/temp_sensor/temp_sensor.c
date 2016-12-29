@@ -29,14 +29,8 @@ bool temp_sensor_init() {
 //备注: 可以用于设置TEMP_SENSOR_VTEMP25
 //==========================================================================
 float temp_sensor_get_vtg() {
-	int16 ad;		//采样AD值
-
-	//获取采样AD值
-	ad = adc_diff_get(TEMP_SENSOR_ADC_MOD, TEMP_SENSOR_ADC_DIFF_GROUP);
-
-	//转化为电压值
-	return ad * TEMP_SENSOR_ADC_VTG * 1.0f
-			/ ((1 << TEMP_SENSOR_ADC_DATA_BITS) - 1);
+	//获取采样电压值
+	return adc_diff_get_vtg(TEMP_SENSOR_ADC_MOD, TEMP_SENSOR_ADC_DIFF_GROUP);
 }
 
 //==========================================================================

@@ -12,10 +12,16 @@ int main(void) {
 	uint8 data[50];
 	uint32 stream;
 	uint8 i;
-
+	float temp;
 	FrameInfo frame;
 	FrameCmdInfo cmd;
 //	FrameDataInfo data;
+
+	uint16 ad_s;
+
+	int16 ad_d;
+
+	float f;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -31,7 +37,7 @@ int main(void) {
 //	light_init(LIGHT_GREEN, LIGHT_OFF);
 //	light_init(LIGHT_RED, LIGHT_OFF);
 			//light_init(LIGHT_BLUE, LIGHT_OFF);
-	uart_init(UART_USE, 115200, UART_PARITY_ODD, UART_STOP_BIT_1,
+	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
@@ -49,12 +55,16 @@ int main(void) {
 //	crc_init_protocol(CRC_CRC16_MODBUS);
 //	frame_init();
 
+	adc_init(ADC_MOD0, ADC_CLK_DIV_4, ADC_ACCURACY_SINGLE_DIFF_16,
+			ADC_HARDWARE_AVG_32, ADC_ADLSTS_12, ADC_ADHSC_NORMAL,
+			ADC_CAL_ENABLE);
+
 	//4. 给有关变量赋初值
 
 	//5. 使能模块中断
-//	pit_enable_int(PIT_CH0);   		//使能pit中断
+	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
-	frame_enable_re_int();
+//	frame_enable_re_int();
 //	reed_switch_enable_int();
 
 //	uart_send_string(UART_USE,"test！\n");
@@ -92,6 +102,19 @@ int main(void) {
 		if (time0_flag.f_1s) {
 
 
+			ad_s = adc_single_get_ad(ADC_MOD0,ADC_SE_TEMP,ADC_SE_SEL_A);
+
+			printf("%d\r\n",ad_s);
+
+			ad_d = adc_diff_get_ad(ADC_MOD0,ADC_DIFF_GROUP_TEMP);
+			printf("%d\r\n",ad_d);
+
+			f = adc_single_get_vtg(ADC_MOD0,ADC_SE_TEMP,ADC_SE_SEL_A);
+			printf("%f\r\n",f);
+
+			f= adc_diff_get_vtg(ADC_MOD0,ADC_DIFF_GROUP_TEMP);
+			printf("%f\r\n",f);
+
 //			frame_send_info(frame);
 //			crc = crc_cal(&frame.type,frame.len+2);
 //			uart_sendN(UART_MOD1,&crc,2);
@@ -101,7 +124,15 @@ int main(void) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 //			printf("%d\n",encoder_get_and_clear_count(ENCODER0));
-//			temp = temp_sensor_get();
+//			temp = temp_sensor_get_temp();
+//			uart_send1(UART_MOD1,((uint32)temp*1000)>>24);
+//			uart_send1(UART_MOD1,((uint32)temp*1000)>>16);
+//			uart_send1(UART_MOD1,((uint32)temp*1000)>>8);
+//			uart_send1(UART_MOD1,((uint32)temp*1000));
+//			printf("%f\r\n",temp);
+//
+//			temp = adc_diff_get_vtg(ADC_MOD0,TEMP_SENSOR_ADC_DIFF_GROUP);
+//			printf("%f\r\n",temp);
 //			send = (uint16) (temp * 1000);
 //			uart_send1(UART_USE, send >> 8);
 //			uart_send1(UART_USE, send);

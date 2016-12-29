@@ -24,8 +24,6 @@
 #define TEMP_SENSOR_ADC_ADHSC			ADC_ADHSC_NORMAL				//正常转换时序
 //定义是否使能ADC校对功能
 #define TEMP_SENSOR_ADC_CAL				ADC_CAL_ENABLE					//使能ADC校对功能
-//定义ADC参考电压，单位mV
-#define TEMP_SENSOR_ADC_VTG				ADC_VTG							//3300mV
 //定义所使用的ADC差分通道组(这里使用差分输入获取ADC转换结果)
 #define TEMP_SENSOR_ADC_DIFF_GROUP		ADC_DIFF_GROUP_TEMP
 
@@ -34,19 +32,6 @@
 #define TEMP_SENSOR_VTEMP25				(716)
 //温度传感器比例系数，单位mV/°C
 #define TEMP_SENSOR_M					(1.62f)
-
-//根据定义的ADC采样精度定义数据位数量
-#ifdef TEMP_SENSOR_ADC_ACCURACY
-#if(TEMP_SENSOR_ADC_ACCURACY == ADC_ACCURACY_SINGLE_8_DIFF_9)
-#define TEMP_SENSOR_ADC_DATA_BITS	(8)
-#elif(TEMP_SENSOR_ADC_ACCURACY == ADC_ACCURACY_SINGLE_10_DIFF_11)
-#define TEMP_SENSOR_ADC_DATA_BITS	(10)
-#elif(TEMP_SENSOR_ADC_ACCURACY == ADC_ACCURACY_SINGLE_12_DIFF_13)
-#define TEMP_SENSOR_ADC_DATA_BITS	(12)
-#elif(TEMP_SENSOR_ADC_ACCURACY == ADC_ACCURACY_SINGLE_DIFF_16)
-#define TEMP_SENSOR_ADC_DATA_BITS	(15)
-#endif
-#endif
 
 //==========================================================================
 //函数名称: temp_sensor_init

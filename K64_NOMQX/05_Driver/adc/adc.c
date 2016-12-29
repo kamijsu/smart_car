@@ -185,7 +185,7 @@ bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 }
 
 //==========================================================================
-//函数名称: adc_single_get
+//函数名称: adc_single_get_ad
 //函数返回: 采样AD值，无符号
 //参数说明: mod:ADC模块号:
 //             ADC_MODx，x为模块号;
@@ -194,11 +194,12 @@ bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 //         se_sel:单端输入通道选择:
 //                ADC_SE_SEL_A:选择A通道;
 //                ADC_SE_SEL_B:选择B通道;
-//功能概要: 阻塞式地获取单端输入通道的ADC转换结果
+//功能概要: 阻塞式地获取单端输入通道的ADC转换结果(AD值)
 //备注: 若通道无AB通道选择，则se_sel无效，选择任意通道均可;
-//     未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能
+//     未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能;
+//     建议使用adc_single_get_vtg，效率较该函数高
 //==========================================================================
-uint16 adc_single_get(uint8 mod, uint8 se_ch, uint8 se_sel) {
+uint16 adc_single_get_ad(uint8 mod, uint8 se_ch, uint8 se_sel) {
 	ADC_Type * adc_ptr;	//ADC基地址
 
 	//获取ADC基地址
@@ -210,10 +211,8 @@ uint16 adc_single_get(uint8 mod, uint8 se_ch, uint8 se_sel) {
 	} else {
 		REG_SET_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_MUXSEL_MASK);
 	}
-	//配置单端输入，并清除通道选择
-	REG_CLR_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_DIFF_MASK|ADC_SC1_ADCH_MASK);
-	//配置输入通道
-	REG_SET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_ADCH(se_ch));
+	//配置输入通道，并设置单端输入
+	REG_SET_VAL(ADC_SC1_REG(adc_ptr,0), ADC_SC1_ADCH(se_ch));
 	//等待ADC转换完成
 	while (!REG_GET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_COCO_MASK)) {
 	}
@@ -222,29 +221,137 @@ uint16 adc_single_get(uint8 mod, uint8 se_ch, uint8 se_sel) {
 }
 
 //==========================================================================
-//函数名称: adc_diff_get
+//函数名称: adc_single_get_vtg
+//函数返回: 采样电压值，单位mV
+//参数说明: mod:ADC模块号:
+//             ADC_MODx，x为模块号;
+//         se_ch:ADC单端输入通道号:
+//               ADC_SEx，x为通道号;
+//         se_sel:单端输入通道选择:
+//                ADC_SE_SEL_A:选择A通道;
+//                ADC_SE_SEL_B:选择B通道;
+//功能概要: 阻塞式地获取单端输入通道的ADC转换结果，并转化为电压值，单位mV
+//备注: 若通道无AB通道选择，则se_sel无效，选择任意通道均可;
+//     未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能
+//==========================================================================
+float adc_single_get_vtg(uint8 mod, uint8 se_ch, uint8 se_sel) {
+	ADC_Type * adc_ptr;	//ADC基地址
+	uint16 ad_val;		//采样AD值，无符号
+	float radio;		//AD值转电压时的比例系数
+	uint8 mode;			//转换模式
+
+	//获取ADC基地址
+	adc_ptr = adc_table[mod];
+
+	//选择AB通道
+	if (se_sel == ADC_SE_SEL_A) {
+		REG_CLR_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_MUXSEL_MASK);
+	} else {
+		REG_SET_MASK(ADC_CFG2_REG(adc_ptr), ADC_CFG2_MUXSEL_MASK);
+	}
+	//配置输入通道，并设置单端输入
+	REG_SET_VAL(ADC_SC1_REG(adc_ptr,0), ADC_SC1_ADCH(se_ch));
+	//等待转换完成期间计算比例系数
+	//获取转换模式
+	mode = REG_GET_MASK(ADC_CFG1_REG(adc_ptr),
+			ADC_CFG1_MODE_MASK) >> ADC_CFG1_MODE_SHIFT;
+	//根据转换模式计算比例系数，除数为((1<<数据位数)-1)
+	switch (mode) {
+	case ADC_ACCURACY_SINGLE_8_DIFF_9:
+		radio = ADC_VTG / 255.0f;
+		break;
+	case ADC_ACCURACY_SINGLE_10_DIFF_11:
+		radio = ADC_VTG / 1023.0f;
+		break;
+	case ADC_ACCURACY_SINGLE_12_DIFF_13:
+		radio = ADC_VTG / 4095.0f;
+		break;
+	case ADC_ACCURACY_SINGLE_DIFF_16:
+		radio = ADC_VTG / 65535.0f;
+		break;
+	}
+	//等待ADC转换完成
+	while (!REG_GET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_COCO_MASK)) {
+	}
+	//获取采样AD值
+	ad_val = ADC_R_REG(adc_ptr, 0);
+	//转化为电压值，并返回
+	return ad_val * radio;
+}
+
+//==========================================================================
+//函数名称: adc_diff_get_ad
 //函数返回: 采样AD值，有符号
 //参数说明: mod:ADC模块号:
 //             ADC_MODx，x为模块号;
 //         diff_group:ADC差分输入通道组号:
 //                    ADC_DIFF_GROUPx，x为通道组号;
-//功能概要: 阻塞式地获取差分输入通道组的ADC转换结果
-//备注: 未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能
+//功能概要: 阻塞式地获取差分输入通道组的ADC转换结果(AD值)
+//备注: 未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能;
+//     建议使用adc_diff_get_vtg，效率较该函数高
 //==========================================================================
-int16 adc_diff_get(uint8 mod, uint8 diff_group) {
+int16 adc_diff_get_ad(uint8 mod, uint8 diff_group) {
 	ADC_Type * adc_ptr;	//ADC基地址
 
 	//获取ADC基地址
 	adc_ptr = adc_table[mod];
 
-	//配置差分输入
-	REG_SET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_DIFF_MASK);
-	//配置输入通道组
-	REG_CLR_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_ADCH_MASK);
-	REG_SET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_ADCH(diff_group));
+	//配置输入通道组，并设置差分输入
+	REG_SET_VAL(ADC_SC1_REG(adc_ptr,0),
+			ADC_SC1_ADCH(diff_group) | ADC_SC1_DIFF_MASK);
 	//等待ADC转换完成
 	while (!REG_GET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_COCO_MASK)) {
 	}
 	//返回转换结果
 	return ADC_R_REG(adc_ptr, 0);
+}
+
+//==========================================================================
+//函数名称: adc_diff_get_vtg
+//函数返回: 采样电压值，单位mV
+//参数说明: mod:ADC模块号:
+//             ADC_MODx，x为模块号;
+//         diff_group:ADC差分输入通道组号:
+//                    ADC_DIFF_GROUPx，x为通道组号;
+//功能概要: 阻塞式地获取差分输入通道组的ADC转换结果，并转化为电压值，单位mV
+//备注: 未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能
+//==========================================================================
+float adc_diff_get_vtg(uint8 mod, uint8 diff_group) {
+	ADC_Type * adc_ptr;	//ADC基地址
+	int16 ad_val;		//采样AD值，有符号
+	float radio;		//AD值转电压时的比例系数
+	uint8 mode;			//转换模式
+
+	//获取ADC基地址
+	adc_ptr = adc_table[mod];
+
+	//配置输入通道组，并设置差分输入
+	REG_SET_VAL(ADC_SC1_REG(adc_ptr,0),
+			ADC_SC1_ADCH(diff_group) | ADC_SC1_DIFF_MASK);
+	//等待转换完成期间计算比例系数
+	//获取转换模式
+	mode = REG_GET_MASK(ADC_CFG1_REG(adc_ptr),
+			ADC_CFG1_MODE_MASK) >> ADC_CFG1_MODE_SHIFT;
+	//根据转换模式计算比例系数，除数为((1<<数据位数)-1)
+	switch (mode) {
+	case ADC_ACCURACY_SINGLE_8_DIFF_9:
+		radio = ADC_VTG / 255.0f;
+		break;
+	case ADC_ACCURACY_SINGLE_10_DIFF_11:
+		radio = ADC_VTG / 1023.0f;
+		break;
+	case ADC_ACCURACY_SINGLE_12_DIFF_13:
+		radio = ADC_VTG / 4095.0f;
+		break;
+	case ADC_ACCURACY_SINGLE_DIFF_16:
+		radio = ADC_VTG / 32767.0f;
+		break;
+	}
+	//等待ADC转换完成
+	while (!REG_GET_MASK(ADC_SC1_REG(adc_ptr,0), ADC_SC1_COCO_MASK)) {
+	}
+	//获取采样AD值
+	ad_val = ADC_R_REG(adc_ptr, 0);
+	//转化为电压值，并返回
+	return ad_val * radio;
 }

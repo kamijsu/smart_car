@@ -46,7 +46,7 @@
 #define ADC_SE_SEL_B		(1)		//选择B通道
 
 //定义ADC参考电压，单位mV，这里默认选择VREFH和VREFL(VTG为voltage简写)
-#define ADC_VTG		(3300)
+#define ADC_VTG		(3300.0f)
 
 //定义ADC模块时钟分频数，这里选择总线时钟
 #define ADC_CLK_DIV_1		(0)		//总线时钟1分频
@@ -141,7 +141,7 @@ bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 		uint8 adlsts, uint8 adhsc, uint8 cal);
 
 //==========================================================================
-//函数名称: adc_single_get
+//函数名称: adc_single_get_ad
 //函数返回: 采样AD值，无符号
 //参数说明: mod:ADC模块号:
 //             ADC_MODx，x为模块号;
@@ -150,22 +150,52 @@ bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 //         se_sel:单端输入通道选择:
 //                ADC_SE_SEL_A:选择A通道;
 //                ADC_SE_SEL_B:选择B通道;
-//功能概要: 阻塞式地获取单端输入通道的ADC转换结果
+//功能概要: 阻塞式地获取单端输入通道的ADC转换结果(AD值)
+//备注: 若通道无AB通道选择，则se_sel无效，选择任意通道均可;
+//     未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能;
+//     建议使用adc_single_get_vtg，效率较该函数高
+//==========================================================================
+uint16 adc_single_get_ad(uint8 mod, uint8 se_ch, uint8 se_sel);
+
+//==========================================================================
+//函数名称: adc_single_get_vtg
+//函数返回: 采样电压值，单位mV
+//参数说明: mod:ADC模块号:
+//             ADC_MODx，x为模块号;
+//         se_ch:ADC单端输入通道号:
+//               ADC_SEx，x为通道号;
+//         se_sel:单端输入通道选择:
+//                ADC_SE_SEL_A:选择A通道;
+//                ADC_SE_SEL_B:选择B通道;
+//功能概要: 阻塞式地获取单端输入通道的ADC转换结果，并转化为电压值，单位mV
 //备注: 若通道无AB通道选择，则se_sel无效，选择任意通道均可;
 //     未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能
 //==========================================================================
-uint16 adc_single_get(uint8 mod, uint8 se_ch, uint8 se_sel);
+float adc_single_get_vtg(uint8 mod, uint8 se_ch, uint8 se_sel);
 
 //==========================================================================
-//函数名称: adc_diff_get
+//函数名称: adc_diff_get_ad
 //函数返回: 采样AD值，有符号
 //参数说明: mod:ADC模块号:
 //             ADC_MODx，x为模块号;
 //         diff_group:ADC差分输入通道组号:
 //                    ADC_DIFF_GROUPx，x为通道组号;
-//功能概要: 阻塞式地获取差分输入通道组的ADC转换结果
+//功能概要: 阻塞式地获取差分输入通道组的ADC转换结果(AD值)
+//备注: 未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能;
+//     建议使用adc_diff_get_vtg，效率较该函数高
+//==========================================================================
+int16 adc_diff_get_ad(uint8 mod, uint8 diff_group);
+
+//==========================================================================
+//函数名称: adc_diff_get_vtg
+//函数返回: 采样电压值，单位mV
+//参数说明: mod:ADC模块号:
+//             ADC_MODx，x为模块号;
+//         diff_group:ADC差分输入通道组号:
+//                    ADC_DIFF_GROUPx，x为通道组号;
+//功能概要: 阻塞式地获取差分输入通道组的ADC转换结果，并转化为电压值，单位mV
 //备注: 未配置相应引脚控制寄存器的MUX值，因此相应引脚在使用前不能被配置为其他功能
 //==========================================================================
-int16 adc_diff_get(uint8 mod, uint8 diff_group);
+float adc_diff_get_vtg(uint8 mod, uint8 diff_group);
 
 #endif
