@@ -37,9 +37,9 @@ typedef struct {
 	uint8_t f_10ms;
 	uint8_t f_15ms;
 	uint8_t f_20ms;
-	uint8_t f_50ms;
+	volatile uint8_t f_50ms;
 	uint8_t f_100ms;
-	uint8_t f_1s;
+	volatile uint8_t f_1s;
 	uint8_t f_5s;
 	uint8_t f_10s;
 	uint8_t f_15s;
