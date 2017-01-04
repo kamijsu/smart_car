@@ -5,6 +5,9 @@
 
 #include "common.h"
 
+//各端口基地址
+static PORT_Type * const port_table[] = { PORTA, PORTB, PORTC, PORTD, PORTE };
+
 //===========================================================================
 //函数名称: com_port_pin_resolution
 //函数返回: 无

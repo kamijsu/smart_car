@@ -34,11 +34,14 @@
 #include "frame_data.h"
 #include "frame_bytes.h"
 
-//防止全局变量重复声明的前缀处理方法
-#ifdef GLOBLE_VAR                 //GLOBLE_VAR在main.c文件中宏定义
-#define G_VAR_PREFIX          //main.c文件中使用全局变量不加“extern”前缀
+//防止全局变量重复声明的前缀处理方法，并且添加volatile前缀，
+//因为全局变量会被多个.c文件使用，若不使用volatile前缀，则不会每次去变量所在地址读值，
+//会造成某个.c文件修改变量后，对别的.c文件不可见问题，而.c文件中的静态变量不存在该问题，
+//因为仅有该.c文件可以访问该静态变量，即该静态变量始终对该.c文件是可见的
+#ifdef GLOBLE_VAR				//GLOBLE_VAR在main.c文件中宏定义
+#define G_VAR_PREFIX volatile		//main.c文件中使用全局变量不加“extern”前缀
 #else
-#define G_VAR_PREFIX  extern  //其他文件中使用全局变量自动加“extern”前缀
+#define G_VAR_PREFIX extern volatile	//其他文件中使用全局变量自动加“extern”前缀
 #endif
 
 //定义全局变量

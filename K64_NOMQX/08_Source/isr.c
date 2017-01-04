@@ -14,19 +14,19 @@
 //功能概要：UART1中断服务函数
 //==========================================================================
 void UART1_RX_TX_IRQHandler() {
-//	FrameFramingResult res;
+	FrameFramingResult res;
 	uint8 ch;
 	bool err = true;
 	DISABLE_INTERRUPTS;
 
-//	res = frame_framing();
-//	uart_send1(UART_MOD1, res);
+	res = frame_framing();
+	uart_send1(UART_MOD1, res);
 
-	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
-		if (!err) {
-			uart_send1(UART_MOD1, ch);
-		}
-	}
+//	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
+//		if (!err) {
+//			uart_send1(UART_MOD1, ch);
+//		}
+//	}
 
 	ENABLE_INTERRUPTS;
 }
@@ -54,7 +54,7 @@ void PIT0_IRQHandler() {
 	pit_clear_int(PIT_CH0); //清标志
 
 	//这里为了效率停用了没有使用的时间标志
-
+//	uart_send1(UART_MOD1,'s');
 	++time_counter.c_5ms;
 //	++time_counter.c_10ms;
 //	++time_counter.c_15ms;

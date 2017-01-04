@@ -5,6 +5,8 @@
 
 #include "gpio.h"
 
+//各端口基地址
+static PORT_Type * const port_table[] = { PORTA, PORTB, PORTC, PORTD, PORTE };
 //GPIO口基地址
 static GPIO_Type * const gpio_table[] = { PTA, PTB, PTC, PTD, PTE };
 //GPIO模块中断请求号

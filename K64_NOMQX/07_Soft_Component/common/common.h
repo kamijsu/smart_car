@@ -70,9 +70,6 @@ typedef uint8 bool;					//bool型，值为true或false
 #define COM_PORTD     (3<<5)
 #define COM_PORTE     (4<<5)
 
-//各端口基地址，这是个全局常量，通过PORT_PCR_REG(port_table[port],pin)可获得该引脚的引脚控制寄存器
-static PORT_Type * const port_table[] = { PORTA, PORTB, PORTC, PORTD, PORTE };
-
 //===========================================================================
 //函数名称: com_port_pin_resolution
 //函数返回: 无
