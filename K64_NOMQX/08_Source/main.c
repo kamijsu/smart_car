@@ -16,7 +16,8 @@ int main(void) {
 	FrameInfo frame;
 	FrameCmdInfo cmd;
 //	FrameDataInfo data;
-
+	double d;
+	float f;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -31,7 +32,7 @@ int main(void) {
 	light_init(LIGHT_BLUE, LIGHT_ON); //蓝灯初始化
 	light_init(LIGHT_GREEN, LIGHT_OFF);
 	light_init(LIGHT_RED, LIGHT_OFF);
-			//light_init(LIGHT_BLUE, LIGHT_OFF);
+	//light_init(LIGHT_BLUE, LIGHT_OFF);
 //	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 //	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
@@ -53,7 +54,8 @@ int main(void) {
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
-
+	d = 1.3;
+	f = 1.3f;
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
@@ -93,11 +95,18 @@ int main(void) {
 //			visual_scope_output(UART_USE,data_out);
 		}
 		if (time0_flag.f_1s) {
+			f = sinf(f);
+			f/=5.1f;
+			uart_sendN(UART_USE,(uint8 *)&f,4);
+//			printf("%f\r\n",f);
+//			uart_send1(UART_USE,f);
+//			d *= 5.3;
+//			f *= 5.3f;
+//			uart_send1(UART_USE,d);
+//			uart_send1(UART_USE,f);
 
-
-//			temp = temp_sensor_get_temp();
+			temp = temp_sensor_get_temp();
 //			printf("%f\r\n", temp);
-
 
 //			frame_send_info(frame);
 //			crc = crc_cal(&frame.type,frame.len+2);
