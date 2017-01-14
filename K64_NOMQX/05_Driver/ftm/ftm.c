@@ -144,6 +144,8 @@ void ftm_timer_enable_int(uint8 mod, uint8 time) {
 	//设置产生中断的频率
 	REG_CLR_MASK(FTM_CONF_REG(ftm_ptr), FTM_CONF_NUMTOF_MASK);
 	REG_SET_MASK(FTM_CONF_REG(ftm_ptr), FTM_CONF_NUMTOF(time - 1));
+	//清除定时器溢出标志
+	REG_CLR_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_TOF_MASK);
 	//使能定时器溢出中断
 	REG_SET_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_TOIE_MASK);
 	//允许接收该FTM模块中断请求
@@ -158,7 +160,7 @@ void ftm_timer_enable_int(uint8 mod, uint8 time) {
 //功能概要: 关闭FTM模块计时中断
 //==========================================================================
 void ftm_timer_disable_int(uint8 mod) {
-	//关闭计数器溢出中断，未禁止接收该FTM模块中断请求，因为可能有通道会产生中断请求
+	//关闭定时器溢出中断，未禁止接收该FTM模块中断请求，因为可能有通道会产生中断请求
 	REG_CLR_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_TOIE_MASK);
 }
 
@@ -170,7 +172,7 @@ void ftm_timer_disable_int(uint8 mod) {
 //功能概要: 获取FTM模块计时中断标志
 //==========================================================================
 bool ftm_timer_get_int(uint8 mod) {
-	//获取计数器溢出标志
+	//获取定时器溢出标志
 	return (REG_GET_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_TOF_MASK)) ?
 			true : false;
 }
@@ -183,7 +185,7 @@ bool ftm_timer_get_int(uint8 mod) {
 //功能概要: 清除FTM模块计时中断标志
 //==========================================================================
 void ftm_timer_clear_int(uint8 mod) {
-	//清除计数器溢出标志
+	//清除定时器溢出标志
 	REG_CLR_MASK(FTM_SC_REG(ftm_table[mod]), FTM_SC_TOF_MASK);
 }
 
@@ -227,10 +229,8 @@ void ftm_pwm_single_init(uint8 mod, uint8 ch, uint8 mode, uint8 pol,
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_CHIE_MASK);
 	//配置通道为相应的PWM功能
 	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMBINE0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_DECAPEN0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_SYNCEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr),
+			(FTM_COMBINE_COMBINE0_MASK|FTM_COMBINE_COMP0_MASK|FTM_COMBINE_DECAPEN0_MASK|FTM_COMBINE_SYNCEN0_MASK)<<shift);
 	if (mode == FTM_PWM_MODE_EDGE_ALIGNED) {
 		//MSB=1;
 		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSB_MASK);
@@ -323,9 +323,9 @@ void ftm_pwm_combine_init(uint8 mod, uint8 ch_group, uint8 mode, uint8 pol,
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch1), FTM_CnSC_CHIE_MASK);
 	//配置通道为相应的PWM功能
 	//COMBINEn=1;DECAPENn=0;SYNCEN=1;
-	REG_SET_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMBINE0_MASK<<shift);
+	REG_SET_MASK(FTM_COMBINE_REG(ftm_ptr),
+			(FTM_COMBINE_COMBINE0_MASK|FTM_COMBINE_SYNCEN0_MASK)<<shift);
 	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_DECAPEN0_MASK<<shift);
-	REG_SET_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_SYNCEN0_MASK<<shift);
 	if (mode == FTM_PWM_MODE_COMBINE) {
 		//COMPn=0;
 		REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
@@ -411,10 +411,8 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_CHIE_MASK);
 	//配置通道为输入捕捉功能
 	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMBINE0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_DECAPEN0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_SYNCEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr),
+			(FTM_COMBINE_COMBINE0_MASK|FTM_COMBINE_COMP0_MASK|FTM_COMBINE_DECAPEN0_MASK|FTM_COMBINE_SYNCEN0_MASK)<<shift);
 	switch (mode) {
 	case FTM_IC_MODE_RISING_EDGE:
 		//ELSB=0;ELSA=1;
@@ -428,13 +426,12 @@ void ftm_ic_init(uint8 mod, uint8 ch, uint8 mode) {
 		break;
 	case FTM_IC_MODE_DOUBLE_EDGE:
 		//ELSB=1;ELSA=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch),
+				FTM_CnSC_ELSB_MASK|FTM_CnSC_ELSA_MASK);
 		break;
 	}
 	//MSB=0;MSA=0;
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSB_MASK);
-	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSA_MASK);
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSB_MASK|FTM_CnSC_MSA_MASK);
 }
 
 //==========================================================================
@@ -493,10 +490,9 @@ void ftm_oc_init(uint8 mod, uint8 ch, uint8 mode, uint16 ratio) {
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_CHIE_MASK);
 	//配置通道为输出比较功能
 	//COMBINEn=0;COMPn=0;DECAPENn=0;SYNCEN=0;
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMBINE0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_COMP0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_DECAPEN0_MASK<<shift);
-	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr), FTM_COMBINE_SYNCEN0_MASK<<shift);
+	REG_CLR_MASK(FTM_COMBINE_REG(ftm_ptr),
+			(FTM_COMBINE_COMBINE0_MASK|FTM_COMBINE_COMP0_MASK|FTM_COMBINE_DECAPEN0_MASK|FTM_COMBINE_SYNCEN0_MASK)<<shift);
+	//设置输出比较模式
 	ftm_oc_change_mode(mod, ch, mode);
 	//MSB=0;MSA=1;
 	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_MSB_MASK);
@@ -532,8 +528,8 @@ void ftm_oc_change_mode(uint8 mod, uint8 ch, uint8 mode) {
 		break;
 	case FTM_OC_MODE_SET:
 		//ELSB=1;ELSA=1;
-		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSB_MASK);
-		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_ELSA_MASK);
+		REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch),
+				FTM_CnSC_ELSB_MASK|FTM_CnSC_ELSA_MASK);
 		break;
 	case FTM_OC_MODE_CLEAR:
 		//ELSB=1;ELSA=0;
@@ -576,8 +572,15 @@ void ftm_oc_set_ratio(uint8 mod, uint8 ch, uint16 ratio) {
 //     输出比较:当比较成功时，产生中断;
 //==========================================================================
 void ftm_ch_enable_int(uint8 mod, uint8 ch) {
+	FTM_Type * ftm_ptr;	//FTM基地址
+
+	//获取FTM基地址
+	ftm_ptr = ftm_table[mod];
+
+	//清除通道中断标志
+	REG_CLR_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_CHF_MASK);
 	//使能通道事件中断
-	REG_SET_MASK(FTM_CnSC_REG(ftm_table[mod],ch), FTM_CnSC_CHIE_MASK);
+	REG_SET_MASK(FTM_CnSC_REG(ftm_ptr,ch), FTM_CnSC_CHIE_MASK);
 	//允许接收该FTM模块中断请求
 	ENABLE_IRQ(ftm_irq_table[mod]);
 }

@@ -38,7 +38,7 @@ int main(void) {
 //	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 //	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
-	pit_init(PIT_CH0, 2000);  //pit0初始化，周期5ms
+	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 //	motor_init(MOTOR0);			//左电机初始化
 //	motor_init(MOTOR1);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
@@ -58,7 +58,7 @@ int main(void) {
 	d = 1.3;
 	f = 1.3f;
 	//5. 使能模块中断
-//	pit_enable_int(PIT_CH0);   		//使能pit中断
+	pit_enable_int(PIT_CH0);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	frame_enable_re_int();
 //	reed_switch_enable_int();
@@ -93,19 +93,6 @@ int main(void) {
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-		gpio_enable_int(COM_PORTB|0,GPIO_INT_RISING_EDGE);
-		reg = PORTB_PCR0;
-					uart_send1(UART_USE,reg>>24);
-					uart_send1(UART_USE,reg>>16);
-					uart_send1(UART_USE,reg>>8);
-					uart_send1(UART_USE,reg);
-					for(i=0;i<0xFFFFFF;i++);
-
-					reg = PORTB_PCR0;
-										uart_send1(UART_USE,reg>>24);
-										uart_send1(UART_USE,reg>>16);
-										uart_send1(UART_USE,reg>>8);
-										uart_send1(UART_USE,reg);
 		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 //			data_out[0] = encoder_get_speed(ENCODER0) * 1000;
