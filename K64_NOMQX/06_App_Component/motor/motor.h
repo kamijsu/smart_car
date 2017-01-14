@@ -20,7 +20,7 @@
 #define MOTOR_FTM_CLK_DIV			FTM_CLK_DIV_1				//1分频，即工作频率48MHz
 //定义FTM模块计数器模式
 #define MOTOR_FTM_COUNTER_MODE		FTM_COUNTER_MODE_UP			//向上计数
-//定义FTM模块计数器计数周期
+//定义FTM模块计数器计数周期，单位μs
 #define MOTOR_FTM_COUNTER_PERIOD	(50)						//50μs，根据相应分频因子，PWM波频率为20kHz
 //定义FTM模块PWM功能的模式
 #define MOTOR_FTM_PWM_MODE			FTM_PWM_MODE_EDGE_ALIGNED	//PWM波边沿对齐
