@@ -18,6 +18,7 @@ int main(void) {
 //	FrameDataInfo data;
 	double d;
 	float f;
+	uint16 crcres;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -50,7 +51,7 @@ int main(void) {
 	temp_sensor_init();
 //	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
-
+	crc_init_protocol(CRC_CRC16_MODBUS);
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
@@ -64,11 +65,11 @@ int main(void) {
 
 //	uart_send_string(UART_USE,"test！\n");
 
-	data[0] = 0x45;
-	data[1] = 0x96;
-	data[2] = 0xFA;
-	data[3] = 0x01;
-	data[4] = 0x72;
+	data[0] = 0x2;
+	data[1] = 0x3;
+	data[2] = 0x0;
+	data[3] = 0x1;
+	data[4] = 0x7;
 	data[5] = 0xB1;
 	data[6] = 0xAF;
 	data[7] = 0x04;
@@ -97,13 +98,16 @@ int main(void) {
 		if (time0_flag.f_1s) {
 			f = sinf(f);
 			f/=5.1f;
-			uart_sendN(UART_USE,(uint8 *)&f,4);
+//			uart_sendN(UART_USE,(uint8 *)&f,4);
 //			printf("%f\r\n",f);
 //			uart_send1(UART_USE,f);
 //			d *= 5.3;
 //			f *= 5.3f;
 //			uart_send1(UART_USE,d);
 //			uart_send1(UART_USE,f);
+			crcres = crc_cal(data,5);
+
+			uart_sendN(UART_USE,(uint8*)&crcres,2);
 
 			temp = temp_sensor_get_temp();
 //			printf("%f\r\n", temp);

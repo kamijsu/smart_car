@@ -11,8 +11,6 @@ static uint32 current_seed;
 static uint32 ctrl_seed;
 //用于校验数据时的控制寄存器值
 static uint32 ctrl_data;
-//用于读取和写入数据寄存器的控制寄存器值，即WAS和TCRC置1
-static const uint32 ctrl_backup = CRC_CTRL_WAS_MASK | CRC_CTRL_TCRC_MASK;
 
 //==========================================================================
 //函数名称: crc_init
@@ -145,7 +143,10 @@ uint32 crc_cal(uint8* data, uint32 len) {
 	uint32 data_old;	//旧数据寄存器值
 	uint32* data32;		//32位数据指针，用于32位校验数据
 	uint32 result;		//CRC校验结果
+	uint32 ctrl_backup;	//用于读取和写入数据寄存器的控制寄存器值
 
+	//WAS和TCRC置1
+	ctrl_backup = CRC_CTRL_WAS_MASK | CRC_CTRL_TCRC_MASK;
 	//读取旧控制寄存器值
 	ctrl_old = CRC_CTRL;
 	//设置控制寄存器为ctrl_backup
