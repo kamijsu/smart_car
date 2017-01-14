@@ -6,9 +6,9 @@
 #include "gpio.h"
 
 //各端口基地址
-static PORT_Type * const port_table[] = { PORTA, PORTB, PORTC, PORTD, PORTE };
+static PORT_Type * const port_table[] = PORT_BASE_PTRS;
 //GPIO口基地址
-static GPIO_Type * const gpio_table[] = { PTA, PTB, PTC, PTD, PTE };
+static GPIO_Type * const gpio_table[] = GPIO_BASE_PTRS;
 //GPIO模块中断请求号
 static const IRQn_Type gpio_irq_table[] = { PORTA_IRQn, PORTB_IRQn, PORTC_IRQn,
 		PORTD_IRQn, PORTE_IRQn };
@@ -196,11 +196,11 @@ void gpio_enable_int(uint8 port_pin, uint8 int_type) {
 	//获取该端口PORT基地址
 	port_ptr = port_table[port];
 
-	//清除引脚中断标志
-	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_ISF_MASK);
-	//设置引脚中断类型
+	//清除引脚中断类型
 	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_IRQC_MASK);
-	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_IRQC(int_type));
+	//清除引脚中断标志，并设置引脚中断类型
+	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin),
+			PORT_PCR_ISF_MASK|PORT_PCR_IRQC(int_type));
 	//允许接收该端口发送的中断请求
 	ENABLE_IRQ(gpio_irq_table[port]);
 }

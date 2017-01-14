@@ -6,7 +6,7 @@
 #include "ftm.h"
 
 //FTM各模块基地址
-static FTM_Type * const ftm_table[] = { FTM0, FTM1, FTM2, FTM3 };
+static FTM_Type * const ftm_table[] = FTM_BASE_PTRS;
 //FTM各模块各通道引脚号
 static const uint8 ftm_ch_pin_table[][8] = { { FTM_MOD0_CH0_PIN,
 FTM_MOD0_CH1_PIN,

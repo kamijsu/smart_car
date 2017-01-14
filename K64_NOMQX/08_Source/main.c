@@ -11,7 +11,8 @@ int main(void) {
 	uint32 crc;
 	uint8 data[50];
 	uint32 stream;
-	uint8 i;
+	uint32 reg;
+	uint32 i;
 	float temp;
 	FrameInfo frame;
 	FrameCmdInfo cmd;
@@ -37,7 +38,7 @@ int main(void) {
 //	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 //	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
-	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
+	pit_init(PIT_CH0, 2000);  //pit0初始化，周期5ms
 //	motor_init(MOTOR0);			//左电机初始化
 //	motor_init(MOTOR1);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
@@ -51,14 +52,13 @@ int main(void) {
 	temp_sensor_init();
 //	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
-	crc_init_protocol(CRC_CRC16_MODBUS);
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
 	d = 1.3;
 	f = 1.3f;
 	//5. 使能模块中断
-	pit_enable_int(PIT_CH0);   		//使能pit中断
+//	pit_enable_int(PIT_CH0);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	frame_enable_re_int();
 //	reed_switch_enable_int();
@@ -83,13 +83,29 @@ int main(void) {
 	cmd.len = 1;
 	cmd.data[0] = 7;
 
+	gpio_init(COM_PORTB|0,GPIO_OUTPUT,GPIO_LEVEL_LOW);
+
+	gpio_enable_int(COM_PORTB|0,GPIO_INT_RISING_EDGE);
+
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
+		gpio_enable_int(COM_PORTB|0,GPIO_INT_RISING_EDGE);
+		reg = PORTB_PCR0;
+					uart_send1(UART_USE,reg>>24);
+					uart_send1(UART_USE,reg>>16);
+					uart_send1(UART_USE,reg>>8);
+					uart_send1(UART_USE,reg);
+					for(i=0;i<0xFFFFFF;i++);
 
+					reg = PORTB_PCR0;
+										uart_send1(UART_USE,reg>>24);
+										uart_send1(UART_USE,reg>>16);
+										uart_send1(UART_USE,reg>>8);
+										uart_send1(UART_USE,reg);
 		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 //			data_out[0] = encoder_get_speed(ENCODER0) * 1000;
@@ -105,12 +121,15 @@ int main(void) {
 //			f *= 5.3f;
 //			uart_send1(UART_USE,d);
 //			uart_send1(UART_USE,f);
-			crcres = crc_cal(data,5);
-
-			uart_sendN(UART_USE,(uint8*)&crcres,2);
 
 			temp = temp_sensor_get_temp();
 //			printf("%f\r\n", temp);
+
+			reg = PIT_TFLG(0);
+			uart_send1(UART_USE,reg>>24);
+			uart_send1(UART_USE,reg>>16);
+			uart_send1(UART_USE,reg>>8);
+			uart_send1(UART_USE,reg);
 
 //			frame_send_info(frame);
 //			crc = crc_cal(&frame.type,frame.len+2);

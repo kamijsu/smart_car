@@ -6,8 +6,7 @@
 #include "uart.h"
 
 //各UART模块基地址
-static UART_Type * const uart_table[] = { UART0, UART1, UART2, UART3, UART4,
-UART5 };
+static UART_Type * const uart_table[] = UART_BASE_PTRS;
 //UART各模块RX引脚号
 static const uint8 uart_rx_pin_table[] = { UART_MOD0_RX_PIN, UART_MOD1_RX_PIN,
 UART_MOD2_RX_PIN, UART_MOD3_RX_PIN, UART_MOD4_RX_PIN, UART_MOD5_RX_PIN };

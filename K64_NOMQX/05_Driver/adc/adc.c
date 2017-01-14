@@ -6,7 +6,7 @@
 #include "adc.h"
 
 //ADC各模块基地址
-static ADC_Type * const adc_table[] = { ADC0, ADC1 };
+static ADC_Type * const adc_table[] = ADC_BASE_PTRS;
 
 //==========================================================================
 //函数名称: adc_cal
@@ -175,11 +175,11 @@ bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 		//禁止硬件计算均值
 		REG_CLR_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_AVGE_MASK);
 	} else {
-		//使能硬件计算均值，并使能持续转换
-		REG_SET_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_AVGE_MASK|ADC_SC3_ADCO_MASK);
-		//选择计算均值
+		//重置硬件计算均值数
 		REG_CLR_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_AVGS_MASK);
-		REG_SET_MASK(ADC_SC3_REG(adc_ptr), ADC_SC3_AVGS(hardware_avg));
+		//使能硬件计算均值，选择计算均值，并使能持续转换
+		REG_SET_MASK(ADC_SC3_REG(adc_ptr),
+				ADC_SC3_AVGE_MASK|ADC_SC3_ADCO_MASK|ADC_SC3_AVGS(hardware_avg));
 	}
 	return result;
 }
