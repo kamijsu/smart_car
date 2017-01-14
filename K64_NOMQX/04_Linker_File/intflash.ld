@@ -1,9 +1,9 @@
 /*
 ** ###################################################################
-**     Processors:          MK64FN1M0VDC12
-**                          MK64FN1M0VLL12
-**                          MK64FN1M0VLQ12
-**                          MK64FN1M0VMD12
+**     Processors:          MK64FX512VDC12
+**                          MK64FX512VLL12
+**                          MK64FX512VLQ12
+**                          MK64FX512VMD12
 **
 **     Compiler:            GNU C Compiler
 **     Reference manual:    K64P144M120SF5RM, Rev.2, January 2014
@@ -58,9 +58,9 @@ MEMORY
 {
   m_interrupts          (RX)  : ORIGIN = 0x00000000, LENGTH = 0x00000400
   m_flash_config        (RX)  : ORIGIN = 0x00000400, LENGTH = 0x00000010
-  m_text                (RX)  : ORIGIN = 0x00000410, LENGTH = 0x000FFBF0
+  m_text                (RX)  : ORIGIN = 0x00000410, LENGTH = 0x0007FBF0
   m_data                (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00010000
-  m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00030000
+  m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00020000
 }
 
 /* Define output sections */
