@@ -12,7 +12,7 @@ int main(void) {
 	uint8 data[50];
 	uint32 stream;
 	uint32 reg;
-	uint32 i;
+	uint32 i,j;
 	float temp;
 	FrameInfo frame;
 	FrameCmdInfo cmd;
@@ -27,6 +27,7 @@ int main(void) {
 	int8 var8;
 	int16 var16;
 	int32 var32;
+	float mat[128][128];
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -61,7 +62,7 @@ int main(void) {
 
 //ftm_oc_init(FTM_MOD0,FTM_CH4,FTM_OC_MODE_TOGGLE,5000);
 	temp_sensor_init();
-	crc_init_protocol(CRC_CRC16_MODBUS);
+//	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
@@ -111,8 +112,6 @@ int main(void) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 
-			f = sinf(f);
-			f /= 5.1f;
 //			uart_sendN(UART_USE,(uint8 *)&f,4);
 //			printf("%f\r\n",f);
 //			uart_send1(UART_USE,f);
@@ -124,21 +123,21 @@ int main(void) {
 			temp = temp_sensor_get_temp();
 //			printf("%f\r\n", temp);
 
+
 			uvar32 = pit_get_time(1);
 
-			crc16_modbus_block(&frame.type, 5000);
-
-//			crc16_modbus_stream(0xFFFF,0xFF);
+			for(i=0;i<128;i++){
+				for(j=0;j<128;j++){
+					mat[i][j] *= mat[(i+1)%128][(j+1)%128];
+				}
+			}
 
 			uvar322 = pit_get_time(1);
 			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
-			uvar32 = pit_get_time(1);
 
-			crc_cal(&frame.type, 5000);
 
-			uvar322 = pit_get_time(1);
-			printf("%d\r\n", (int32) (uvar322 - uvar32));
+			uart_send1(UART_USE,mat[0][0]);
 
 //			frame_send_info(frame);
 //			crc = crc_cal(&frame.type,frame.len+2);
