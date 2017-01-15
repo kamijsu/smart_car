@@ -12,7 +12,7 @@ int main(void) {
 	uint8 data[50];
 	uint32 stream;
 	uint32 reg;
-	uint32 i,j;
+	uint32 i, j;
 	float temp;
 	FrameInfo frame;
 	FrameCmdInfo cmd;
@@ -28,6 +28,12 @@ int main(void) {
 	int16 var16;
 	int32 var32;
 	float mat[128][128];
+	uint8 key[128];
+	uint8 key_sch[44];
+	uint8 state[16];
+	uint8 msg[2048];
+	uint8 digest[20];
+	uint8* ptr;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -77,7 +83,7 @@ int main(void) {
 //	ftm_timer_enable_int(FTM_MOD0,10);
 
 //	uart_send_string(UART_USE,"test！\n");
-
+	memset(msg, 1, 2048);
 	frame.len = 255;
 	data[0] = 0x2;
 	data[1] = 0x3;
@@ -123,21 +129,11 @@ int main(void) {
 			temp = temp_sensor_get_temp();
 //			printf("%f\r\n", temp);
 
-
 			uvar32 = pit_get_time(1);
-
-			for(i=0;i<128;i++){
-				for(j=0;j<128;j++){
-					mat[i][j] *= mat[(i+1)%128][(j+1)%128];
-				}
-			}
-
+			crypto_sha1_string("赵俊杰123", digest);
+			uart_sendN(UART_MOD1, digest, 20);
 			uvar322 = pit_get_time(1);
-			printf("%d\r\n", (int32) (uvar322 - uvar32));
-
-
-
-			uart_send1(UART_USE,mat[0][0]);
+//			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
 //			frame_send_info(frame);
 //			crc = crc_cal(&frame.type,frame.len+2);
