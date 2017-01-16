@@ -34,6 +34,9 @@ int main(void) {
 	uint8 msg[2048];
 	uint8 digest[20];
 	uint8* ptr;
+	uint32 tnum = 0;
+	uint32 fnum = 0;
+	uint32 rnum[256] = {0};
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -54,7 +57,7 @@ int main(void) {
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 	pit_init(PIT_CH1, 89478);
-
+	rng_init();
 //	motor_init(MOTOR0);			//左电机初始化
 //	motor_init(MOTOR1);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
@@ -109,6 +112,7 @@ int main(void) {
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
+
 		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 //			data_out[0] = encoder_get_speed(ENCODER0) * 1000;
@@ -129,10 +133,27 @@ int main(void) {
 			temp = temp_sensor_get_temp();
 //			printf("%f\r\n", temp);
 
+			tnum = fnum = 0;
+			memset(rnum,0,256);
 			uvar32 = pit_get_time(1);
-			crypto_sha1_string("赵俊杰123", digest);
-			uart_sendN(UART_MOD1, digest, 20);
+
+			for(i=0;i<50000;i++){
+				rnum[rng_next_uint8()]++;
+			}
+
 			uvar322 = pit_get_time(1);
+//			printf("%d\r\n", (int32) (uvar322 - uvar32));
+//			printf("%d\r\n", tnum);
+			for(i=0;i<256;i++){
+				printf("%4d:%d\r\n",i,rnum[i]);
+			}
+//			uart_sendN(UART_USE, rnum,256);
+
+
+//			uvar32 = pit_get_time(1);
+//			crypto_sha1_string("赵俊杰123", digest);
+//			uart_sendN(UART_MOD1, digest, 20);
+//			uvar322 = pit_get_time(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
 //			frame_send_info(frame);
