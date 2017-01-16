@@ -5,6 +5,7 @@
 
 #include "includes.h"   //包含总头文件
 
+
 int main(void) {
 	//1. 声明主函数使用的变量
 	uint8 light_state;		//当前灯状态
@@ -27,16 +28,12 @@ int main(void) {
 	int8 var8;
 	int16 var16;
 	int32 var32;
-	float mat[128][128];
-	uint8 key[128];
-	uint8 key_sch[44];
-	uint8 state[16];
-	uint8 msg[2048];
-	uint8 digest[20];
-	uint8* ptr;
-	uint32 tnum = 0;
-	uint32 fnum = 0;
-	uint32 rnum[256] = {0};
+
+	uint8 key[8] = "12345678";
+	uint8 iv[8] = "87654321";
+	uint8 plain[56];
+	uint8 cipher[56];
+	uint32 cipher_len;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -85,8 +82,8 @@ int main(void) {
 //	reed_switch_enable_int();
 //	ftm_timer_enable_int(FTM_MOD0,10);
 
-//	uart_send_string(UART_USE,"test！\n");
-	memset(msg, 1, 2048);
+	memset(plain,1,56);
+	memset(cipher,1,56);
 	frame.len = 255;
 	data[0] = 0x2;
 	data[1] = 0x3;
@@ -106,6 +103,8 @@ int main(void) {
 	cmd.len = 1;
 	cmd.data[0] = 7;
 
+
+
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
@@ -115,67 +114,30 @@ int main(void) {
 
 		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
-//			data_out[0] = encoder_get_speed(ENCODER0) * 1000;
-//			visual_scope_output(UART_USE,data_out);
 		}
 		if (time0_flag.f_1s) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 
-//			uart_sendN(UART_USE,(uint8 *)&f,4);
-//			printf("%f\r\n",f);
-//			uart_send1(UART_USE,f);
-//			d *= 5.3;
-//			f *= 5.3f;
-//			uart_send1(UART_USE,d);
-//			uart_send1(UART_USE,f);
 
-			temp = temp_sensor_get_temp();
-//			printf("%f\r\n", temp);
-
-			tnum = fnum = 0;
-			memset(rnum,0,256);
 			uvar32 = pit_get_time(1);
 
-			for(i=0;i<50000;i++){
-				rnum[rng_next_uint8()]++;
-			}
+//
+//			if(mmcau_des_chk_parity(key)<0){
+//				uart_send_string(UART_USE,"shit");
+//			}
+
+			crypto_des_encrypt(CRYPTO_MODE_CFB,CRYPTO_PADDING_PKCS7,plain,2,key,iv,cipher,&cipher_len);
+			uart_sendN(UART_USE,cipher,cipher_len);
+
+//			mmcau_des_encrypt(in,key,out);
+//			uart_sendN(UART_USE,out,8);
 
 			uvar322 = pit_get_time(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
-//			printf("%d\r\n", tnum);
-			for(i=0;i<256;i++){
-				printf("%4d:%d\r\n",i,rnum[i]);
-			}
+
 //			uart_sendN(UART_USE, rnum,256);
 
-
-//			uvar32 = pit_get_time(1);
-//			crypto_sha1_string("赵俊杰123", digest);
-//			uart_sendN(UART_MOD1, digest, 20);
-//			uvar322 = pit_get_time(1);
-//			printf("%d\r\n", (int32) (uvar322 - uvar32));
-
-//			frame_send_info(frame);
-//			crc = crc_cal(&frame.type,frame.len+2);
-//			uart_sendN(UART_MOD1,&crc,2);
-//
-//			frame_cmd_send(cmd);
-//			frame_string_send("啦啦啦\r\n");
-
-//			printf("%d\n",encoder_get_and_clear_count(ENCODER0));
-//			temp = temp_sensor_get_temp();
-//			uart_send1(UART_MOD1,((uint32)temp*1000)>>24);
-//			uart_send1(UART_MOD1,((uint32)temp*1000)>>16);
-//			uart_send1(UART_MOD1,((uint32)temp*1000)>>8);
-//			uart_send1(UART_MOD1,((uint32)temp*1000));
-//			printf("%f\r\n",temp);
-//
-//			temp = adc_diff_get_vtg(ADC_MOD0,TEMP_SENSOR_ADC_DIFF_GROUP);
-//			printf("%f\r\n",temp);
-//			send = (uint16) (temp * 1000);
-//			uart_send1(UART_USE, send >> 8);
-//			uart_send1(UART_USE, send);
 		}
 
 //		//处理接收到的帧
