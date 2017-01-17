@@ -5,7 +5,6 @@
 
 #include "includes.h"   //包含总头文件
 
-
 int main(void) {
 	//1. 声明主函数使用的变量
 	uint8 light_state;		//当前灯状态
@@ -31,8 +30,8 @@ int main(void) {
 
 	uint8 key[8] = "12345678";
 	uint8 iv[8] = "87654321";
-	uint8 plain[56];
-	uint8 cipher[56];
+	uint8 plain[1024];
+	uint8 cipher[1024];
 	uint32 cipher_len;
 
 	/* 小车相关参数变量 */
@@ -82,8 +81,8 @@ int main(void) {
 //	reed_switch_enable_int();
 //	ftm_timer_enable_int(FTM_MOD0,10);
 
-	memset(plain,1,56);
-	memset(cipher,1,56);
+	memset(plain, 1, 1024);
+	memset(cipher, 1, 1024);
 	frame.len = 255;
 	data[0] = 0x2;
 	data[1] = 0x3;
@@ -103,8 +102,6 @@ int main(void) {
 	cmd.len = 1;
 	cmd.data[0] = 7;
 
-
-
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
@@ -119,7 +116,6 @@ int main(void) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 
-
 			uvar32 = pit_get_time(1);
 
 //
@@ -127,8 +123,12 @@ int main(void) {
 //				uart_send_string(UART_USE,"shit");
 //			}
 
-			crypto_des_encrypt(CRYPTO_MODE_CFB,CRYPTO_PADDING_PKCS7,plain,2,key,iv,cipher,&cipher_len);
-			uart_sendN(UART_USE,cipher,cipher_len);
+			if (crypto_des_encrypt(CRYPTO_MODE_CBC, CRYPTO_PADDING_ISO10126, plain,
+					8, key, iv, plain, &cipher_len)) {
+				uart_sendN(UART_USE, plain, 27);
+			} else {
+				uart_send_string(UART_USE,"失败！\r\n");
+			}
 
 //			mmcau_des_encrypt(in,key,out);
 //			uart_sendN(UART_USE,out,8);

@@ -211,20 +211,20 @@ void crypto_sha1_string(uint8* msg, uint8* digest) {
 //         iv:8字节初始化向量的首地址，若工作模式为ECB，该参数无效
 //         cipher:存储密文的首地址
 //         cipher_len:存储密文长度的地址
-//功能概要: 对明文使用DES算法进行加密，存储相应的密文
+//功能概要: 对明文使用DES算法进行加密，成功时存储相应的密文
 //备注: 仅当填充算法为None且明文长度不为8的倍数时，加密失败;
 //     若填充算法为ISO10126，需要先初始化RNG模块;
 //     若填充算法为None，密文长度等于明文长度，
-//     否则密文长度为明文长度补至8的倍数，若明文长度为8的倍数，则会额外补8个字节
+//     否则密文长度为明文长度补至8的倍数，若明文长度为8的倍数，则会额外补8个字节;
+//     密文地址可以为明文地址
 //==========================================================================
 bool crypto_des_encrypt(uint8 mode, uint8 padding, uint8* plain,
 		uint32 plain_len, uint8* key, uint8* iv, uint8* cipher,
 		uint32* cipher_len) {
 	uint32 blk_num;		//分组数
-	uint8* ptr8, *ptr8c;	//8位指针
+	uint8 *ptr8, *ptr8c;	//8位指针
 	uint8 pad_num;		//要填充的字节数
-	uint32 i;			//游标
-	uint8 v[8], v2[8];	//64位向量
+	uint8 v[8];			//64位向量
 
 	//若不进行填充
 	if (padding == CRYPTO_PADDING_NONE) {
@@ -271,7 +271,7 @@ bool crypto_des_encrypt(uint8 mode, uint8 padding, uint8* plain,
 	switch (mode) {
 	case CRYPTO_MODE_ECB:	//ECB
 		//对各分组加密
-		for (i = 0, ptr8 = pad_plain, ptr8c = cipher; i < blk_num; i++, ptr8 +=
+		for (ptr8 = pad_plain, ptr8c = cipher; blk_num > 0; --blk_num, ptr8 +=
 				8, ptr8c += 8) {
 			mmcau_des_encrypt(ptr8, key, ptr8c);
 		}
@@ -283,9 +283,9 @@ bool crypto_des_encrypt(uint8 mode, uint8 padding, uint8* plain,
 			crypto_xor(iv, pad_plain, 8, v);
 			mmcau_des_encrypt(v, key, cipher);
 			//加密剩余组
-			for (i = 0, --blk_num, ptr8 = pad_plain + 8, ptr8c = cipher;
-					i < blk_num; i++, ptr8 += 8) {
-				crypto_xor(ptr8c, ptr8, 8, v);
+			for (--blk_num, ptr8 = pad_plain, ptr8c = cipher; blk_num > 0;
+					--blk_num) {
+				crypto_xor(ptr8c, ptr8 += 8, 8, v);
 				mmcau_des_encrypt(v, key, ptr8c += 8);
 			}
 		}
@@ -293,18 +293,166 @@ bool crypto_des_encrypt(uint8 mode, uint8 padding, uint8* plain,
 	case CRYPTO_MODE_CFB:	//CFB
 		//分组数不为0时，进行加密
 		if (blk_num) {
-			//复制初始向量至64位向量
-			memcpy(v, iv, 8);
-			mmcau_des_encrypt(v, key, v2);
-			crypto_xor(v2, pad_plain, 8, cipher);
-			for (i = 0, --blk_num, ptr8 = pad_plain + 8, ptr8c = cipher;
-					i < blk_num; i++, ptr8 += 8) {
-				memcpy(v, ptr8c, 8);
-				mmcau_des_encrypt(v, key, v2);
-				crypto_xor(v2, ptr8, 8, ptr8c += 8);
+			//对第一组加密
+			mmcau_des_encrypt(iv, key, v);
+			crypto_xor(v, pad_plain, 8, cipher);
+			//加密剩余组
+			for (--blk_num, ptr8 = pad_plain, ptr8c = cipher; blk_num > 0;
+					--blk_num) {
+				mmcau_des_encrypt(ptr8c, key, v);
+				crypto_xor(v, ptr8 += 8, 8, ptr8c += 8);
 			}
 		}
 		break;
+	case CRYPTO_MODE_OFB:	//OFB
+		//分组数不为0时，进行加密
+		if (blk_num) {
+			//对第一组加密
+			mmcau_des_encrypt(iv, key, v);
+			crypto_xor(v, pad_plain, 8, cipher);
+			//加密剩余组
+			for (--blk_num, ptr8 = pad_plain, ptr8c = cipher; blk_num > 0;
+					--blk_num) {
+				mmcau_des_encrypt(v, key, v);
+				crypto_xor(v, ptr8 += 8, 8, ptr8c += 8);
+			}
+		}
+		break;
+	}
+	return true;
+}
+
+//==========================================================================
+//函数名称: crypto_des_decrypt
+//函数返回: true:解密成功; false:解密失败
+//参数说明: mode:工作模式:
+//              CRYPTO_MODE_ECB:电码本;
+//              CRYPTO_MODE_CBC:密码分组链接;
+//              CRYPTO_MODE_CFB:密码反馈;
+//              CRYPTO_MODE_OFB:输出反馈;
+//         padding:填充算法:
+//                 CRYPTO_PADDING_PKCS7:   PKCS7;
+//                 CRYPTO_PADDING_ISO10126:ISO 10126;
+//                 CRYPTO_PADDING_ANSIX923:ANSI X.923;
+//                 CRYPTO_PADDING_NONE:    不进行填充;
+//         cipher:密文的首地址
+//         cipher_len:密文长度
+//         key:8字节密钥的首地址
+//         iv:8字节初始化向量的首地址，若工作模式为ECB，该参数无效
+//         plain:存储明文的首地址
+//         plain_len:存储明文长度的地址
+//功能概要: 对密文使用DES算法进行解密，成功时存储相应的明文
+//备注: 当密文长度不为8的倍数或解出的明文填充错误时，解密失败;
+//     密文长度大于等于明文长度;
+//     密文地址可以为明文地址
+//==========================================================================
+bool crypto_des_decrypt(uint8 mode, uint8 padding, uint8* cipher,
+		uint32 cipher_len, uint8* key, uint8* iv, uint8* plain,
+		uint32* plain_len) {
+	uint8 pad_plain[cipher_len];	//填充后的明文
+	uint32 blk_num;		//分组数
+	uint8 *ptr8, *ptr8c;	//8位指针
+	uint8 v[8];			//64位向量
+	uint8 pad_num;		//填充的字节数
+
+	//若密文长度不为8的倍数，解密失败
+	if (cipher_len & 0x7) {
+		return false;
+	}
+	blk_num = cipher_len >> 3;	//计算分组数
+	//根据工作模式解密
+	switch (mode) {
+	case CRYPTO_MODE_ECB:	//ECB
+		//对各分组解密
+		for (ptr8c = cipher, ptr8 = pad_plain; blk_num > 0; --blk_num, ptr8c +=
+				8, ptr8 += 8) {
+			mmcau_des_decrypt(ptr8c, key, ptr8);
+		}
+		break;
+	case CRYPTO_MODE_CBC:	//CBC
+		//分组数不为0时，进行解密
+		if (blk_num) {
+			//对第一组解密
+			mmcau_des_decrypt(cipher, key, v);
+			crypto_xor(v, iv, 8, pad_plain);
+			//解密剩余组
+			for (--blk_num, ptr8 = pad_plain, ptr8c = cipher; blk_num > 0;
+					--blk_num, ptr8c += 8) {
+				mmcau_des_decrypt(ptr8c + 8, key, v);
+				crypto_xor(v, ptr8c, 8, ptr8 += 8);
+			}
+		}
+		break;
+	case CRYPTO_MODE_CFB:	//CFB
+		//分组数不为0时，进行解密
+		if (blk_num) {
+			//对第一组解密
+			mmcau_des_encrypt(iv, key, v);
+			crypto_xor(v, cipher, 8, pad_plain);
+			//解密剩余组
+			for (--blk_num, ptr8 = pad_plain, ptr8c = cipher; blk_num > 0;
+					--blk_num) {
+				mmcau_des_encrypt(ptr8c, key, v);
+				crypto_xor(v, ptr8c += 8, 8, ptr8 += 8);
+			}
+		}
+		break;
+	case CRYPTO_MODE_OFB:	//OFB
+		//分组数不为0时，进行解密
+		if (blk_num) {
+			//对第一组解密
+			mmcau_des_encrypt(iv, key, v);
+			crypto_xor(v, cipher, 8, pad_plain);
+			//解密剩余组
+			for (--blk_num, ptr8 = pad_plain, ptr8c = cipher; blk_num > 0;
+					--blk_num) {
+				mmcau_des_encrypt(v, key, v);
+				crypto_xor(v, ptr8c += 8, 8, ptr8 += 8);
+			}
+		}
+		break;
+	}
+	//密文长度不为0时
+	if (cipher_len) {
+		//若未进行填充
+		if (padding == CRYPTO_PADDING_NONE) {
+			//明文长度等于密文长度
+			*plain_len = cipher_len;
+		} else {
+			blk_num = cipher_len - 1;	//blk_num当成临时变量
+			pad_num = pad_plain[blk_num];	//获取填充字节数
+			//检查填充数是否合法
+			if (pad_num == 0 || pad_num > 8) {
+				return false;
+			}
+			//根据填充方式检查填充是否合法
+			switch (padding) {
+			case CRYPTO_PADDING_PKCS7:
+				//检查是否为n-1个n
+				for (ptr8c = pad_plain + blk_num, ptr8 = ptr8c - pad_num + 1;
+						ptr8 < ptr8c;) {
+					if (*ptr8++ != pad_num) {
+						return false;
+					}
+				}
+				break;
+			case CRYPTO_PADDING_ANSIX923:
+				//检查是否为n-1个0
+				for (ptr8c = pad_plain + blk_num, ptr8 = ptr8c - pad_num + 1;
+						ptr8 < ptr8c;) {
+					if (*ptr8++) {
+						return false;
+					}
+				}
+				break;
+			}
+			*plain_len = cipher_len - pad_num;
+		}
+		//拷贝明文
+		memcpy(plain, pad_plain, *plain_len);
+	} else {
+		//明文长度为0
+		*plain_len = 0;
 	}
 	return true;
 }
