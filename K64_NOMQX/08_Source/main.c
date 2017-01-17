@@ -33,6 +33,10 @@ int main(void) {
 	uint8 plain[1024];
 	uint8 cipher[1024];
 	uint32 cipher_len;
+	uint8 plain2[1024];
+	uint32 plain_len;
+	uint8 mode;
+	uint8 padding;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -83,6 +87,7 @@ int main(void) {
 
 	memset(plain, 1, 1024);
 	memset(cipher, 1, 1024);
+	memset(plain2, 0xFF, 1024);
 	frame.len = 255;
 	data[0] = 0x2;
 	data[1] = 0x3;
@@ -101,6 +106,8 @@ int main(void) {
 	cmd.type = 0x00;
 	cmd.len = 1;
 	cmd.data[0] = 7;
+
+	cipher_len = 5;
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -123,18 +130,30 @@ int main(void) {
 //				uart_send_string(UART_USE,"shit");
 //			}
 
-			if (crypto_des_encrypt(CRYPTO_MODE_CBC, CRYPTO_PADDING_ISO10126, plain,
-					8, key, iv, plain, &cipher_len)) {
-				uart_sendN(UART_USE, plain, 27);
+			mode = CRYPTO_MODE_ECB;
+			padding = CRYPTO_PADDING_PKCS7;
+
+			if (crypto_des_encrypt(mode, padding, "赵俊杰123\r\n", strlen("赵俊杰123\r\n"), key, iv, cipher,
+					&cipher_len)) {
+//				uart_sendN(UART_USE, cipher, cipher_len);
 			} else {
-				uart_send_string(UART_USE,"失败！\r\n");
+				uart_send_string(UART_USE, "加密失败！\r\n");
 			}
+
+			if (crypto_des_decrypt(mode, padding, cipher, cipher_len, key, iv,
+					plain2, &plain_len)) {
+//				uart_sendN(UART_USE, plain2, plain_len);
+			} else {
+				uart_send_string(UART_USE, "解密失败！\r\n");
+			}
+
+
 
 //			mmcau_des_encrypt(in,key,out);
 //			uart_sendN(UART_USE,out,8);
 
 			uvar322 = pit_get_time(1);
-//			printf("%d\r\n", (int32) (uvar322 - uvar32));
+			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
 //			uart_sendN(UART_USE, rnum,256);
 
@@ -173,5 +192,5 @@ int main(void) {
 //		}
 
 	} //主循环end_for
-	  //主循环结束==================================================================
+//主循环结束==================================================================
 }

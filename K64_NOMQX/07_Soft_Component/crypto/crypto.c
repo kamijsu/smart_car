@@ -95,22 +95,6 @@ static void crypto_xor(uint8* b1, uint8* b2, uint32 len, uint8* dest) {
 	}
 }
 
-////==========================================================================
-////函数名称: crypto_shift
-////函数返回: 无
-////参数说明: v:向量首地址
-////         len:向量的长度
-////         pad:填充字节的地址
-////功能概要: 将向量向低位移1个字节，并填充1个字节于最高位
-////==========================================================================
-//static void crypto_shift(uint8* v, uint32 len, uint8* pad) {
-//	uint32 i, j;
-//	for (i = 0, j = len - 1; i < j; i++) {
-//		v[i] = v[i + 1];
-//	}
-//	v[j] = *pad;
-//}
-
 //==========================================================================
 //函数名称: crypto_md5
 //函数返回: 无
@@ -344,7 +328,7 @@ bool crypto_des_encrypt(uint8 mode, uint8 padding, uint8* plain,
 //功能概要: 对密文使用DES算法进行解密，成功时存储相应的明文
 //备注: 当密文长度不为8的倍数或解出的明文填充错误时，解密失败;
 //     密文长度大于等于明文长度;
-//     密文地址可以为明文地址
+//     明文地址可以为密文地址
 //==========================================================================
 bool crypto_des_decrypt(uint8 mode, uint8 padding, uint8* cipher,
 		uint32 cipher_len, uint8* key, uint8* iv, uint8* plain,
@@ -446,6 +430,7 @@ bool crypto_des_decrypt(uint8 mode, uint8 padding, uint8* cipher,
 				}
 				break;
 			}
+			//去除填充字节数
 			*plain_len = cipher_len - pad_num;
 		}
 		//拷贝明文

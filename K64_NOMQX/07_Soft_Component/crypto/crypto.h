@@ -95,4 +95,32 @@ bool crypto_des_encrypt(uint8 mode, uint8 padding, uint8* plain,
 		uint32 plain_len, uint8* key, uint8* iv, uint8* cipher,
 		uint32* cipher_len);
 
+//==========================================================================
+//函数名称: crypto_des_decrypt
+//函数返回: true:解密成功; false:解密失败
+//参数说明: mode:工作模式:
+//              CRYPTO_MODE_ECB:电码本;
+//              CRYPTO_MODE_CBC:密码分组链接;
+//              CRYPTO_MODE_CFB:密码反馈;
+//              CRYPTO_MODE_OFB:输出反馈;
+//         padding:填充算法:
+//                 CRYPTO_PADDING_PKCS7:   PKCS7;
+//                 CRYPTO_PADDING_ISO10126:ISO 10126;
+//                 CRYPTO_PADDING_ANSIX923:ANSI X.923;
+//                 CRYPTO_PADDING_NONE:    不进行填充;
+//         cipher:密文的首地址
+//         cipher_len:密文长度
+//         key:8字节密钥的首地址
+//         iv:8字节初始化向量的首地址，若工作模式为ECB，该参数无效
+//         plain:存储明文的首地址
+//         plain_len:存储明文长度的地址
+//功能概要: 对密文使用DES算法进行解密，成功时存储相应的明文
+//备注: 当密文长度不为8的倍数或解出的明文填充错误时，解密失败;
+//     密文长度大于等于明文长度;
+//     明文地址可以为密文地址
+//==========================================================================
+bool crypto_des_decrypt(uint8 mode, uint8 padding, uint8* cipher,
+		uint32 cipher_len, uint8* key, uint8* iv, uint8* plain,
+		uint32* plain_len);
+
 #endif
