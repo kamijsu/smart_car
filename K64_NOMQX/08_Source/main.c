@@ -28,8 +28,9 @@ int main(void) {
 	int16 var16;
 	int32 var32;
 
-	uint8 key[8] = "12345678";
-	uint8 iv[8] = "87654321";
+	uint8 key[32] = "12345678123456781234567812345678";
+	uint8 key_sch[240];
+	uint8 iv[16] = "8765432187654321";
 	uint8 plain[1024];
 	uint8 cipher[1024];
 	uint32 cipher_len;
@@ -37,6 +38,7 @@ int main(void) {
 	uint32 plain_len;
 	uint8 mode;
 	uint8 padding;
+	uint16 key_size;
 
 	/* –°≥µœ‡πÿ≤Œ ˝±‰¡ø */
 	Car car;
@@ -88,6 +90,7 @@ int main(void) {
 	memset(plain, 1, 1024);
 	memset(cipher, 1, 1024);
 	memset(plain2, 0xFF, 1024);
+	memset(key_sch, 0xEE, 240);
 	frame.len = 255;
 	data[0] = 0x2;
 	data[1] = 0x3;
@@ -130,30 +133,35 @@ int main(void) {
 //				uart_send_string(UART_USE,"shit");
 //			}
 
-			mode = CRYPTO_MODE_ECB;
-			padding = CRYPTO_PADDING_PKCS7;
+			mode = CRYPTO_MODE_CBC;
+			padding = CRYPTO_PADDING_ISO10126;
+			key_size = 192;
 
-			if (crypto_des_encrypt(mode, padding, "’‘ø°Ω‹123\r\n", strlen("’‘ø°Ω‹123\r\n"), key, iv, cipher,
-					&cipher_len)) {
-//				uart_sendN(UART_USE, cipher, cipher_len);
+			if (crypto_aes_encrypt(mode, padding, "123’‘ø°Ω‹§Ô§ø§∑¿≤¿≤¿≤123\r\n", strlen("123’‘ø°Ω‹§Ô§ø§∑¿≤¿≤¿≤123\r\n"), key, key_size, iv,
+					cipher, &cipher_len)) {
+//				uart_sendN(UART_USE, cipher, 27);
 			} else {
 				uart_send_string(UART_USE, "º”√‹ ß∞‹£°\r\n");
 			}
-
-			if (crypto_des_decrypt(mode, padding, cipher, cipher_len, key, iv,
-					plain2, &plain_len)) {
-//				uart_sendN(UART_USE, plain2, plain_len);
+			if (crypto_aes_decrypt(mode,padding , cipher, cipher_len, key,
+					key_size, iv, plain2, &plain_len)) {
+				uart_sendN(UART_USE, plain2, plain_len);
 			} else {
 				uart_send_string(UART_USE, "Ω‚√‹ ß∞‹£°\r\n");
 			}
 
-
+//			if (crypto_des_decrypt(mode, padding, cipher, cipher_len, key, iv,
+//					plain2, &plain_len)) {
+////				uart_sendN(UART_USE, plain2, plain_len);
+//			} else {
+//				uart_send_string(UART_USE, "Ω‚√‹ ß∞‹£°\r\n");
+//			}
 
 //			mmcau_des_encrypt(in,key,out);
 //			uart_sendN(UART_USE,out,8);
 
 			uvar322 = pit_get_time(1);
-			printf("%d\r\n", (int32) (uvar322 - uvar32));
+//			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
 //			uart_sendN(UART_USE, rnum,256);
 
