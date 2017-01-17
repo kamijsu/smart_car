@@ -16,7 +16,6 @@ int main(void) {
 	float temp;
 	FrameInfo frame;
 	FrameCmdInfo cmd;
-//	FrameDataInfo data;
 	double d;
 	float f;
 	uint16 crcres;
@@ -28,17 +27,6 @@ int main(void) {
 	int16 var16;
 	int32 var32;
 
-	uint8 key[32] = "12345678123456781234567812345678";
-	uint8 key_sch[240];
-	uint8 iv[16] = "8765432187654321";
-	uint8 plain[1024];
-	uint8 cipher[1024];
-	uint32 cipher_len;
-	uint8 plain2[1024];
-	uint32 plain_len;
-	uint8 mode;
-	uint8 padding;
-	uint16 key_size;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -73,7 +61,7 @@ int main(void) {
 
 //ftm_oc_init(FTM_MOD0,FTM_CH4,FTM_OC_MODE_TOGGLE,5000);
 	temp_sensor_init();
-//	crc_init_protocol(CRC_CRC16_MODBUS);
+	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
@@ -87,30 +75,14 @@ int main(void) {
 //	reed_switch_enable_int();
 //	ftm_timer_enable_int(FTM_MOD0,10);
 
-	memset(plain, 1, 1024);
-	memset(cipher, 1, 1024);
-	memset(plain2, 0xFF, 1024);
-	memset(key_sch, 0xEE, 240);
 	frame.len = 255;
-	data[0] = 0x2;
-	data[1] = 0x3;
-	data[2] = 0x0;
-	data[3] = 0x1;
-	data[4] = 0x7;
-	data[5] = 0xB1;
-	data[6] = 0xAF;
-	data[7] = 0x04;
 
-	data[8] = 0x92;
-	data[9] = 0x91;
-	data[10] = 0x73;
-	data[11] = 0x88;
+	memset(data,0xEE,20);
 
 	cmd.type = 0x00;
 	cmd.len = 1;
 	cmd.data[0] = 7;
 
-	cipher_len = 5;
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -128,42 +100,20 @@ int main(void) {
 
 			uvar32 = pit_get_time(1);
 
-//
-//			if(mmcau_des_chk_parity(key)<0){
-//				uart_send_string(UART_USE,"shit");
-//			}
+			reg = FTFE_FSEC;
+			reg = *(uint32*)0x2000FFFF;
+//			uart_send1(UART_USE,reg>>24);
+//			uart_send1(UART_USE,reg>>16);
+//			uart_send1(UART_USE,reg>>8);
+//			uart_send1(UART_USE,reg);
 
-			mode = CRYPTO_MODE_CBC;
-			padding = CRYPTO_PADDING_ISO10126;
-			key_size = 192;
-
-			if (crypto_aes_encrypt(mode, padding, "123赵俊杰わたし啦啦啦123\r\n", strlen("123赵俊杰わたし啦啦啦123\r\n"), key, key_size, iv,
-					cipher, &cipher_len)) {
-//				uart_sendN(UART_USE, cipher, 27);
-			} else {
-				uart_send_string(UART_USE, "加密失败！\r\n");
-			}
-			if (crypto_aes_decrypt(mode,padding , cipher, cipher_len, key,
-					key_size, iv, plain2, &plain_len)) {
-				uart_sendN(UART_USE, plain2, plain_len);
-			} else {
-				uart_send_string(UART_USE, "解密失败！\r\n");
-			}
-
-//			if (crypto_des_decrypt(mode, padding, cipher, cipher_len, key, iv,
-//					plain2, &plain_len)) {
-////				uart_sendN(UART_USE, plain2, plain_len);
-//			} else {
-//				uart_send_string(UART_USE, "解密失败！\r\n");
-//			}
-
-//			mmcau_des_encrypt(in,key,out);
-//			uart_sendN(UART_USE,out,8);
+			uvar16 = crc_cal(data,20);
+			uart_send1(UART_USE,uvar16>>8);
+			uart_send1(UART_USE,uvar16);
 
 			uvar322 = pit_get_time(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
-//			uart_sendN(UART_USE, rnum,256);
 
 		}
 
