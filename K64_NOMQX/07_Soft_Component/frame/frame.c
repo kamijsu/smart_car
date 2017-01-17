@@ -50,11 +50,11 @@ void frame_disable_re_int() {
 
 //==========================================================================
 //函数名称: frame_send_info
-//函数返回: true:发送成功; false:发送失败
+//函数返回: 无
 //参数说明: info:要发送的帧信息结构体
 //功能概要: 发送帧信息结构体，自动添加帧头与帧校验序列
 //==========================================================================
-bool frame_send_info(FrameInfo info) {
+void frame_send_info(FrameInfo info) {
 	uint16 info_len;	//帧信息结构体的字节数
 	uint8* info_ptr;	//帧信息结构体首地址
 	uint16 crc;			//CRC16校验码
@@ -65,15 +65,11 @@ bool frame_send_info(FrameInfo info) {
 	//计算CRC16校验码
 	crc = crc16_modbus_block(info_ptr, info_len);
 	//依顺序发送帧各字段
-	if (uart_send1(FRAME_UART_MOD, FRAME_HEAD_LOW)
-			&& uart_send1(FRAME_UART_MOD, FRAME_HEAD_HIGH)
-			&& uart_sendN(FRAME_UART_MOD, info_ptr, info_len)
-			&& uart_send1(FRAME_UART_MOD, (uint8) crc)
-			&& uart_send1(FRAME_UART_MOD, crc >> 8)) {
-		return true;
-	} else {
-		return false;
-	}
+	uart_send1(FRAME_UART_MOD, FRAME_HEAD_LOW);
+	uart_send1(FRAME_UART_MOD, FRAME_HEAD_HIGH);
+	uart_sendN(FRAME_UART_MOD, info_ptr, info_len);
+	uart_send1(FRAME_UART_MOD, (uint8) crc);
+	uart_send1(FRAME_UART_MOD, crc >> 8);
 }
 
 //==========================================================================

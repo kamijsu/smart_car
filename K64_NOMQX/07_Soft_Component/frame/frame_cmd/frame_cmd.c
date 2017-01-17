@@ -7,20 +7,17 @@
 
 //==========================================================================
 //函数名称: frame_cmd_send
-//函数返回: 命令发送结果:
-//         CmdSendSuccess:   发送命令成功;
-//         CmdSendIllegalLen:非法命令信息长度;
-//         CmdSendInfoFail:  发送帧信息结构体失败;
+//函数返回: true:发送命令成功; false:非法命令信息长度
 //参数说明: cmd:要发送的帧命令信息结构体
 //功能概要: 发送帧命令信息结构体，自动组装帧信息结构体
 //备注: 需先使能组帧通信协议
 //==========================================================================
-FrameCmdSendResult frame_cmd_send(FrameCmdInfo cmd) {
+bool frame_cmd_send(FrameCmdInfo cmd) {
 	FrameInfo info;	//要发送的帧信息结构体
 	uint8 i;		//游标
 	//检查命令信息长度是否合法
 	if (cmd.len > 253) {
-		return CmdSendIllegalLen;
+		return false;
 	}
 	//设置类型
 	info.type = FRAME_CMD_TYPE;
@@ -33,13 +30,8 @@ FrameCmdSendResult frame_cmd_send(FrameCmdInfo cmd) {
 		info.data[i + 2] = cmd.data[i];
 	}
 	//发送帧信息结构体
-	if (frame_send_info(info)) {
-		//发送成功
-		return CmdSendSuccess;
-	} else {
-		//发送失败
-		return CmdSendInfoFail;
-	}
+	frame_send_info(info);
+	return true;
 }
 
 //==========================================================================

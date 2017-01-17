@@ -7,15 +7,12 @@
 
 //==========================================================================
 //函数名称: frame_string_send
-//函数返回: 字符串发送结果:
-//         StringSendSuccess:      发送字符串成功;
-//         StringSendIllegalString:非法字符串，即字符串长度超过255字节;
-//         StringSendInfoFail:     发送帧信息结构体失败;
+//函数返回: true:发送字符串成功; false:字符串长度超过255字节
 //参数说明: str:要发送的字符串首地址
 //功能概要: 发送以'\0'结束的字符串，自动组装帧信息结构体
 //备注: 需先使能组帧通信协议;字符串长度不能超过255字节，不包括'\0'，不发送'\0'
 //==========================================================================
-FrameStringSendResult frame_string_send(uint8* str) {
+bool frame_string_send(uint8* str) {
 	FrameInfo info;	//要发送的帧信息结构体
 
 	//设置类型
@@ -26,16 +23,11 @@ FrameStringSendResult frame_string_send(uint8* str) {
 	}
 	//检查字符串长度是否超过255字节
 	if (info.len == 255 && str[255] != '\0') {
-		return StringSendIllegalString;
+		return false;
 	}
 	//发送帧信息结构体
-	if (frame_send_info(info)) {
-		//发送成功
-		return StringSendSuccess;
-	} else {
-		//发送失败
-		return StringSendInfoFail;
-	}
+	frame_send_info(info);
+	return true;
 }
 
 //==========================================================================

@@ -27,13 +27,6 @@ typedef struct {
 	uint8 data[253];	//命令信息
 } FrameCmdInfo;
 
-//定义命令组件发送结果枚举类型
-typedef enum {
-	CmdSendSuccess,		//发送命令成功
-	CmdSendIllegalLen,	//非法命令信息长度
-	CmdSendInfoFail		//发送帧信息结构体失败
-} FrameCmdSendResult;
-
 //定义命令组件解析结果枚举类型
 typedef enum {
 	CmdParseSuccess, 		//命令解析成功
@@ -44,15 +37,12 @@ typedef enum {
 
 //==========================================================================
 //函数名称: frame_cmd_send
-//函数返回: 命令发送结果:
-//         CmdSendSuccess:   发送命令成功;
-//         CmdSendIllegalLen:非法命令信息长度;
-//         CmdSendInfoFail:  发送帧信息结构体失败;
+//函数返回: true:发送命令成功; false:非法命令信息长度
 //参数说明: cmd:要发送的帧命令信息结构体
 //功能概要: 发送帧命令信息结构体，自动组装帧信息结构体
 //备注: 需先使能组帧通信协议
 //==========================================================================
-FrameCmdSendResult frame_cmd_send(FrameCmdInfo cmd);
+bool frame_cmd_send(FrameCmdInfo cmd);
 
 //==========================================================================
 //函数名称: frame_cmd_parse

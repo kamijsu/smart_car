@@ -7,13 +7,13 @@
 
 //==========================================================================
 //函数名称: frame_bytes_send
-//函数返回: true:发送成功; false:发送失败，即发送帧信息结构体失败
+//函数返回: 无
 //参数说明: bytes:要发送的字节数组首地址
 //         len:字节数组长度
 //功能概要: 发送一定长度的字节数组，自动组装帧信息结构体
 //备注: 需先使能组帧通信协议
 //==========================================================================
-bool frame_bytes_send(uint8* bytes, uint8 len) {
+void frame_bytes_send(uint8* bytes, uint8 len) {
 	FrameInfo info;	//要发送的帧信息结构体
 	uint8 i;		//游标
 	//设置类型
@@ -25,7 +25,7 @@ bool frame_bytes_send(uint8* bytes, uint8 len) {
 		info.data[i] = bytes[i];
 	}
 	//发送帧信息结构体
-	return frame_send_info(info);
+	frame_send_info(info);
 }
 
 //==========================================================================

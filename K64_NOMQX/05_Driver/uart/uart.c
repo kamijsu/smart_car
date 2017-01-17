@@ -137,68 +137,56 @@ void uart_init(uint8 mod, uint32 baud, uint8 parity_mode, uint8 stop_bit,
 
 //==========================================================================
 //函数名称: uart_send1
-//函数返回: true:发送成功; false:发送失败
+//函数返回: 无
 //参数说明: mod:UART模块号:
 //             UART_MODx，x为模块号;
 //         byte:想要发送的字节数据
-//功能概要: 发送1个字节数据
+//功能概要: 阻塞式地发送1个字节数据
 //==========================================================================
-bool uart_send1(uint8 mod, uint8 byte) {
+void uart_send1(uint8 mod, uint8 byte) {
 	UART_Type * uart_ptr;	//UART基地址
-	uint32 max, i;
 
 	//获取UART基地址
 	uart_ptr = uart_table[mod];
-	max = UART_RP_TIME_SEND;	//将上限次数转化为uint32类型
 
-	for (i = 0; i < max; i++) {
-		//判断发送缓冲区是否为空
-		if (REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_TDRE_MASK)) {
-			//为空时，设置数据寄存器为byte
-			REG_SET_VAL(UART_D_REG(uart_ptr), byte);
-			return true;
-		}
+	//等待发送缓冲区为空
+	while (!REG_GET_MASK(UART_S1_REG(uart_ptr), UART_S1_TDRE_MASK)) {
 	}
-	return false;
+	//发送该字节
+	REG_SET_VAL(UART_D_REG(uart_ptr), byte);
 }
 
 //==========================================================================
 //函数名称: uart_sendN
-//函数返回: true:发送成功; false:发送失败
+//函数返回: 无
 //参数说明: mod:UART模块号:
 //             UART_MODx，x为模块号;
 //         buff:发送缓冲区首地址
 //         len:发送的字节数
-//功能概要: 发送N个字节数据
+//功能概要: 阻塞式地发送N个字节数据
 //==========================================================================
-bool uart_sendN(uint8 mod, uint8* buff, uint32 len) {
+void uart_sendN(uint8 mod, uint8* buff, uint32 len) {
 	uint32 i;
 
+	//按顺序发送各字节
 	for (i = 0; i < len; i++) {
-		//发送1个字节数据，失败则发送失败
-		if (!uart_send1(mod, buff[i])) {
-			return false;
-		}
+		uart_send1(mod, buff[i]);
 	}
-	return true;
 }
 
 //==========================================================================
 //函数名称: uart_send_string
-//函数返回: true:发送成功; false:发送失败
+//函数返回: 无
 //参数说明: mod:UART模块号:
 //             UART_MODx，x为模块号;
 //         str:发送字符串的首地址
-//功能概要: 发送一个以'\0'结束的字符串，不会发送'\0'
+//功能概要: 阻塞式地发送一个以'\0'结束的字符串，不会发送'\0'
 //==========================================================================
-bool uart_send_string(uint8 mod, uint8* str) {
+void uart_send_string(uint8 mod, uint8* str) {
+	//不为'\0'时，发送该字节
 	while (*str != '\0') {
-		//发送1个字节数据，失败则发送失败
-		if (!uart_send1(mod, *str++)) {
-			return false;
-		}
+		uart_send1(mod, *str++);
 	}
-	return true;
 }
 
 //==========================================================================

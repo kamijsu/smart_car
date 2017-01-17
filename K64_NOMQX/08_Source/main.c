@@ -27,7 +27,6 @@ int main(void) {
 	int16 var16;
 	int32 var32;
 
-
 	/* 小车相关参数变量 */
 	Car car;
 
@@ -61,7 +60,7 @@ int main(void) {
 
 //ftm_oc_init(FTM_MOD0,FTM_CH4,FTM_OC_MODE_TOGGLE,5000);
 	temp_sensor_init();
-	crc_init_protocol(CRC_CRC16_MODBUS);
+//	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
@@ -77,12 +76,11 @@ int main(void) {
 
 	frame.len = 255;
 
-	memset(data,0xEE,20);
+	memset(data, 0xEE, 20);
 
 	cmd.type = 0x00;
 	cmd.len = 1;
 	cmd.data[0] = 7;
-
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -101,19 +99,20 @@ int main(void) {
 			uvar32 = pit_get_time(1);
 
 			reg = FTFE_FSEC;
-			reg = *(uint32*)0x2000FFFF;
-//			uart_send1(UART_USE,reg>>24);
-//			uart_send1(UART_USE,reg>>16);
-//			uart_send1(UART_USE,reg>>8);
-//			uart_send1(UART_USE,reg);
-
-			uvar16 = crc_cal(data,20);
-			uart_send1(UART_USE,uvar16>>8);
-			uart_send1(UART_USE,uvar16);
+			reg = *(uint32*) 0x000003FD;
+//			uart_send1(UART_USE, reg >> 24);
+//			uart_send1(UART_USE, reg >> 16);
+//			uart_send1(UART_USE, reg >> 8);
+			uart_send1(UART_USE, reg);
+//			*(uint32*) 0x14000000 = 0xAAAAAAAA;
+//			reg = *(uint32*) 0x14000000;
+//			uart_send1(UART_USE, reg >> 24);
+//			uart_send1(UART_USE, reg >> 16);
+//			uart_send1(UART_USE, reg >> 8);
+//			uart_send1(UART_USE, reg);
 
 			uvar322 = pit_get_time(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
-
 
 		}
 

@@ -19,13 +19,6 @@
 //定义字符串组件所使用的帧类型，不能与其他组件冲突
 #define FRAME_STRING_TYPE	(0x00)
 
-//定义字符串组件发送结果枚举类型
-typedef enum {
-	StringSendSuccess,			//发送字符串成功
-	StringSendIllegalString,	//非法字符串，即字符串长度超过255字节
-	StringSendInfoFail			//发送帧信息结构体失败
-} FrameStringSendResult;
-
 //定义字符串组件解析结果枚举类型
 typedef enum {
 	StringParseSuccess, 		//字符串解析成功
@@ -35,15 +28,12 @@ typedef enum {
 
 //==========================================================================
 //函数名称: frame_string_send
-//函数返回: 字符串发送结果:
-//         StringSendSuccess:      发送字符串成功;
-//         StringSendIllegalString:非法字符串，即字符串长度超过255字节;
-//         StringSendInfoFail:     发送帧信息结构体失败;
+//函数返回: true:发送字符串成功; false:字符串长度超过255字节
 //参数说明: str:要发送的字符串首地址
 //功能概要: 发送以'\0'结束的字符串，自动组装帧信息结构体
 //备注: 需先使能组帧通信协议;字符串长度不能超过255字节，不包括'\0'，不发送'\0'
 //==========================================================================
-FrameStringSendResult frame_string_send(uint8* str);
+bool frame_string_send(uint8* str);
 
 //==========================================================================
 //函数名称: frame_string_parse

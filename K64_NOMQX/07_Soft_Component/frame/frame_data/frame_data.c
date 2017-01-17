@@ -7,20 +7,17 @@
 
 //==========================================================================
 //函数名称: frame_data_send
-//函数返回: 数据发送结果:
-//         DataSendSuccess:   发送数据成功;
-//         DataSendIllegalLen:非法数据信息长度;
-//         DataSendInfoFail:  发送帧信息结构体失败;
+//函数返回: true:发送数据成功; false:非法数据信息长度
 //参数说明: data:要发送的帧数据信息结构体
 //功能概要: 发送帧数据信息结构体，自动组装帧信息结构体
 //备注: 需先使能组帧通信协议
 //==========================================================================
-FrameDataSendResult frame_data_send(FrameDataInfo data) {
+bool frame_data_send(FrameDataInfo data) {
 	FrameInfo info;	//要发送的帧信息结构体
 	uint8 i;		//游标
 	//检查数据信息长度是否合法
 	if (data.len > 253) {
-		return DataSendIllegalLen;
+		return false;
 	}
 	//设置类型
 	info.type = FRAME_DATA_TYPE;
@@ -33,13 +30,8 @@ FrameDataSendResult frame_data_send(FrameDataInfo data) {
 		info.data[i + 2] = data.data[i];
 	}
 	//发送帧信息结构体
-	if (frame_send_info(info)) {
-		//发送成功
-		return DataSendSuccess;
-	} else {
-		//发送失败
-		return DataSendInfoFail;
-	}
+	frame_send_info(info);
+	return true;
 }
 
 //==========================================================================

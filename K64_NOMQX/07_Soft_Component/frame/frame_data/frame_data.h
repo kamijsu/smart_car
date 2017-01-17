@@ -27,13 +27,6 @@ typedef struct {
 	uint8 data[253];	//数据信息
 } FrameDataInfo;
 
-//定义数据组件发送结果枚举类型
-typedef enum {
-	DataSendSuccess,	//发送数据成功
-	DataSendIllegalLen,	//非法数据信息长度
-	DataSendInfoFail	//发送帧信息结构体失败
-} FrameDataSendResult;
-
 //定义数据组件解析结果枚举类型
 typedef enum {
 	DataParseSuccess, 			//数据解析成功
@@ -44,15 +37,12 @@ typedef enum {
 
 //==========================================================================
 //函数名称: frame_data_send
-//函数返回: 数据发送结果:
-//         DataSendSuccess:   发送数据成功;
-//         DataSendIllegalLen:非法数据信息长度;
-//         DataSendInfoFail:  发送帧信息结构体失败;
+//函数返回: true:发送数据成功; false:非法数据信息长度
 //参数说明: data:要发送的帧数据信息结构体
 //功能概要: 发送帧数据信息结构体，自动组装帧信息结构体
 //备注: 需先使能组帧通信协议
 //==========================================================================
-FrameDataSendResult frame_data_send(FrameDataInfo data);
+bool frame_data_send(FrameDataInfo data);
 
 //==========================================================================
 //函数名称: frame_data_parse
