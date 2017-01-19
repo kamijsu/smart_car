@@ -9,7 +9,7 @@ int main(void) {
 	//1. 声明主函数使用的变量
 	uint8 light_state;		//当前灯状态
 	uint32 crc;
-	uint8 data[50];
+	uint8 data[1024];
 	uint32 stream;
 	uint32 reg;
 	uint32 i, j;
@@ -75,8 +75,7 @@ int main(void) {
 //	ftm_timer_enable_int(FTM_MOD0,10);
 
 	frame.len = 255;
-
-	memset(data, 0xEE, 20);
+	memset(data, 0xEE, 1024);
 
 	cmd.type = 0x00;
 	cmd.len = 1;
@@ -98,12 +97,18 @@ int main(void) {
 
 			uvar32 = pit_get_time(1);
 
-			reg = FTFE_FSEC;
-			reg = *(uint32*) 0x000003FD;
+//			reg = SIM_FCFG1;
+////			reg = *(uint32*) 0x000003FD;
 //			uart_send1(UART_USE, reg >> 24);
 //			uart_send1(UART_USE, reg >> 16);
 //			uart_send1(UART_USE, reg >> 8);
-			uart_send1(UART_USE, reg);
+//			uart_send1(UART_USE, reg);
+
+//			reg = FTFE_FSTAT;
+//			uart_send1(UART_USE, reg >> 24);
+//			uart_send1(UART_USE, reg >> 16);
+//			uart_send1(UART_USE, reg >> 8);
+//			uart_send1(UART_USE, reg);
 //			*(uint32*) 0x14000000 = 0xAAAAAAAA;
 //			reg = *(uint32*) 0x14000000;
 //			uart_send1(UART_USE, reg >> 24);

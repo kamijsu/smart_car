@@ -112,10 +112,11 @@ bool crypto_des_encrypt(uint8 mode, uint8 padding, uint8* plain,
 //         iv:8字节初始化向量的首地址，若工作模式为ECB，该参数无效
 //         plain:存储明文的首地址
 //         plain_len:存储明文长度的地址
-//功能概要: 对密文使用DES算法进行解密，成功时存储相应的明文
+//功能概要: 对密文使用DES算法进行解密，存储相应的明文
 //备注: 当密文长度不为8的倍数或解出的明文填充错误时，解密失败;
 //     密文长度大于等于明文长度;
-//     明文地址可以为密文地址
+//     仅当工作模式为ECB和OFB时，明文地址可以为密文地址;
+//     密文长度合法时，无论填充是否正确，解出的明文均会被保存
 //==========================================================================
 bool crypto_des_decrypt(uint8 mode, uint8 padding, uint8* cipher,
 		uint32 cipher_len, uint8* key, uint8* iv, uint8* plain,
@@ -177,7 +178,8 @@ bool crypto_aes_encrypt(uint8 mode, uint8 padding, uint8* plain,
 //功能概要: 对密文使用AES算法进行解密，成功时存储相应的明文
 //备注: 当密文长度不为16的倍数或解出的明文填充错误时，解密失败;
 //     密文长度大于等于明文长度;
-//     明文地址可以为密文地址
+//     仅当工作模式为ECB和OFB时，明文地址可以为密文地址;
+//     密文长度合法时，无论填充是否正确，解出的明文均会被保存
 //==========================================================================
 bool crypto_aes_decrypt(uint8 mode, uint8 padding, uint8* cipher,
 		uint32 cipher_len, uint8* key, uint16 key_size, uint8* iv, uint8* plain,
