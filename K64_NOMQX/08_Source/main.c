@@ -133,15 +133,30 @@ int main(void) {
 			data[5] = 0xBC;
 			data[6] = 0xDE;
 			data[7] = 0xF0;
+
 //			result = flash_write(FLASH_BLK_DFLASH, 0, 0, 16, data);
-			uart_send1(UART_USE, result);
-			flash_read(FLASH_BLK_DFLASH, 0, 0, 24, read_data);
-			uart_sendN(UART_USE, read_data, 24);
-//			uart_send1(UART_USE,*(uint8*)addr);
-//			uart_send1(UART_USE,*(uint8*)(addr+1));
+//			uart_send1(UART_USE, result);
+//
+//			flash_read(FLASH_BLK_DFLASH, 0, 0, 26, read_data);
+//			uart_sendN(UART_USE, read_data, 26);
+//
+//			result = flash_write(FLASH_BLK_DFLASH, 31, 4072, 24, data);
+//			uart_send1(UART_USE, result);
+//
+//			flash_read(FLASH_BLK_DFLASH, 31, 4072, 20, read_data);
+//			uart_sendN(UART_USE, read_data, 26);
+//
+//			result = flash_erase_sector(FLASH_BLK_DFLASH, 31);
+//			uart_send1(UART_USE, result);
+//
+//			flash_read(FLASH_BLK_DFLASH, 0, 0, 26, read_data);
+//			uart_sendN(UART_USE, read_data, 26);
+//
+//			flash_read(FLASH_BLK_DFLASH, 31, 4072, 20, read_data);
+//			uart_sendN(UART_USE, read_data, 27);
 
 			uvar322 = pit_get_time(1);
-//			printf("%d\r\n", (int32) (uvar322 - uvar32));
+			printf("%d\r\n", (int32) (uvar322 - uvar32));
 		}
 
 //		//处理接收到的帧

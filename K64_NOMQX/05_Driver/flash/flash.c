@@ -29,11 +29,15 @@ static const uint32 flash_addr_table[] =
 
 //==========================================================================
 //函数名称: flash_launch
-//函数返回: 完成后状态寄存器的值
+//函数返回: 操作结果:
+//         FlashSuccess:        操作成功;
+//         FlashIllegalArgument:非法参数;
+//         FlashProtected:      操作区域被保护;
+//         FlashVerifyFail:     操作执行完毕，但确认操作结果时错误;
 //参数说明: 无
 //功能概要: 执行flash命令
 //==========================================================================
-static uint8 flash_launch() {
+static FlashResult flash_launch() {
 	//各错误标志
 	static const uint8 masks = FTFE_FSTAT_RDCOLERR_MASK | FTFE_FSTAT_ACCERR_MASK
 			| FTFE_FSTAT_FPVIOL_MASK;
@@ -47,8 +51,23 @@ static uint8 flash_launch() {
 	do {
 		temp = FTFE_FSTAT;
 	} while (!REG_GET_MASK(temp, FTFE_FSTAT_CCIF_MASK));
-	//返回状态寄存器的值
-	return temp;
+	//结果出现异常时，具体检查是何种错误
+	if (temp != FTFE_FSTAT_CCIF_MASK) {
+		//非法参数
+		if (REG_GET_MASK(temp, FTFE_FSTAT_ACCERR_MASK)) {
+			return FlashIllegalArgument;
+		}
+		//操作区域被保护
+		if (REG_GET_MASK(temp, FTFE_FSTAT_FPVIOL_MASK)) {
+			return FlashProtected;
+		}
+		//操作执行完毕，但确认操作结果时错误
+		if (REG_GET_MASK(temp, FTFE_FSTAT_MGSTAT0_MASK)) {
+			return FlashVerifyFail;
+		}
+	}
+	//操作成功
+	return FlashSuccess;
 }
 
 //==========================================================================
@@ -103,8 +122,8 @@ void show() {
 //==========================================================================
 FlashResult flash_write(uint8 blk, uint8 sector, uint16 offset, uint16 num,
 		uint8* data) {
-	uint32 addr;	//物理地址
-	uint8 result;	//写入结果
+	uint32 addr;		//物理地址
+	FlashResult result;	//写入结果
 
 	//写入数量不为8的倍数时，参数非法
 	if (num & 0x7) {
@@ -129,20 +148,9 @@ FlashResult flash_write(uint8 blk, uint8 sector, uint16 offset, uint16 num,
 		REG_SET_VAL(FTFE_FCCOB8, data[7]);
 		//执行命令，并获取结果
 		result = flash_launch();
-		//结果出现异常时，具体检查是何种错误
-		if (result != FTFE_FSTAT_CCIF_MASK) {
-			//非法参数
-			if (REG_GET_MASK(result, FTFE_FSTAT_ACCERR_MASK)) {
-				return FlashIllegalArgument;
-			}
-			//写入区域被保护
-			if (REG_GET_MASK(result, FTFE_FSTAT_FPVIOL_MASK)) {
-				return FlashProtected;
-			}
-			//写入完毕，但写入结果与预期不同
-			if (REG_GET_MASK(result, FTFE_FSTAT_MGSTAT0_MASK)) {
-				return FlashVerifyFail;
-			}
+		//写入失败时，返回失败原因
+		if (result != FlashSuccess) {
+			return result;
 		}
 	}
 	//写入成功
@@ -170,4 +178,49 @@ void flash_read(uint8 blk, uint8 sector, uint16 offset, uint16 num, uint8* data)
 	//将逻辑地址转换为物理地址，并复制到内存中
 	memcpy(data, (uint8*) (flash_addr_table[blk] + (sector << 12) + offset),
 			num);
+}
+
+//==========================================================================
+//函数名称: flash_erase_sector
+//函数返回: 擦除结果:
+//         FlashSuccess:        擦除成功;
+//         FlashIllegalArgument:非法参数;
+//         FlashProtected:      该扇区被保护;
+//         FlashVerifyFail:     擦除完毕，但该扇区不全为0xFF;
+//参数说明: blk:flash块:
+//             FLASH_BLK_PFLASH:程序flash;
+//             FLASH_BLK_DFLASH:数据flash;
+//         sector:扇区号:
+//                程序flash时，取值范围为[0,127];
+//                数据flash时，取值范围为[0,31];
+//功能概要: 擦除一块扇区
+//备注: 擦除程序flash的0扇区时，会引起芯片加密，需要整体擦除
+//==========================================================================
+FlashResult flash_erase_sector(uint8 blk, uint8 sector) {
+	//设置命令为擦除一块扇区
+	REG_SET_VAL(FTFE_FCCOB0, ERSSCR);
+	//设置地址
+	flash_set_addr((flash_addr_table[blk] >> 5) + (sector << 12));
+	//执行命令，并返回结果
+	return flash_launch();
+}
+
+//==========================================================================
+//函数名称: flash_erase_dflash
+//函数返回: 擦除结果:
+//         FlashSuccess:        擦除成功;
+//         FlashIllegalArgument:非法参数;
+//         FlashProtected:      数据flash有区域被保护;
+//         FlashVerifyFail:     擦除完毕，但数据flash不全为0xFF;
+//参数说明: 无
+//功能概要: 擦除数据flash
+//备注: 若数据flash分配空间给EEPROM备份，擦除时，返回非法参数
+//==========================================================================
+FlashResult flash_erase_dflash() {
+	//设置命令为擦除一块flash
+	REG_SET_VAL(FTFE_FCCOB0, ERSBLK);
+	//设置地址
+	flash_set_addr(flash_addr_table[FLASH_BLK_DFLASH] >> 5);
+	//执行命令，并返回结果
+	return flash_launch();
 }

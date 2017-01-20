@@ -80,4 +80,35 @@ FlashResult flash_write(uint8 blk, uint8 sector, uint16 offset, uint16 num,
 void flash_read(uint8 blk, uint8 sector, uint16 offset, uint16 num,
 		uint8* data);
 
+//==========================================================================
+//函数名称: flash_erase_sector
+//函数返回: 擦除结果:
+//         FlashSuccess:        擦除成功;
+//         FlashIllegalArgument:非法参数;
+//         FlashProtected:      该扇区被保护;
+//         FlashVerifyFail:     擦除完毕，但该扇区不全为0xFF;
+//参数说明: blk:flash块:
+//             FLASH_BLK_PFLASH:程序flash;
+//             FLASH_BLK_DFLASH:数据flash;
+//         sector:扇区号:
+//                程序flash时，取值范围为[0,127];
+//                数据flash时，取值范围为[0,31];
+//功能概要: 擦除一块扇区
+//备注: 擦除程序flash的0扇区时，会引起芯片加密，需要整体擦除
+//==========================================================================
+FlashResult flash_erase_sector(uint8 blk, uint8 sector);
+
+//==========================================================================
+//函数名称: flash_erase_dflash
+//函数返回: 擦除结果:
+//         FlashSuccess:        擦除成功;
+//         FlashIllegalArgument:非法参数;
+//         FlashProtected:      数据flash有区域被保护;
+//         FlashVerifyFail:     擦除完毕，但数据flash不全为0xFF;
+//参数说明: 无
+//功能概要: 擦除数据flash
+//备注: 若数据flash分配空间给EEPROM备份，擦除时，返回非法参数
+//==========================================================================
+FlashResult flash_erase_dflash();
+
 #endif
