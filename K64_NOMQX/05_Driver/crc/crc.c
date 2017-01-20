@@ -139,12 +139,12 @@ void crc_init_protocol(uint8 protocol_type) {
 //     硬件CRC仅适合块式校验数据，流式校验数据时效率低下，建议用软件CRC进行流式校验
 //==========================================================================
 uint32 crc_cal(uint8* data, uint32 len) {
+	//用于读取和写入数据寄存器的控制寄存器值，即WAS和TCRC置1
+	static const uint32 ctrl_backup = CRC_CTRL_WAS_MASK | CRC_CTRL_TCRC_MASK;
 	uint32 ctrl_old;	//旧控制寄存器值
 	uint32 data_old;	//旧数据寄存器值
 	uint32* data32;		//32位数据指针，用于32位校验数据
 	uint32 result;		//CRC校验结果
-	//用于读取和写入数据寄存器的控制寄存器值，即WAS和TCRC置1
-	const uint32 ctrl_backup = CRC_CTRL_WAS_MASK | CRC_CTRL_TCRC_MASK;
 
 	//读取旧控制寄存器值
 	ctrl_old = CRC_CTRL;

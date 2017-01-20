@@ -26,6 +26,9 @@ int main(void) {
 	int8 var8;
 	int16 var16;
 	int32 var32;
+	uint32 addr;
+	uint8* ptr;
+	FlashResult result;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -77,6 +80,9 @@ int main(void) {
 	frame.len = 255;
 	memset(data, 0xEE, 1024);
 
+	uint8 read_data[1024];
+	memset(read_data, 0xCC, 1024);
+
 	cmd.type = 0x00;
 	cmd.len = 1;
 	cmd.data[0] = 7;
@@ -116,9 +122,26 @@ int main(void) {
 //			uart_send1(UART_USE, reg >> 8);
 //			uart_send1(UART_USE, reg);
 
+			addr = 0x10000000;
+//			uart_send1(UART_USE,*(uint8*)addr);
+//			uart_send1(UART_USE,*(uint8*)(addr+1));
+			data[0] = 0x12;
+			data[1] = 0x34;
+			data[2] = 0x56;
+			data[3] = 0x78;
+			data[4] = 0x9A;
+			data[5] = 0xBC;
+			data[6] = 0xDE;
+			data[7] = 0xF0;
+//			result = flash_write(FLASH_BLK_DFLASH, 0, 0, 16, data);
+			uart_send1(UART_USE, result);
+			flash_read(FLASH_BLK_DFLASH, 0, 0, 24, read_data);
+			uart_sendN(UART_USE, read_data, 24);
+//			uart_send1(UART_USE,*(uint8*)addr);
+//			uart_send1(UART_USE,*(uint8*)(addr+1));
+
 			uvar322 = pit_get_time(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
-
 		}
 
 //		//处理接收到的帧
