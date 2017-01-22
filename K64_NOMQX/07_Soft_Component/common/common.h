@@ -20,15 +20,20 @@
 #define ENABLE_IRQ(IRQn)	NVIC_EnableIRQ(IRQn)	//允许接收中断请求号为IRQn的中断，中断请求号的定义在"MK64F12.h"的171行
 #define DISABLE_IRQ(IRQn)	NVIC_DisableIRQ(IRQn)	//禁止接收中断请求号为IRQn的中断
 
+//位操作宏函数
+#define BSET(var,bit)		((var) |= (0x1 << (bit)))	//置变量的一位
+#define BCLR(var,bit)		((var) &= ~(0x1 << (bit)))	//清变量的一位
+#define BGET(var,bit)		(((var) >> (bit)) & 0x1)	//获取变量一位的状态
+
 //寄存器操作宏函数
 //根据偏移进行操作
-#define REG_SET_SHIFT(reg,shift)	((reg) |= (0x1 << (shift)))		//置寄存器的一位
-#define REG_CLR_SHIFT(reg,shift)	((reg) &= ~(0x1 << (shift)))	//清寄存器的一位
-#define REG_GET_SHIFT(reg,shift)	(((reg) >> (shift)) & 0x1)		//获取寄存器一位的状态
+#define REG_SET_SHIFT(reg,shift)	BSET(reg,shift)		//置寄存器的一位
+#define REG_CLR_SHIFT(reg,shift)	BCLR(reg,shift)		//清寄存器的一位
+#define REG_GET_SHIFT(reg,shift)	BGET(reg,shift)		//获取寄存器一位的状态
 //根据掩码进行操作
-#define REG_SET_MASK(reg,mask)		((reg) |= (mask))				//置寄存器的掩码位
-#define REG_CLR_MASK(reg,mask)		((reg) &= ~(mask))				//清寄存器的掩码位
-#define REG_GET_MASK(reg,mask)		((reg) & (mask))				//获取寄存器掩码位的值
+#define REG_SET_MASK(reg,mask)		((reg) |= (mask))	//置寄存器的掩码位
+#define REG_CLR_MASK(reg,mask)		((reg) &= ~(mask))	//清寄存器的掩码位
+#define REG_GET_MASK(reg,mask)		((reg) & (mask))	//获取寄存器掩码位的值
 //设置寄存器的值
 #define REG_SET_VAL(reg,val)		((reg) = (val))
 

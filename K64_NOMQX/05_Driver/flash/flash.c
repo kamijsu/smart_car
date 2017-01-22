@@ -82,6 +82,15 @@ static void flash_set_addr(uint32 addr) {
 	REG_SET_VAL(FTFE_FCCOB3, addr);
 }
 
+static void flash_set_data(uint8 offset, uint8 num, volatile uint8* data) {
+	//数据FCCOB寄存器基地址
+	static uint8* const data_ptr = (uint8*) (FTFE_BASE + 0x8);
+	volatile uint8* volatile ptr;
+	for (ptr = data_ptr + offset; num > 0; --num) {
+		*ptr++ = *data++;
+	}
+}
+
 void show() {
 	uart_send1(UART_MOD1, FTFE_FCCOB0);
 	uart_send1(UART_MOD1, FTFE_FCCOB1);
@@ -155,6 +164,108 @@ FlashResult flash_write(uint8 blk, uint8 sector, uint16 offset, uint16 num,
 	}
 	//写入成功
 	return FlashSuccess;
+////	//数据FCCOB寄存器基地址
+////	static uint8* const data_ptr = (uint8*) (FTFE_BASE + 0x8);
+//	uint8 bn;		//字节数
+//	uint32 addr;	//地址FCCOB寄存器设置的地址值
+//	uint32 i;		//临时变量
+//	uint16 j;		//临时变量
+//	FlashResult result;	//写入结果
+//
+//	//偏移地址未满8字节部分
+//	bn = offset & 0x7;
+//	//flash块内偏移地址
+//	i = (sector << 12) + offset - bn;
+//	//第23位决定选择程序flash还是数据flash
+//	addr = (flash_addr_table[blk] >> 5) + i;
+//	//设置命令为写入8个字节
+//	REG_SET_VAL(FTFE_FCCOB0, PGM8);
+//	//处理偏移地址未满8字节情况
+//	if (bn) {
+//		//设置地址
+//		flash_set_addr(addr);
+//		//数据物理地址
+//		i += flash_addr_table[blk];
+//		//用原先数据填充数据FCCOB寄存器
+//		flash_set_data(0, bn, (uint8*) i);
+////		memcpy(data_ptr, (void*) i, bn);
+//		//填充数量与写入总数之和
+//		j = bn + num;
+//		//判断能否满8字节
+//		if (j >= 8) {
+//			//写入数据数量
+//			j = 8 - bn;
+//			//能满时，设置剩余数据
+//			flash_set_data(bn, j, data);
+////			memcpy((void*) (data_ptr + bn), data, j);
+//		} else {
+//			//不能满时，设置数据后用原先数据填充FCCOB寄存器
+//			flash_set_data(bn, num, data);
+//			flash_set_data(j, 8 - j, (uint8*) (i + j));
+////			memcpy((void*) (data_ptr + bn), data, num);
+////			memcpy((void*) (data_ptr + j), (void*) (i + j), 8 - j);
+//			//写入数据数量
+//			j = num;
+//		}
+////		show();
+//		//执行命令，并获取结果
+//		result = flash_launch();
+//		//写入失败，或写入完毕时，返回结果
+//		if (result != FlashSuccess || (num -= j) == 0) {
+//			return result;
+//		}
+//		//设置的地址值向后偏移8字节
+//		addr += 8;
+//		//写入数据首地址向后偏移
+//		data += j;
+//	}
+//	//剩余写入数量未满8字节部分
+//	bn = num & 0x7;
+//	//写入满8字节部分
+//	for (num -= bn; num > 0; num -= 8, data += 8, addr += 8) {
+//		//设置地址
+//		flash_set_addr(addr);
+//		//设置数据
+////		memcpy(data_ptr, data, 8);
+//		REG_SET_VAL(FTFE_FCCOB7, data[0]);
+//		REG_SET_VAL(FTFE_FCCOB6, data[1]);
+//		REG_SET_VAL(FTFE_FCCOB5, data[2]);
+//		REG_SET_VAL(FTFE_FCCOB4, data[3]);
+//		REG_SET_VAL(FTFE_FCCOBB, data[4]);
+//		REG_SET_VAL(FTFE_FCCOBA, data[5]);
+//		REG_SET_VAL(FTFE_FCCOB9, data[6]);
+//		REG_SET_VAL(FTFE_FCCOB8, data[7]);
+//		//执行命令，并获取结果
+//		result = flash_launch();
+//		//写入失败时，返回失败原因
+//		if (result != FlashSuccess) {
+//			return result;
+//		}
+//	}
+//	//处理剩余写入数量未满8字节情况
+//	if (bn) {
+//		//设置地址
+//		flash_set_addr(addr);
+//		//将地址第23位移至28位以获得物理地址
+//		if (BGET(addr, 23)) {
+//			BCLR(addr, 23);
+//			BSET(addr, 28);
+//		}
+//		//设置剩余数据后用原先数据填充FCCOB寄存器
+//		flash_set_data(0, bn, data);
+//		flash_set_data(bn, 8 - bn, (uint8*) (addr + bn));
+//		show();
+//		uart_send1(1,addr>>24);
+//		uart_send1(1,addr>>16);
+//		uart_send1(1,addr>>8);
+//		uart_send1(1,addr);
+////		memcpy(data_ptr, data, bn);
+////		memcpy((void*) (data_ptr + bn), (void*) (addr + bn), 8 - bn);
+//		//执行命令，并获取结果
+//		result = flash_launch();
+//	}
+//	//返回写入结果
+//	return result;
 }
 
 //==========================================================================
@@ -178,6 +289,29 @@ void flash_read(uint8 blk, uint8 sector, uint16 offset, uint16 num, uint8* data)
 	//将逻辑地址转换为物理地址，并复制到内存中
 	memcpy(data, (uint8*) (flash_addr_table[blk] + (sector << 12) + offset),
 			num);
+////	memcpy(data,(void*)(flash_addr_table[blk] + (sector << 12) + offset),num);
+//	volatile uint32* volatile ptrr;	//不优化的32位指针
+//	uint32* ptrw;	//32位指针
+//
+//	//将逻辑地址转换为物理地址
+//	ptrr = (uint32*) (flash_addr_table[blk] + (sector << 12) + offset);
+//	//每4字节读取
+//	for (ptrw = (uint32*) data; num >= 4; num -= 4) {
+//		*ptrw++ = *ptrr++;
+//	}
+//	//读取剩余字节
+//	switch (num) {
+//	case 3:
+//		*(uint16*) ptrw = *(volatile uint16*) ptrr;
+//		*((uint8*) ptrw + 2) = *((volatile uint8*) ptrr + 2);
+//		break;
+//	case 2:
+//		*(uint16*) ptrw = *(volatile uint16*) ptrr;
+//		break;
+//	case 1:
+//		*(uint8*) ptrw = *(volatile uint8*) ptrr;
+//		break;
+//	}
 }
 
 //==========================================================================

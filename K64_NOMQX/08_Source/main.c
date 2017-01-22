@@ -28,7 +28,10 @@ int main(void) {
 	int32 var32;
 	uint32 addr;
 	uint8* ptr;
+	uint16 offset;
+	uint16 num;
 	FlashResult result;
+
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -68,8 +71,8 @@ int main(void) {
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
-	d = 1.3;
-	f = 1.3f;
+//	d = 1.3;
+//	f = 1.3f;
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
@@ -79,7 +82,7 @@ int main(void) {
 
 	frame.len = 255;
 	memset(data, 0xEE, 1024);
-
+	FMC_PFB0CR |= FMC_PFB0CR_S_B_INV_MASK;
 	uint8 read_data[1024];
 	memset(read_data, 0xCC, 1024);
 
@@ -125,21 +128,36 @@ int main(void) {
 			addr = 0x10000000;
 //			uart_send1(UART_USE,*(uint8*)addr);
 //			uart_send1(UART_USE,*(uint8*)(addr+1));
-			data[0] = 0x12;
-			data[1] = 0x34;
-			data[2] = 0x56;
-			data[3] = 0x78;
-			data[4] = 0x9A;
-			data[5] = 0xBC;
-			data[6] = 0xDE;
-			data[7] = 0xF0;
+			for (i = 0; i < 128; i++) {
+				data[i * 8] = 0x00;
+				data[i * 8 + 1] = 0x11;
+				data[i * 8 + 2] = 0x22;
+				data[i * 8 + 3] = 0x33;
+				data[i * 8 + 4] = 0x44;
+				data[i * 8 + 5] = 0x55;
+				data[i * 8 + 6] = 0x66;
+				data[i * 8 + 7] = 0x77;
+			}
+			offset = 0;
+			num = 8;
 
-//			result = flash_write(FLASH_BLK_DFLASH, 0, 0, 16, data);
-//			uart_send1(UART_USE, result);
-//
-//			flash_read(FLASH_BLK_DFLASH, 0, 0, 26, read_data);
-//			uart_sendN(UART_USE, read_data, 26);
-//
+
+			flash_erase_sector(FLASH_BLK_DFLASH, 0);
+			rng_next_bytes(data, 48);
+
+//			flash_read(FLASH_BLK_DFLASH, 0, 0, 27, read_data);
+//						uart_sendN(UART_USE, read_data, 27);
+			result = flash_write(FLASH_BLK_DFLASH, 0, offset, num, data);
+			uart_send1(UART_USE, result);
+//			FMC_PFB0CR |= FMC_PFB0CR_S_B_INV_MASK;
+			flash_read(FLASH_BLK_DFLASH, 0, 2, 2, read_data);
+			uart_sendN(UART_USE, read_data, 26);
+
+			result = flash_write(FLASH_BLK_DFLASH, 0, offset, num, data);
+			uart_send1(UART_USE, result);
+			flash_read(FLASH_BLK_DFLASH, 0, 0, 4, read_data);
+			uart_sendN(UART_USE, read_data, 26);
+
 //			result = flash_write(FLASH_BLK_DFLASH, 31, 4072, 24, data);
 //			uart_send1(UART_USE, result);
 //
@@ -154,9 +172,9 @@ int main(void) {
 //
 //			flash_read(FLASH_BLK_DFLASH, 31, 4072, 20, read_data);
 //			uart_sendN(UART_USE, read_data, 27);
-
+//			return 1;
 			uvar322 = pit_get_time(1);
-			printf("%d\r\n", (int32) (uvar322 - uvar32));
+//			printf("%d\r\n", (int32) (uvar322 - uvar32));
 		}
 
 //		//处理接收到的帧
