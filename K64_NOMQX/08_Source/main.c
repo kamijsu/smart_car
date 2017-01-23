@@ -93,7 +93,7 @@ int main(void) {
 	cmd.len = 1;
 	cmd.data[0] = 7;
 
-//	result = flash_partition(FLASH_DFLASH_SIZE_0, FLASH_EEPROM_SIZE_64,
+//	result = flash_partition(FLASH_DFLASH_SIZE_96, FLASH_EEPROM_SIZE_64,
 //			FLASH_EEPROM_SPLIT_1_3);
 //	uart_send1(UART_USE, result);
 
@@ -145,31 +145,33 @@ int main(void) {
 				data[i * 8 + 7] = 0x77;
 			}
 			sector = 0;
-			offset = 0;
+			offset = 40;
 			num = 27;
 
-			reg = FTFE_FDPROT;
-			uart_send1(UART_USE, reg);
 
-			FTFE_FDPROT = 0x00;
-
-			reg = FTFE_FDPROT;
-			uart_send1(UART_USE, reg);
-
+//			flash_protect(FLASH_BLK_FLEXRAM,0);
+//			reg = FTFE_FDPROT;
+//			uart_send1(UART_USE, reg);
+//
+//			FTFE_FDPROT = 0x00;
+//
+//			reg = FTFE_FDPROT;
+//			uart_send1(UART_USE, reg);
+//
 //			REG_CLR_SHIFT(FTFE_FEPROT, 0);
 //
-////			flash_flexram_set_mode(FLASH_FLEXRAM_MODE_RAM);
-////
-////			flash_flexram_read(offset, num, read_data);
-////			uart_sendN(UART_USE, read_data, num);
-////
+//			flash_flexram_set_mode(FLASH_FLEXRAM_MODE_RAM);
+//
+//			flash_flexram_read(offset, num, read_data);
+//			uart_sendN(UART_USE, read_data, num);
+//
 //			rng_next_bytes(data, num);
 //			uart_sendN(UART_USE, data, num);
 //
 //			flash_flexram_write(offset, num, data);
-
-			flash_flexram_read(offset, num, read_data);
-			uart_sendN(UART_USE, read_data, num);
+//
+//			flash_flexram_read(offset, num, read_data);
+//			uart_sendN(UART_USE, read_data, num);
 //
 //			offset += 8;
 //			rng_next_bytes(data, num);
@@ -224,7 +226,7 @@ int main(void) {
 //
 //			memcpy(read_data, (void*) addr, 26);
 //			uart_sendN(UART_USE, read_data, 26);
-
+//			flash_erase_sector(FLASH_BLK_DFLASH,sector);
 //			flash_write(FLASH_BLK_DFLASH, sector, offset, num, data);
 //
 ////			flash_erase_sector(1,0);
@@ -250,8 +252,8 @@ int main(void) {
 //			flash_erase_sector(FLASH_BLK_DFLASH, sector);
 //			rng_next_bytes(data, 48);
 //
-////			flash_read(FLASH_BLK_DFLASH, 0, 0, 27, read_data);
-////						uart_sendN(UART_USE, read_data, 27);
+//			flash_read(FLASH_BLK_PFLASH, 0, 0, 27, read_data);
+//						uart_sendN(UART_USE, read_data, 27);
 //			result = flash_write(FLASH_BLK_DFLASH, sector, offset, num, data);
 //			uart_send1(UART_USE, result);
 ////			FMC_PFB0CR |= FMC_PFB0CR_S_B_INV_MASK;
