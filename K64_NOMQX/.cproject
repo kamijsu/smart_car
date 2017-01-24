@@ -64,6 +64,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/mmcau&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/pit&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/rng&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/spi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/uart&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/ems&quot;"/>
@@ -216,6 +217,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/mmcau&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/pit&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/rng&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/spi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/uart&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/ems&quot;"/>
