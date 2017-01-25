@@ -111,9 +111,9 @@ int main(void) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 
-			uvar32 = pit_get_time(1);
+			uvar32 = pit_get_time_ms(1);
 
-			uvar322 = pit_get_time(1);
+			uvar322 = pit_get_time_ms(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
 		}
 
