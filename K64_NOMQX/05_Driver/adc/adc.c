@@ -74,7 +74,8 @@ static bool adc_cal(uint8 mod) {
 //参数说明: mod:ADC模块号:
 //             ADC_MODx，x为模块号;
 //         clk_div:时钟分频数:
-//                 ADC_CLK_DIV_x，x为分频数大小;
+//                 ADC_CLK_DIV_x，x为分频数大小，x可取值为:
+//                 1 | 2 | 4 | 8 | 16
 //         accuracy:ADC采样精度:
 //                  ADC_ACCURACY_SINGLE_8_DIFF_9:  单端8位转换，差分9位转换;
 //                  ADC_ACCURACY_SINGLE_10_DIFF_11:单端10位转换，差分11位转换;

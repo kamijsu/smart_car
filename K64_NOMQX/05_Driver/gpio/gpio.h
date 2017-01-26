@@ -75,7 +75,7 @@ void gpio_reverse(uint8 port_pin);
 //                GPIO_DRIVE_LOW: 正常驱动能力(5mA);
 //                GPIO_DRIVE_HIGH:高驱动能力(18mA);
 //功能概要: 当引脚配置为输出时，设定其驱动能力
-//备注:     K64芯片只有PTD7可以被设置为高驱动能力
+//备注: K64芯片只有PTD7可以被设置为高驱动能力
 //==========================================================================
 void gpio_drive_strength(uint8 port_pin, uint8 status);
 

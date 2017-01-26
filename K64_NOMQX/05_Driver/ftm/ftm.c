@@ -44,7 +44,8 @@ static const IRQn_Type ftm_irq_table[] = { FTM0_IRQn, FTM1_IRQn, FTM2_IRQn,
 //参数说明: mod:FTM模块号:
 //             FTM_MODx，x为模块号;
 //         clk_div:时钟分频因子:
-//                 FTM_CLK_DIV_x，x为分频因子大小;
+//                 FTM_CLK_DIV_x，x为分频因子大小，x可取值为:
+//                 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128
 //         counter_mode:计数器模式:
 //                      FTM_COUNTER_MODE_UP:     向上计数;
 //                      FTM_COUNTER_MODE_UP_DOWN:上下计数;

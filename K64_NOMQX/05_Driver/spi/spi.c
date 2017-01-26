@@ -51,8 +51,9 @@ static const IRQn_Type spi_irq_table[] = { SPI0_IRQn, SPI1_IRQn, SPI2_IRQn };
 //t ASC = (1/fP) x PASC x ASC
 //tDT = (1/fP ) x PDT x DT
 // (fP /PBR) x [(1+DBR)/BR]
-void spi_init_master(uint8 mod, uint8 config, uint32 baud, uint8 format,
-		uint8 data_size, uint8 bit_order) {
+void spi_init_master(uint8 mod, uint8 config, uint32 baud_scaler, uint8 format,
+		uint8 data_size, uint8 bit_order, uint8 csc_scaler, uint8 asc_scaler,
+		uint8 dt_scaler) {
 	SPI_Type * spi_ptr;	//SPI基地址
 	uint8 i;	//游标
 
@@ -94,19 +95,18 @@ void spi_init_master(uint8 mod, uint8 config, uint32 baud, uint8 format,
 	REG_SET_MASK(SPI_MCR_REG(spi_ptr),
 			SPI_MCR_MSTR_MASK|SPI_MCR_PCSIS_MASK|SPI_MCR_DIS_TXF_MASK|SPI_MCR_DIS_RXF_MASK|SPI_MCR_CLR_TXF_MASK|SPI_MCR_CLR_RXF_MASK);
 
-	//设置帧格式
+	//清空CTAR寄存器的值，节约了IO操作
+	REG_SET_VAL(SPI_CTAR_REG(spi_ptr,config), 0);
+
+	//设置帧格式，由于CTAR值全部置0，仅需置位即可
 	switch (format) {
 	case SPI_FORMAT_CPOL0_CPHA0:
-		REG_CLR_MASK(SPI_CTAR_REG(spi_ptr,config),
-				SPI_CTAR_CPOL_MASK|SPI_CTAR_CPHA_MASK);
 		break;
 	case SPI_FORMAT_CPOL0_CPHA1:
-		REG_CLR_MASK(SPI_CTAR_REG(spi_ptr,config), SPI_CTAR_CPOL_MASK);
 		REG_SET_MASK(SPI_CTAR_REG(spi_ptr,config), SPI_CTAR_CPHA_MASK);
 		break;
 	case SPI_FORMAT_CPOL1_CPHA0:
 		REG_SET_MASK(SPI_CTAR_REG(spi_ptr,config), SPI_CTAR_CPOL_MASK);
-		REG_CLR_MASK(SPI_CTAR_REG(spi_ptr,config), SPI_CTAR_CPHA_MASK);
 		break;
 	case SPI_FORMAT_CPOL1_CPHA1:
 		REG_SET_MASK(SPI_CTAR_REG(spi_ptr,config),
@@ -114,14 +114,18 @@ void spi_init_master(uint8 mod, uint8 config, uint32 baud, uint8 format,
 		break;
 	}
 
-	//设置帧数据位数
-	REG_CLR_MASK(SPI_CTAR_REG(spi_ptr,config), SPI_CTAR_FMSZ_MASK);
-	REG_SET_MASK(SPI_CTAR_REG(spi_ptr,config), SPI_CTAR_FMSZ(data_size));
+	//设置波特率分频因子，帧数据位数，各延时分频因子
+	REG_SET_MASK(SPI_CTAR_REG(spi_ptr,config),
+			baud_scaler |SPI_CTAR_FMSZ(data_size) |SPI_CTAR_PCSSCK(csc_scaler>>4) |SPI_CTAR_CSSCK(csc_scaler) |SPI_CTAR_PASC(asc_scaler>>4) |SPI_CTAR_ASC(asc_scaler) |SPI_CTAR_PDT(dt_scaler>>4) |SPI_CTAR_DT(dt_scaler));
 
 	//设置位传输顺序
 	if (bit_order == SPI_BIT_ORDER_LSB) {
 		REG_SET_MASK(SPI_CTAR_REG(spi_ptr,config), SPI_CTAR_LSBFE_MASK);
-	} else {
-		REG_CLR_MASK(SPI_CTAR_REG(spi_ptr,config), SPI_CTAR_LSBFE_MASK);
 	}
+
+	//清除所有状态标识
+	REG_SET_VAL(SPI_SR_REG(spi_ptr), 0xFFFFFFFF);
+
+	//使能SPI时钟，并开始传输
+	REG_CLR_MASK(SPI_MCR_REG(spi_ptr), SPI_MCR_MDIS_MASK|SPI_MCR_HALT_MASK);
 }

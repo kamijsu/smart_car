@@ -125,6 +125,10 @@ void PIT0_IRQHandler() {
 	ENABLE_INTERRUPTS; //恢复原总中断设置情况
 }
 
+void PIT2_IRQHandler(){
+	pit_clear_int(PIT_CH2); //清标志
+}
+
 //============================================================================
 //函数名称：PORTD_IRQHandler
 //函数参数：

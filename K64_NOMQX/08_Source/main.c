@@ -55,6 +55,7 @@ int main(void) {
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 	pit_init(PIT_CH1, 89478);
+//	pit_init(PIT_CH2,1);
 	rng_init();
 //	motor_init(MOTOR0);			//左电机初始化
 //	motor_init(MOTOR1);			//右电机初始化
@@ -78,6 +79,7 @@ int main(void) {
 //	f = 1.3f;
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
+//	pit_enable_int(PIT_CH2);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	frame_enable_re_int();
 //	reed_switch_enable_int();
@@ -112,6 +114,7 @@ int main(void) {
 			light_change(LIGHT_BLUE);
 
 			uvar32 = pit_get_time_ms(1);
+
 
 			uvar322 = pit_get_time_ms(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
