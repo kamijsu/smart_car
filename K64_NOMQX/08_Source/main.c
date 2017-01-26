@@ -47,20 +47,22 @@ int main(void) {
 
 	//3. 初始化外设模块
 	light_init(LIGHT_BLUE, LIGHT_ON); //蓝灯初始化
-	light_init(LIGHT_GREEN, LIGHT_OFF);
-	light_init(LIGHT_RED, LIGHT_OFF);
-	//light_init(LIGHT_BLUE, LIGHT_OFF);
+//	light_init(LIGHT_GREEN, LIGHT_OFF);
+//	light_init(LIGHT_RED, LIGHT_OFF);
+			//light_init(LIGHT_BLUE, LIGHT_OFF);
 //	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 //	UART_BIT_ORDER_LSB); //uart1初始化，蓝牙用，蓝牙模块波特率9600，无法在5ms中断中传输数据
 //	uart_init(UART_USE, 115200);   //uart1初始化，串口用
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 	pit_init(PIT_CH1, 89478);
+//	gpio_init(COM_PORTC | 0, GPIO_OUTPUT, GPIO_LEVEL_LOW);
+//	gpio_init(COM_PORTB | 19, GPIO_OUTPUT, GPIO_LEVEL_LOW);
 //	pit_init(PIT_CH2,1);
 	rng_init();
 //	motor_init(MOTOR0);			//左电机初始化
 //	motor_init(MOTOR1);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
-	encoder_init(ENCODER0);		//左编码器初始化
+//	encoder_init(ENCODER0);		//左编码器初始化
 //	encoder_init(ENCODER1);		//右编码器初始化
 //	ems_init();					//电磁传感器初始化
 //	reed_switch_init();			//干簧管初始化
@@ -69,9 +71,17 @@ int main(void) {
 //ftm_pwm_single_init(FTM_MOD0,FTM_CH4,FTM_PWM_MODE_EDGE_ALIGNED,FTM_PWM_POL_NEGATIVE,5000);
 
 //ftm_oc_init(FTM_MOD0,FTM_CH4,FTM_OC_MODE_TOGGLE,5000);
-	temp_sensor_init();
+
 //	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
+
+	spi_master_init(SPI_MOD2, SPI_CONFIG0, SPI_BAUD_SCALER_2,
+	SPI_FORMAT_CPOL1_CPHA1, 8, SPI_BIT_ORDER_MSB,
+	SPI_DELAY_SCALER_2, SPI_DELAY_SCALER_2,
+	SPI_DELAY_SCALER_2);
+
+	spi_slave_init(SPI_MOD0, SPI_FORMAT_CPOL1_CPHA1, 8);
+
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
@@ -82,6 +92,7 @@ int main(void) {
 //	pit_enable_int(PIT_CH2);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	frame_enable_re_int();
+	spi_slave_enable_re_int(SPI_MOD0);
 //	reed_switch_enable_int();
 //	ftm_timer_enable_int(FTM_MOD0,10);
 
@@ -113,11 +124,104 @@ int main(void) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 
-			uvar32 = pit_get_time_ms(1);
+//			reg = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, 0xFF,
+//			SPI_CONT_DISABLE);
 
+//			reg = SPI0_CTAR0;
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+//			reg = SPI0_PUSHR_SLAVE;
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
 
-			uvar322 = pit_get_time_ms(1);
+//			spi_slave_send(SPI_MOD0, 0x12345645);
+//			spi_slave_send(SPI_MOD0, 0x12345687);
+//			spi_slave_send(SPI_MOD0, 0xF898);
+//			spi_slave_send(SPI_MOD0, 0x8276);
+//			spi_slave_send(SPI_MOD0, 0xAC54);
+//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xF898));
+//			uart_send1(1, spi_slave_send(SPI_MOD0, 0x8276));
+//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xAC54));
+//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xAC54));
+//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xAC54));
+//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xAC54));
+//			reg = SPI0_PUSHR_SLAVE;
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+//			uart_send1(1, spi_slave_send(SPI_MOD0, 0x78));
+//			reg = SPI0_SR;
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+//			reg = SPI0_PUSHR_SLAVE;
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+
+			uvar32 = pit_get_time_us(1);
+//			reg = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, 0x13AC,
+//			SPI_CONT_DISABLE);
+//			if (spi_slave_re(SPI_MOD0, &uvar32)) {
+//				uart_send1(1, uvar32 >> 24);
+//				uart_send1(1, uvar32 >> 16);
+//				uart_send1(1, uvar32 >> 8);
+//				uart_send1(1, uvar32);
+//			} else {
+//				uart_send1(1, 0xFF);
+//			}
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+//			reg = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, 0x21BD,
+//			SPI_CONT_DISABLE);
+//						uart_send1(1, reg >> 24);
+//						uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+//			if (spi_slave_re(SPI_MOD0, &uvar32)) {
+//				uart_send1(1, uvar32 >> 24);
+//				uart_send1(1, uvar32 >> 16);
+//				uart_send1(1, uvar32 >> 8);
+//				uart_send1(1, uvar32);
+//			} else {
+//				uart_send1(1, 0xFF);
+//			}
+//			if (spi_slave_re(SPI_MOD0, &uvar32)) {
+//				uart_send1(1, uvar32 >> 24);
+//				uart_send1(1, uvar32 >> 16);
+//				uart_send1(1, uvar32 >> 8);
+//				uart_send1(1, uvar32);
+//			} else {
+//				uart_send1(1, 0xFF);
+//			}
+			uvar322 = pit_get_time_us(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
+
+//			reg = SPI0_SR;
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+//			reg = SPI0_PUSHR_SLAVE;
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+//			reg = SPI0_TXFR0;
+//			uart_send1(1, reg >> 24);
+//			uart_send1(1, reg >> 16);
+//			uart_send1(1, reg >> 8);
+//			uart_send1(1, reg);
+
 		}
 
 //		//处理接收到的帧

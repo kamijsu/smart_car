@@ -28,10 +28,10 @@
 
 //定义SPI各模块的引脚设置，通过更改COM_PORTx|x的x以选择引脚，
 //SCK、SOUT、SIN、CSx分别为时钟信号、输出信号、输入信号、片选信号引脚
-#define SPI_MOD0_SCK_PIN	(COM_PORTA|15)	//A15 C5  D1
-#define SPI_MOD0_SOUT_PIN	(COM_PORTA|16)	//A16 C6  D2
-#define SPI_MOD0_SIN_PIN	(COM_PORTA|17)	//A17 C7  D3
-#define SPI_MOD0_CS0_PIN	(COM_PORTA|14)	//A14 C4  D0
+#define SPI_MOD0_SCK_PIN	(COM_PORTC|5)	//A15 C5  D1
+#define SPI_MOD0_SOUT_PIN	(COM_PORTC|6)	//A16 C6  D2
+#define SPI_MOD0_SIN_PIN	(COM_PORTC|7)	//A17 C7  D3
+#define SPI_MOD0_CS0_PIN	(COM_PORTC|4)	//A14 C4  D0
 #define SPI_MOD0_CS1_PIN	(COM_PORTC|3)	//    C3  D4
 #define SPI_MOD0_CS2_PIN	(COM_PORTC|2)	//    C2  D5
 #define SPI_MOD0_CS3_PIN	(COM_PORTC|1)	//    C1  D6
@@ -153,10 +153,6 @@
 #define SPI_FORMAT_CPOL1_CPHA0	(2)	//平时电平为高，第一个跳变取数，第二个跳变数据上线
 #define SPI_FORMAT_CPOL1_CPHA1	(3)	//平时电平为高，第一个跳变数据上线，第二个跳变取数
 
-//定义SPI帧数据位数
-#define SPI_DATA_SIZE_8			(7)		//每帧8位，即1个字节
-#define SPI_DATA_SIZE_16		(15)	//每帧16位，即2个字节
-
 //定义SPI模块位传输顺序
 #define SPI_BIT_ORDER_MSB		(0)		//最高有效位，即先发送最高位
 #define SPI_BIT_ORDER_LSB		(1)		//最低有效位，即先发送最低位
@@ -227,6 +223,27 @@
 #define SPI_DELAY_SCALER_229376	(0x3E)
 #define SPI_DELAY_SCALER_327680	(0x2F)
 #define SPI_DELAY_SCALER_458752	(0x3F)
+
+//定义主机模式下是否使能连续发送(CONT为continuous简写)
+#define SPI_CONT_ENABLE			(1)
+#define SPI_CONT_DISABLE		(0)
+
+void spi_master_init(uint8 mod, uint8 config, uint32 baud_scaler, uint8 format,
+		uint8 data_size, uint8 bit_order, uint8 csc_scaler, uint8 asc_scaler,
+		uint8 dt_scaler);
+
+uint16 spi_master_send(uint8 mod, uint8 config, uint8 cs, uint16 data,
+		uint8 cont);
+
+void spi_slave_init(uint8 mod, uint8 format, uint8 data_size);
+
+bool spi_slave_send(uint8 mod, uint32 data);
+
+bool spi_slave_re(uint8 mod, uint32* data);
+
+void spi_slave_enable_re_int(uint8 mod);
+
+void spi_slave_disable_re_int(uint8 mod);
 
 //根据SPI模块所设置的引脚号，定义相应的PCR的MUX值
 #ifdef SPI_MOD0_SCK_PIN

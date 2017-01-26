@@ -80,6 +80,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/control&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crc16_modbus&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crypto&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/custom&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_bytes&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_cmd&quot;"/>
@@ -233,6 +234,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/control&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crc16_modbus&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crypto&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/custom&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_bytes&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_cmd&quot;"/>
@@ -302,6 +304,7 @@
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+			<storageModule moduleId="ilg.gnuarmeclipse.managedbuild.packs"/>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>

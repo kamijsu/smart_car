@@ -24,10 +24,24 @@ void UART1_RX_TX_IRQHandler() {
 
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
+			ch = spi_master_send(SPI_MOD2,SPI_CONFIG0,SPI_CS0,ch,SPI_CONT_DISABLE);
 			uart_send1(UART_MOD1, ch);
 		}
 	}
 
+	ENABLE_INTERRUPTS;
+}
+
+void SPI0_IRQHandler() {
+	uint32 data;
+	DISABLE_INTERRUPTS;
+	if (spi_slave_re(SPI_MOD0, &data)) {
+		if (!spi_slave_send(SPI_MOD0, data)) {
+			uart_send_string(UART_USE, "SPI发送失败!\r\n");
+		}
+	} else {
+		uart_send_string(UART_USE, "SPI接收失败!\r\n");
+	}
 	ENABLE_INTERRUPTS;
 }
 
@@ -125,7 +139,7 @@ void PIT0_IRQHandler() {
 	ENABLE_INTERRUPTS; //恢复原总中断设置情况
 }
 
-void PIT2_IRQHandler(){
+void PIT2_IRQHandler() {
 	pit_clear_int(PIT_CH2); //清标志
 }
 
