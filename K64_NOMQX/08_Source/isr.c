@@ -24,7 +24,8 @@ void UART1_RX_TX_IRQHandler() {
 
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
-			ch = spi_master_send(SPI_MOD2,SPI_CONFIG0,SPI_CS0,ch,SPI_CONT_DISABLE);
+			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
+					SPI_CONT_DISABLE);
 			uart_send1(UART_MOD1, ch);
 		}
 	}
@@ -49,9 +50,7 @@ void FTM0_IRQHandler() {
 	if (ftm_timer_get_int(0)) {
 		ftm_timer_clear_int(0);
 		time0_flag.f_1s = 1;
-
 	}
-
 }
 
 //==========================================================================

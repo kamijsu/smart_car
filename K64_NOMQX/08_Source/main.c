@@ -76,11 +76,15 @@ int main(void) {
 	frame_init();
 
 	spi_master_init(SPI_MOD2, SPI_CONFIG0, SPI_BAUD_SCALER_2,
+	SPI_FORMAT_CPOL1_CPHA0, 8, SPI_BIT_ORDER_MSB,
+	SPI_DELAY_SCALER_2, SPI_DELAY_SCALER_2,
+	SPI_DELAY_SCALER_2);
+	spi_master_init(SPI_MOD2, SPI_CONFIG1, SPI_BAUD_SCALER_2,
 	SPI_FORMAT_CPOL1_CPHA1, 8, SPI_BIT_ORDER_MSB,
 	SPI_DELAY_SCALER_2, SPI_DELAY_SCALER_2,
 	SPI_DELAY_SCALER_2);
 
-	spi_slave_init(SPI_MOD0, SPI_FORMAT_CPOL1_CPHA1, 8);
+	spi_slave_init(SPI_MOD0, SPI_FORMAT_CPOL1_CPHA0, 8);
 
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
@@ -167,16 +171,6 @@ int main(void) {
 //			uart_send1(1, reg);
 
 			uvar32 = pit_get_time_us(1);
-//			reg = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, 0x13AC,
-//			SPI_CONT_DISABLE);
-//			if (spi_slave_re(SPI_MOD0, &uvar32)) {
-//				uart_send1(1, uvar32 >> 24);
-//				uart_send1(1, uvar32 >> 16);
-//				uart_send1(1, uvar32 >> 8);
-//				uart_send1(1, uvar32);
-//			} else {
-//				uart_send1(1, 0xFF);
-//			}
 //			uart_send1(1, reg >> 24);
 //			uart_send1(1, reg >> 16);
 //			uart_send1(1, reg >> 8);
