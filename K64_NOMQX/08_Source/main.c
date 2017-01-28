@@ -75,17 +75,11 @@ int main(void) {
 //	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
 
-	spi_master_init(SPI_MOD2, SPI_CONFIG0, SPI_BAUD_SCALER_2,
-	SPI_FORMAT_CPOL1_CPHA0, 8, SPI_BIT_ORDER_MSB,
-	SPI_DELAY_SCALER_2, SPI_DELAY_SCALER_2,
-	SPI_DELAY_SCALER_2);
-	spi_master_init(SPI_MOD2, SPI_CONFIG1, SPI_BAUD_SCALER_2,
-	SPI_FORMAT_CPOL1_CPHA1, 8, SPI_BIT_ORDER_MSB,
-	SPI_DELAY_SCALER_2, SPI_DELAY_SCALER_2,
-	SPI_DELAY_SCALER_2);
-
-	spi_slave_init(SPI_MOD0, SPI_FORMAT_CPOL1_CPHA0, 8);
-
+//	spi_master_init(SPI_MOD2, SPI_CONFIG0, SPI_BAUD_SCALER_12,
+//	SPI_FORMAT_CPOL0_CPHA0, 8, SPI_BIT_ORDER_MSB,
+//	SPI_DELAY_SCALER_12, SPI_DELAY_SCALER_12,
+//	SPI_DELAY_SCALER_12);
+	oled_init();
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
@@ -96,7 +90,6 @@ int main(void) {
 //	pit_enable_int(PIT_CH2);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	frame_enable_re_int();
-	spi_slave_enable_re_int(SPI_MOD0);
 //	reed_switch_enable_int();
 //	ftm_timer_enable_int(FTM_MOD0,10);
 
@@ -109,11 +102,20 @@ int main(void) {
 	cmd.type = 0x00;
 	cmd.len = 1;
 	cmd.data[0] = 7;
+	OLED_P8x16Str(0, 0, "123");
+	OLED_P8x16Str(0, 2, "happy new year:)");
+	OLED_P8x16Str(0, 6, "321");
+//	oled_set_scroll(OLED_SCROLL_DIR_RIGHT, OLED_PAGE0, OLED_PAGE1,
+//	OLED_SCROLL_INTERVAL_FRAMES_2);
+	oled_set_scroll_with_vertical(OLED_SCROLL_DIR_RIGHT,OLED_PAGE2,OLED_PAGE3,OLED_SCROLL_INTERVAL_FRAMES_25,3);
+	oled_set_scroll_vertical_area(0,24);
+	oled_scroll_start();
+	i = 1;
 
 //	result = flash_partition(FLASH_DFLASH_SIZE_32, FLASH_EEPROM_SIZE_128,
 //			FLASH_EEPROM_SPLIT_1_7);
 //	uart_send1(UART_USE, result);
-
+//	OLED_P8x16Str(0, 0, "happy new year:)");
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
@@ -128,93 +130,18 @@ int main(void) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 
-//			reg = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, 0xFF,
-//			SPI_CONT_DISABLE);
-
-//			reg = SPI0_CTAR0;
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-//			reg = SPI0_PUSHR_SLAVE;
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-
-//			spi_slave_send(SPI_MOD0, 0x12345645);
-//			spi_slave_send(SPI_MOD0, 0x12345687);
-//			spi_slave_send(SPI_MOD0, 0xF898);
-//			spi_slave_send(SPI_MOD0, 0x8276);
-//			spi_slave_send(SPI_MOD0, 0xAC54);
-//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xF898));
-//			uart_send1(1, spi_slave_send(SPI_MOD0, 0x8276));
-//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xAC54));
-//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xAC54));
-//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xAC54));
-//			uart_send1(1, spi_slave_send(SPI_MOD0, 0xAC54));
-//			reg = SPI0_PUSHR_SLAVE;
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-//			uart_send1(1, spi_slave_send(SPI_MOD0, 0x78));
-//			reg = SPI0_SR;
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-//			reg = SPI0_PUSHR_SLAVE;
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-
 			uvar32 = pit_get_time_us(1);
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-//			reg = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, 0x21BD,
-//			SPI_CONT_DISABLE);
-//						uart_send1(1, reg >> 24);
-//						uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-//			if (spi_slave_re(SPI_MOD0, &uvar32)) {
-//				uart_send1(1, uvar32 >> 24);
-//				uart_send1(1, uvar32 >> 16);
-//				uart_send1(1, uvar32 >> 8);
-//				uart_send1(1, uvar32);
-//			} else {
-//				uart_send1(1, 0xFF);
-//			}
-//			if (spi_slave_re(SPI_MOD0, &uvar32)) {
-//				uart_send1(1, uvar32 >> 24);
-//				uart_send1(1, uvar32 >> 16);
-//				uart_send1(1, uvar32 >> 8);
-//				uart_send1(1, uvar32);
-//			} else {
-//				uart_send1(1, 0xFF);
-//			}
-			uvar322 = pit_get_time_us(1);
-//			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
-//			reg = SPI0_SR;
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-//			reg = SPI0_PUSHR_SLAVE;
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
-//			reg = SPI0_TXFR0;
-//			uart_send1(1, reg >> 24);
-//			uart_send1(1, reg >> 16);
-//			uart_send1(1, reg >> 8);
-//			uart_send1(1, reg);
+//			if (i == 1) {
+//				oled_scroll_stop();
+//				i = 0;
+//			} else {
+//				oled_scroll_start();
+//				i = 1;
+//			}
+
+			uvar322 = pit_get_time_us(1);
+			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
 		}
 
