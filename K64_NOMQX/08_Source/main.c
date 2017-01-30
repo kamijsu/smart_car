@@ -102,14 +102,18 @@ int main(void) {
 	cmd.type = 0x00;
 	cmd.len = 1;
 	cmd.data[0] = 7;
-	OLED_P8x16Str(0, 0, "123");
-	OLED_P8x16Str(0, 2, "happy new year:)");
-	OLED_P8x16Str(0, 6, "321");
+
+//	oled_display_str(0, 0, "123");
+//	oled_display_str(0, 2, "happy new year:)");
+//	oled_display_str(0, 6, "happy new year:)");
 //	oled_set_scroll(OLED_SCROLL_DIR_RIGHT, OLED_PAGE0, OLED_PAGE1,
 //	OLED_SCROLL_INTERVAL_FRAMES_2);
-	oled_set_scroll_with_vertical(OLED_SCROLL_DIR_RIGHT,OLED_PAGE2,OLED_PAGE3,OLED_SCROLL_INTERVAL_FRAMES_25,3);
-	oled_set_scroll_vertical_area(0,24);
-	oled_scroll_start();
+//	oled_set_start_line(16);
+//	oled_set_scroll_with_vertical(OLED_SCROLL_DIR_RIGHT, 2, 3,
+//			OLED_SCROLL_INTERVAL_FRAMES_25, 0, 16, 1);
+//	oled_scroll_start();
+
+
 	i = 1;
 
 //	result = flash_partition(FLASH_DFLASH_SIZE_32, FLASH_EEPROM_SIZE_128,
@@ -139,7 +143,8 @@ int main(void) {
 //				oled_scroll_start();
 //				i = 1;
 //			}
-
+			oled_display_str(0, 6, "happy new year:)123321123321123321");
+//			oled_fill(0xFF);
 			uvar322 = pit_get_time_us(1);
 			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
