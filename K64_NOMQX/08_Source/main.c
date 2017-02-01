@@ -113,13 +113,29 @@ int main(void) {
 //			OLED_SCROLL_INTERVAL_FRAMES_25, 0, 16, 1);
 //	oled_scroll_start();
 
-
 	i = 1;
 
 //	result = flash_partition(FLASH_DFLASH_SIZE_32, FLASH_EEPROM_SIZE_128,
 //			FLASH_EEPROM_SPLIT_1_7);
 //	uart_send1(UART_USE, result);
-//	OLED_P8x16Str(0, 0, "happy new year:)");
+
+
+	oled_set_scroll(OLED_SCROLL_DIR_LEFT,0,1,OLED_SCROLL_INTERVAL_FRAMES_2);
+	oled_set_contrast(255);
+//	oled_set_display_clk(15,2);
+//	oled_set_precharge_period(8,8);
+//	oled_set_remap(false,false);
+//
+
+//	oled_display_str(0, 2, "123");
+
+//	oled_set_multiplex_ratio(48);
+//	oled_display_str(0, 0, "1");
+//	oled_display_str(0, 2, "2");
+//	oled_display_str(0, 4, "3");
+//	oled_display_str(0, 6, "4");
+//	oled_set_display_offset(16);
+
 	//6. ¿ª×ÜÖÐ¶Ï
 	ENABLE_INTERRUPTS;
 
@@ -137,16 +153,26 @@ int main(void) {
 			uvar32 = pit_get_time_us(1);
 
 //			if (i == 1) {
-//				oled_scroll_stop();
+//				oled_set_contrast(0);
+////				oled_scroll_stop();
 //				i = 0;
 //			} else {
-//				oled_scroll_start();
+//				oled_set_contrast(255);
+////				oled_scroll_start();
 //				i = 1;
 //			}
-			oled_display_str(0, 6, "happy new year:)123321123321123321");
-//			oled_fill(0xFF);
+
+			oled_display_str(0, 0, "happy new year:)");
+//			oled_scroll_start();
+//			pit_delay_ms(1, 1000);
+//
+//
+//
+//			oled_scroll_stop();
+//			pit_delay_ms(1, 1000);
+
 			uvar322 = pit_get_time_us(1);
-			printf("%d\r\n", (int32) (uvar322 - uvar32));
+//			printf("%d\r\n", (int32) (uvar322 - uvar32));
 
 		}
 

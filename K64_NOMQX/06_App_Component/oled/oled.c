@@ -8,12 +8,8 @@
 //当前数据/命令选择信号的电平
 static uint8 current_dc_level;
 
-//======================================================
-// 128X64I液晶底层驱动[8X16]字体库
-// 设计者: powerint
-// 描  述: [8X16]西文字符的字模数据 (纵向取模,字节倒序)
-// !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
-//======================================================
+//ASCII码字符集可显示部分(32-126)的字模数据，纵向取模，字节倒序;
+//字符大小为8*16，前8字节为低页数据，后8字节为高页数据
 static const uint8 char_lib[95][16] = { { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // 0
 		{ 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -204,9 +200,14 @@ static const uint8 char_lib[95][16] = { { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x3F, 0x00, 0x00, 0x00, 0x00 }, //}93
 		{ 0x00, 0x06, 0x01, 0x01, 0x02, 0x02, 0x04, 0x04, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00 } //~94
-
 };
 
+//==========================================================================
+//函数名称: oled_write_cmd
+//函数返回: 无
+//参数说明: cmd:命令字节
+//功能概要: 向OLED写一个字节命令，具体命令信息需查看芯片手册
+//==========================================================================
 static void oled_write_cmd(uint8 cmd) {
 	//若当前不为命令信号电平
 	if (current_dc_level != OLED_DC_CMD_LEVEL) {
@@ -219,6 +220,14 @@ static void oled_write_cmd(uint8 cmd) {
 	SPI_CONT_DISABLE);
 }
 
+//==========================================================================
+//函数名称: oled_write_data
+//函数返回: 无
+//参数说明: data:数据字节
+//功能概要: 向OLED写一个字节数据
+//备注: 该字节数据用于填充当前所在页的所在列，SPI的位传输顺序为MSB时，高位填充高行，
+//     OLED未开启反相显示时，1表示该像素亮，0表示该像素暗
+//==========================================================================
 void oled_write_data(uint8 data) {
 	//若当前不为数据信号电平
 	if (current_dc_level != OLED_DC_DATA_LEVEL) {
@@ -231,6 +240,14 @@ void oled_write_data(uint8 data) {
 	SPI_CONT_DISABLE);
 }
 
+//==========================================================================
+//函数名称: oled_init
+//函数返回: 无
+//参数说明: 无
+//功能概要: 初始化OLED，相应配置在oled.h中
+//备注: 屏幕左右、上下均反置，使能电荷泵，打开显示，且所有像素均为暗，
+//     其余屏幕设置均为复位后设置
+//==========================================================================
 void oled_init() {
 	//使能复位信号，并设置复位信号有效
 	gpio_init(OLED_RST, GPIO_OUTPUT, OLED_RST_VALID_LEVEL);
@@ -247,127 +264,114 @@ void oled_init() {
 	//设置复位信号无效
 	gpio_set(OLED_RST, OLED_RST_INVALID_LEVEL);
 
-//	oled_write_cmd(0xAE);   //display off
-//	oled_write_cmd(0x20); //Set Memory Addressing Mode
-//	oled_write_cmd(0x10); //00,Horizontal Addressing Mode;01,Vertical Addressing Mode;10,Page Addressing Mode (RESET);11,Invalid
-//	oled_write_cmd(0xb0); //Set Page Start Address for Page Addressing Mode,0-7
-//	oled_write_cmd(0xc8); //Set COM Output Scan Direction
-//	oled_write_cmd(0x00); //---set low column address
-//	oled_write_cmd(0x10); //---set high column address
-//	oled_write_cmd(0x40); //--set start line address
-
-	//设置对比度，两字节命令
-//	oled_write_cmd(0x81); //--set contrast control register
-//	oled_write_cmd(0x7F);
-
+	//屏幕左右、上下均反置
 	oled_set_remap(true, true);
+	//使能电荷泵
 	oled_set_charge_pump(true);
+	//用0x00填充整个屏幕，即屏幕全暗
 	oled_fill(0x00);
+	//重置当前位置至0列0页
+	oled_set_pos(0, 0);
+	//打开显示
 	oled_set_display_on(true);
-
-//	oled_write_cmd(0xa1); //--set segment re-map 0 to 127
-//	oled_write_cmd(0xa6); //--set normal display
-//	oled_write_cmd(0xa8); //--set multiplex ratio(1 to 64)
-//	oled_write_cmd(0x3F); //
-//	oled_write_cmd(0xa4); //0xa4,Output follows RAM content;0xa5,Output ignores RAM content
-//	oled_write_cmd(0xd3); //-set display offset
-//	oled_write_cmd(0x00); //-not offset
-//	oled_write_cmd(0xd5); //--set display clock divide ratio/oscillator frequency
-//	oled_write_cmd(0xf0); //--set divide ratio
-//	oled_write_cmd(0xd9); //--set pre-charge period
-//	oled_write_cmd(0x22); //
-//	oled_write_cmd(0xda); //--set com pins hardware configuration
-//	oled_write_cmd(0x12);
-//	oled_write_cmd(0xdb); //--set vcomh
-//	oled_write_cmd(0x20); //0x20,0.77xVcc
-//	oled_write_cmd(0x8d); //--set DC-DC enable
-//	oled_write_cmd(0x14); //
-//	oled_write_cmd(0xaf); //--turn on oled panel
-
-//	oled_write_cmd(0xae); //--turn off oled panel
-//	oled_write_cmd(0x00); //---set low column address
-//	oled_write_cmd(0x10); //---set high column address
-//	oled_write_cmd(0x40); //--set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
-//	oled_write_cmd(0x81); //--set contrast control register
-//	oled_write_cmd(0xcf); // Set SEG Output Current Brightness
-//	oled_write_cmd(0xa1); //--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
-//	oled_write_cmd(0xc8); //Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
-//	oled_write_cmd(0xa6); //--set normal display
-//	oled_write_cmd(0xa8); //--set multiplex ratio(1 to 64)
-//	oled_write_cmd(0x3f); //--1/64 duty
-//	oled_write_cmd(0xd3); //-set display offset	Shift Mapping RAM Counter (0x00~0x3F)
-//	oled_write_cmd(0x00); //-not offset
-//	oled_write_cmd(0xd5); //--set display clock divide ratio/oscillator frequency
-//	oled_write_cmd(0x80); //--set divide ratio, Set Clock as 100 Frames/Sec
-//	oled_write_cmd(0xd9); //--set pre-charge period
-//	oled_write_cmd(0xf1); //Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
-//	oled_write_cmd(0xda); //--set com pins hardware configuration
-//	oled_write_cmd(0x12);
-//	oled_write_cmd(0xdb); //--set vcomh
-//	oled_write_cmd(0x40); //Set VCOM Deselect Level
-//	oled_write_cmd(0x20); //-Set Page Addressing Mode (0x00/0x01/0x02)
-//	oled_write_cmd(0x02); //
-//	oled_write_cmd(0x8d); //--set Charge Pump enable/disable
-//	oled_write_cmd(0x14); //--set(0x10) disable
-//	oled_write_cmd(0xa4); // Disable Entire Display On (0xa4/0xa5)
-//	oled_write_cmd(0xa6); // Disable Inverse Display On (0xa6/a7)
-//	oled_write_cmd(0xaf); //--turn on oled panel
-
 }
 
+//==========================================================================
+//函数名称: oled_fill
+//函数返回: 无
+//参数说明: data:数据字节
+//功能概要: 对整个屏幕填充同一个字节数据
+//备注: 数据字节为0x00时，屏幕全暗，数据字节为0xFF时，屏幕全亮;
+//     寻址方式需为按页寻址
+//==========================================================================
 void oled_fill(uint8 data) {
-	uint8 i, j;
+	uint8 i, j;	//游标
 
+	//遍历每一页
 	for (i = 0; i < OLED_PAGE_NUM; i++) {
+		//设置为页开始地址
 		oled_set_pos(0, i);
+		//对该页的所有列填充该字节数据
 		for (j = 0; j < OLED_WIDTH; j++) {
 			oled_write_data(data);
 		}
 	}
 }
 
-//==============================================================
-//函数名：LCD_P8x16Str(u8 x,u8 y,u8 *p)
-//功能描述：写入一组标准ASCII字符串
-//参数：显示的位置（x,y），y为页范围0～7，要显示的字符串
-//返回：无
-//==============================================================
+//==========================================================================
+//函数名称: oled_display_str
+//函数返回: 无
+//参数说明: col:起始列号，取值范围为[0,OLED_WIDTH-8]，这里为[0,120]
+//         page:起始页号，取值范围为[0,OLED_PAGE_NUM-1]，这里为[0,7]
+//         str:显示字符串的首地址
+//功能概要: 从起始位置开始，显示一个以'\0'结束的字符串
+//备注: 仅支持ASCII码字符集的可显示字符;
+//     字符大小为8*16，一个字符占用8列、2页;
+//     当字符串到达右边界时，会换行至下两页继续显示，
+//     当字符串到达下边界时，会换行至第一页继续显示;
+//     寻址方式需为按页寻址
+//==========================================================================
 void oled_display_str(uint8 col, uint8 page, uint8* str) {
-	uint8 i, j;
-	uint8 x, y;
-	uint8 ch;
+	uint8 i, j;		//游标
+	uint8 x, y;		//当前坐标
+	uint8 index;	//该字符在字符库的索引
 
+	//设置起始低页位置
 	oled_set_pos(col, page);
+	//填充低页字符数据
 	for (i = 0, x = col, y = page; str[i] != '\0'; i++, x += 8) {
-		ch = str[i] - 32;
+		//获取该字符的字符库索引
+		index = str[i] - 32;
+		//当前横坐标越界时，换行
 		if (x > OLED_WIDTH - 8) {
 			x = 0;
 			y += 2;
+			//当前纵坐标越界时，换行
 			if (y >= OLED_PAGE_NUM) {
 				y -= OLED_PAGE_NUM;
 			}
+			//设置当前位置
 			oled_set_pos(x, y);
 		}
-		for (j = 0; j < 8; j++)
-			oled_write_data(char_lib[ch][j]);
+		//填充该字符数据
+		for (j = 0; j < 8; j++) {
+			oled_write_data(char_lib[index][j]);
+		}
 	}
-	oled_set_pos(col, ++page);
+	//切换为高页地址，若高页地址越界，换行
+	if (++page >= OLED_PAGE_NUM) {
+		page -= OLED_PAGE_NUM;
+	}
+	//设置起始高页位置
+	oled_set_pos(col, page);
+	//填充高页字符数据
 	for (i = 0, x = col, y = page; str[i] != '\0'; i++, x += 8) {
-		ch = str[i] - 32;
+		//获取该字符的字符库索引
+		index = str[i] - 32;
+		//当前横坐标越界时，换行
 		if (x > OLED_WIDTH - 8) {
 			x = 0;
 			y += 2;
+			//当前纵坐标越界时，换行
 			if (y >= OLED_PAGE_NUM) {
 				y -= OLED_PAGE_NUM;
 			}
+			//设置当前位置
 			oled_set_pos(x, y);
 		}
-		for (j = 8; j < 16; j++)
-			oled_write_data(char_lib[ch][j]);
+		//填充该字符数据
+		for (j = 8; j < 16; j++) {
+			oled_write_data(char_lib[index][j]);
+		}
 	}
 }
 
-//设置对比度
+//==========================================================================
+//函数名称: oled_set_contrast
+//函数返回: 无
+//参数说明: contrast:对比度值，取值范围为[0,255]，复位值为127
+//功能概要: 设置OLED对比度，值越大，屏幕越亮
+//==========================================================================
 void oled_set_contrast(uint8 contrast) {
 	//写设置对比度命令
 	oled_write_cmd(0x81);
@@ -375,10 +379,20 @@ void oled_set_contrast(uint8 contrast) {
 	oled_write_cmd(contrast);
 }
 
-//设置整体显示
+//==========================================================================
+//函数名称: oled_set_entire_display
+//函数返回: 无
+//参数说明: on:是否开启全部显示:
+//            true: 开启全部显示;
+//            false:关闭全部显示;
+//            复位值为false
+//功能概要: 设置是否开启全部显示
+//备注: 开启全部显示时，整个屏幕为亮，关闭全部显示时，按照写入数据显示亮暗，
+//     且数据不会因开启全部显示而丢失
+//==========================================================================
 void oled_set_entire_display(bool on) {
 	if (on) {
-		//整体显示
+		//全部显示
 		oled_write_cmd(0xA5);
 	} else {
 		//正常显示
@@ -386,7 +400,16 @@ void oled_set_entire_display(bool on) {
 	}
 }
 
-//设置反相显示
+//==========================================================================
+//函数名称: oled_set_inverse_display
+//函数返回: 无
+//参数说明: on:是否开启反相显示:
+//            true: 开启反相显示;
+//            false:关闭反相显示;
+//            复位值为false
+//功能概要: 设置是否开启反相显示
+//备注: 开启反相显示时，数据0代表亮，1代表暗，关闭反相显示时，数据0代表暗，1代表亮
+//==========================================================================
 void oled_set_inverse_display(bool on) {
 	if (on) {
 		//反相显示，数据0代表亮，1代表暗
@@ -397,7 +420,17 @@ void oled_set_inverse_display(bool on) {
 	}
 }
 
-//设置是否打开显示
+//==========================================================================
+//函数名称: oled_set_display_on
+//函数返回: 无
+//参数说明: on:是否打开显示:
+//            true: 打开显示;
+//            false:关闭显示;
+//            复位值为false
+//功能概要: 设置是否打开显示
+//备注: 打开显示时，按照写入数据显示亮暗，关闭显示时，整个屏幕为暗，
+//     且数据不会因关闭显示而丢失
+//==========================================================================
 void oled_set_display_on(bool on) {
 	if (on) {
 		//打开显示
@@ -408,13 +441,30 @@ void oled_set_display_on(bool on) {
 	}
 }
 
+//==========================================================================
+//函数名称: oled_set_scroll
+//函数返回: 无
+//参数说明: dir:水平滚动方向:
+//             OLED_SCROLL_DIR_LEFT: 向左滚动;
+//             OLED_SCROLL_DIR_RIGHT:向右滚动;
+//         start_page:起始滚动页号，取值范围为[0,OLED_PAGE_NUM-1]，这里为[0,7]
+//         end_page:结束滚动页号，取值范围为[start_page,OLED_PAGE_NUM-1]，
+//                  这里为[start_page,7]
+//         interval:滚动间隔:
+//                  OLED_SCROLL_INTERVAL_FRAMES_x，每隔x帧滚动一次，x可取值为:
+//                  2 | 3 | 4 | 5 | 25 | 64 | 128 | 256
+//功能概要: 设置屏幕水平滚动配置
+//备注: 起始滚动页和结束滚动页也会滚动;
+//     需写开始滚动命令后，才会滚动;
+//     屏幕刷新频率越高，一帧的时间越短
+//==========================================================================
 void oled_set_scroll(uint8 dir, uint8 start_page, uint8 end_page,
 		uint8 interval) {
 	if (dir == OLED_SCROLL_DIR_LEFT) {
-		//向左水平滚屏
+		//向左水平滚动
 		oled_write_cmd(0x27);
 	} else {
-		//向右水平滚屏
+		//向右水平滚动
 		oled_write_cmd(0x26);
 	}
 	//无效字节
@@ -431,20 +481,44 @@ void oled_set_scroll(uint8 dir, uint8 start_page, uint8 end_page,
 	oled_write_cmd(0xFF);
 }
 
+//==========================================================================
+//函数名称: oled_set_scroll_with_vertical
+//函数返回: 无
+//参数说明: dir:水平滚动方向:
+//             OLED_SCROLL_DIR_LEFT: 向左滚动;
+//             OLED_SCROLL_DIR_RIGHT:向右滚动;
+//         start_page:水平滚动起始页号，取值范围为[0,OLED_PAGE_NUM-1]，这里为[0,7]
+//         end_page:水平滚动结束页号，取值范围为[start_page,OLED_PAGE_NUM-1]，
+//                  这里为[start_page,7]
+//         interval:滚动间隔:
+//                  OLED_SCROLL_INTERVAL_FRAMES_x，每隔x帧滚动一次，x可取值为:
+//                  2 | 3 | 4 | 5 | 25 | 64 | 128 | 256
+//         fixed_row_num:从第一行起，不参与垂直滚动的行数，取值范围为[0,MUX]
+//         scroll_row_num:从不参与垂直滚动的最后一行的下一行起，参与垂直滚动的行数，
+//                        取值范围为[0,MUX-fixed_row_num]
+//         offset_row_num:每次垂直滚动时偏移行数，取值范围为[0,scroll_row_num)
+//功能概要: 设置屏幕水平和垂直滚动配置
+//备注: 起始滚动页和结束滚动页也会滚动;
+//     需写开始滚动命令后，才会滚动;
+//     屏幕刷新频率越高，一帧的时间越短;
+//     MUX为复用率，即可显示的行数，复位值为64;
+//     垂直滚动方向为由上至下滚动，但上下反置后，为由下至上滚动;
+//     水平和垂直滚动单独设置，两者可交叉，即一区域可同时水平和垂直滚动
+//==========================================================================
 void oled_set_scroll_with_vertical(uint8 dir, uint8 start_page, uint8 end_page,
 		uint8 interval, uint8 fixed_row_num, uint8 scroll_row_num,
 		uint8 offset_row_num) {
 	//写设置垂直滚动区域命令
 	oled_write_cmd(0xA3);
-	//发送固定不动的行数
+	//发送不参与垂直滚动的行数
 	oled_write_cmd(fixed_row_num);
-	//发送垂直滚动的行数
+	//发送参与垂直滚动的行数
 	oled_write_cmd(scroll_row_num);
 	if (dir == OLED_SCROLL_DIR_LEFT) {
-		//向左水平滚屏
+		//向左水平滚动
 		oled_write_cmd(0x2A);
 	} else {
-		//向右水平滚屏
+		//向右水平滚动
 		oled_write_cmd(0x29);
 	}
 	//无效字节
@@ -459,33 +533,86 @@ void oled_set_scroll_with_vertical(uint8 dir, uint8 start_page, uint8 end_page,
 	oled_write_cmd(offset_row_num);
 }
 
+//==========================================================================
+//函数名称: oled_scroll_start
+//函数返回: 无
+//参数说明: 无
+//功能概要: 写开始滚动命令
+//备注: 需要预先设置好屏幕滚动配置和显示的内容
+//==========================================================================
 void oled_scroll_start() {
-	//写开始滚屏命令
+	//写开始滚动命令
 	oled_write_cmd(0x2F);
 }
 
-//停止滚屏时，垂直滚动的页会回归至原先的位置，但水平滚动会停止在当前所在位置
+//==========================================================================
+//函数名称: oled_scroll_stop
+//函数返回: 无
+//参数说明: 无
+//功能概要: 写停止滚动命令
+//备注: 停止滚动后，垂直滚动的行会回归至原先的位置，但水平滚动的列会停止在当前所在位置
+//==========================================================================
 void oled_scroll_stop() {
-	//写停止滚屏命令
+	//写停止滚动命令
 	oled_write_cmd(0x2E);
 }
 
+//==========================================================================
+//函数名称: oled_set_addressing_mode
+//函数返回: 无
+//参数说明: mode:寻址方式:
+//              OLED_ADDRESSING_MODE_HORIZONTAL:水平寻址;
+//              OLED_ADDRESSING_MODE_VERTICAL:  垂直寻址;
+//              OLED_ADDRESSING_MODE_PAGE:      按页寻址;
+//              复位值为OLED_ADDRESSING_MODE_PAGE
+//功能概要: 设置寻址方式
+//备注: 水平寻址时，写一次数据后，列地址加一，如果列地址到达列的结束地址，
+//     重置为开始地址，且页地址加一，如果列和页地址都到达结束地址，全部重置为开始地址;
+//
+//     垂直寻址时，写一次数据后，页地址加一，如果页地址到达页的结束地址，
+//     重置为开始地址，且列地址加一，如果列和页地址都到达结束地址，全部重置为开始地址;
+//
+//     按页寻址时，写一次数据后，列地址加一，如果列地址到达列的结束地址，
+//     重置为开始地址，且页地址不变
+//==========================================================================
 void oled_set_addressing_mode(uint8 mode) {
-	//写设置地址模式命令
+	//写设置寻址方式命令
 	oled_write_cmd(0x20);
-	//发送地址模式
+	//发送寻址方式
 	oled_write_cmd(mode);
 }
 
+//==========================================================================
+//函数名称: oled_set_pos
+//函数返回: 无
+//参数说明: col:列号，取值范围为[0,OLED_WIDTH-1]，这里为[0,127]，复位值为0
+//         page:页号，取值范围为[0,OLED_PAGE_NUM-1]，这里为[0,7]，复位值为0
+//功能概要: 设置当前位置
+//备注: 寻址方式需为按页寻址
+//==========================================================================
 void oled_set_pos(uint8 col, uint8 page) {
-	//设置起始低列地址
+	//设置当前低列地址
 	oled_write_cmd(col & 0xF);
-	//设置起始高列地址
+	//设置当前高列地址
 	oled_write_cmd(0x10 | (col >> 4));
-	//设置起始页地址
+	//设置当前页地址
 	oled_write_cmd(0xB0 | page);
 }
 
+//==========================================================================
+//函数名称: oled_set_address_range
+//函数返回: 无
+//参数说明: start_col:起始列号，取值范围为[0,OLED_WIDTH-1]，
+//                   这里为[0,127]，复位值为0
+//         end_col:结束列号，取值范围为[0,OLED_WIDTH-1]，
+//                 这里为[0,127]，复位值为127
+//         start_page:起始页号，取值范围为[0,OLED_PAGE_NUM-1]，
+//                    这里为[0,7]，复位值为0
+//         end_page:结束页号，取值范围为[0,OLED_PAGE_NUM-1]，
+//                  这里为[0,7]，复位值为7
+//功能概要: 设置地址范围
+//备注: 寻址方式需为水平寻址或垂直寻址
+//==========================================================================
 void oled_set_address_range(uint8 start_col, uint8 end_col, uint8 start_page,
 		uint8 end_page) {
 	//写设置列地址命令
@@ -502,12 +629,27 @@ void oled_set_address_range(uint8 start_col, uint8 end_col, uint8 start_page,
 	oled_write_cmd(end_page);
 }
 
-//设置起始线
+//==========================================================================
+//函数名称: oled_set_start_line
+//函数返回: 无
+//参数说明: row:起始线行号，取值范围为[0,OLED_HEIGHT-1]，这里为[0,63]，复位值为0
+//功能概要: 设置起始线
+//备注: 设置起始线后，会从该行起显示图像;
+//     复用率不为64时，不显示的行不会偏移
+//==========================================================================
 void oled_set_start_line(uint8 row) {
 	oled_write_cmd(0x40 | row);
 }
 
-//设置显示偏移
+//==========================================================================
+//函数名称: oled_set_display_offset
+//函数返回: 无
+//参数说明: row:偏移后起始行号，取值范围为[0,OLED_HEIGHT-1]，
+//             这里为[0,63]，复位值为0
+//功能概要: 设置显示偏移
+//备注: 设置显示偏移后，会从偏移后起始行号起显示图像;
+//     复用率不为64时，不显示的行也会偏移
+//==========================================================================
 void oled_set_display_offset(uint8 row) {
 	//写设置显示偏移命令
 	oled_write_cmd(0xD3);
@@ -515,15 +657,34 @@ void oled_set_display_offset(uint8 row) {
 	oled_write_cmd(row);
 }
 
-//num:[16,64]
-//设置多路复用比率
+//==========================================================================
+//函数名称: oled_set_multiplex_ratio
+//函数返回: 无
+//参数说明: multiplex_ratio:复用率，取值范围为[16,OLED_HEIGHT]，
+//                         这里为[16,64]，复位值为64
+//功能概要: 设置复用率，即可显示的行数
+//备注: 复用率越高，屏幕刷新频率越低
+//==========================================================================
 void oled_set_multiplex_ratio(uint8 multiplex_ratio) {
-	//写设置多路复用比率命令
+	//写设置复用率命令
 	oled_write_cmd(0xA8);
-	//发送多路复用比率
+	//发送复用率
 	oled_write_cmd(multiplex_ratio - 1);
 }
 
+//==========================================================================
+//函数名称: oled_set_remap
+//函数返回: 无
+//参数说明: row_remap:是否启用行重映射:
+//                   true:左右反置;
+//                   false:正常显示;
+//                   复位值为false
+//         col_remap:是否启用列重映射:
+//                   true:上下反置;
+//                   false:正常显示;
+//                   复位值为false
+//功能概要: 设置重映射
+//==========================================================================
 void oled_set_remap(bool row_remap, bool col_remap) {
 	if (row_remap) {
 		//左右反置
@@ -541,7 +702,23 @@ void oled_set_remap(bool row_remap, bool col_remap) {
 	}
 }
 
-//设置COMx引脚到各行的映射配置
+//==========================================================================
+//函数名称: oled_set_com_pin_config
+//函数返回: 无
+//参数说明: order:COM引脚映射的顺序:
+//               OLED_COM_PIN_CONFIG_SEQUENTIAL: 按顺序映射;
+//               OLED_COM_PIN_CONFIG_ALTERNATIVE:交替映射;
+//               复位值为OLED_COM_PIN_CONFIG_ALTERNATIVE
+//         remap:COM0-COM31和COM32-COM63交换映射是否使能:
+//               OLED_COM_PIN_CONFIG_REMAP_ENABLE: 使能交换映射;
+//               OLED_COM_PIN_CONFIG_REMAP_DISABLE:关闭交换映射;
+//               复位值为OLED_COM_PIN_CONFIG_REMAP_DISABLE
+//功能概要: 设置COMx引脚到各行的映射配置
+//备注: 按顺序映射时，COM0对应ROW0，COM1对应ROW1，以此类推;
+//     交替映射时，COM0对应ROW0，COM32对应ROW1，COM1对应ROW2，COM33对应ROW3，
+//     以此类推;
+//     使能交换映射后，COM0和COM32对应行交换，COM1和COM33对应行交换，以此类推
+//==========================================================================
 void oled_set_com_pin_config(uint8 order, uint8 remap) {
 	//写设置引脚命令
 	oled_write_cmd(0xDA);
@@ -549,9 +726,15 @@ void oled_set_com_pin_config(uint8 order, uint8 remap) {
 	oled_write_cmd(0x20 | order | remap);
 }
 
-//divide_ratio:[1,16]
-//oscillator_freq:[0,15]
-//设置显示时钟分频率和振荡器频率
+//==========================================================================
+//函数名称: oled_set_display_clk
+//函数返回: 无
+//参数说明: oscillator_freq:振荡器频率，取值范围为[0,15]，复位值为8
+//         divide_ratio:显示时钟分频率，取值范围为[1,16]，复位值为1
+//功能概要: 设置振荡器频率和显示时钟分频率
+//备注: 振荡器频率越高，屏幕刷新频率越高，显示时钟分频率越高，屏幕刷新频率越低;
+//     振荡器频率被显示时钟分频率分频后，得到显示时钟周期(DCLK)
+//==========================================================================
 void oled_set_display_clk(uint8 oscillator_freq, uint8 divide_ratio) {
 	//写设置显示时钟命令
 	oled_write_cmd(0xD5);
@@ -559,7 +742,14 @@ void oled_set_display_clk(uint8 oscillator_freq, uint8 divide_ratio) {
 	oled_write_cmd((divide_ratio - 1) | (oscillator_freq << 4));
 }
 
-//设置预充电周期
+//==========================================================================
+//函数名称: oled_set_precharge_period
+//函数返回: 无
+//参数说明: phase1:阶段1预充电周期，取值范围为[1,15]，复位值为2
+//         phase2:阶段2预充电周期，取值范围为[1,15]，复位值为2
+//功能概要: 设置预充电周期，单位为显示时钟周期(DCLK)
+//备注: 预充电周期越长，屏幕刷新频率越低
+//==========================================================================
 void oled_set_precharge_period(uint8 phase1, uint8 phase2) {
 	//写设置预充电周期命令
 	oled_write_cmd(0xD9);
@@ -567,7 +757,16 @@ void oled_set_precharge_period(uint8 phase1, uint8 phase2) {
 	oled_write_cmd(phase1 | (phase2 << 4));
 }
 
-//设置VCOMH
+//==========================================================================
+//函数名称: oled_set_vcomh
+//函数返回: 无
+//参数说明: vcomh:VCOMH引脚的电压:
+//               OLED_VCOMH_065:0.65*VCC;
+//               OLED_VCOMH_077:0.77*VCC;
+//               OLED_VCOMH_083:0.83*VCC;
+//               复位值为OLED_VCOMH_077
+//功能概要: 设置VCOMH引脚的电压
+//==========================================================================
 void oled_set_vcomh(uint8 vcomh) {
 	//写设置VCOMH命令
 	oled_write_cmd(0xDB);
@@ -575,7 +774,16 @@ void oled_set_vcomh(uint8 vcomh) {
 	oled_write_cmd(vcomh);
 }
 
-//设置电荷泵是否使能
+//==========================================================================
+//函数名称: oled_set_charge_pump
+//函数返回: 无
+//参数说明: on:是否使能电荷泵:
+//            true: 使能电荷泵;
+//            false:关闭电荷泵;
+//            复位值为false
+//功能概要: 设置电荷泵是否使能
+//备注: 必须使能电荷泵，屏幕才可以显示
+//==========================================================================
 void oled_set_charge_pump(bool on) {
 	//写设置电荷泵命令
 	oled_write_cmd(0x8D);
@@ -588,7 +796,12 @@ void oled_set_charge_pump(bool on) {
 	}
 }
 
-//空操作
+//==========================================================================
+//函数名称: oled_nop
+//函数返回: 无
+//参数说明: 无
+//功能概要: 进行一次空操作
+//==========================================================================
 void oled_nop() {
 	//进行一次空操作
 	oled_write_cmd(0xE3);
