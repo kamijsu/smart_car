@@ -85,7 +85,7 @@ int main(void) {
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
 //	d = 1.3;
-//	f = 1.3f;
+	f = 1.3f;
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 //	pit_enable_int(PIT_CH2);   		//使能pit中断
@@ -153,7 +153,10 @@ int main(void) {
 
 			uvar32 = pit_get_time_us(1);
 
+			f = arm_sin_f32(f);
 
+			ptr32 = (uint32*)malloc(sizeof(uint32)*1024);
+			uart_send1(1,ptr32[0]);
 //			if (i == 1) {
 //				oled_set_contrast(0);
 ////				oled_scroll_stop();

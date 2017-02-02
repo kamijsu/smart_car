@@ -37,7 +37,7 @@
 #include "frame_bytes.h"
 #include <math.h>
 #include "rng.h"
-//#include "arm_math.h"
+#include "arm_math.h"
 #include "mmcau.h"
 #include "crypto.h"
 #include "flash.h"
