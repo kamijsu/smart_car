@@ -162,7 +162,7 @@ int main(void) {
 //				i = 1;
 //			}
 
-			oled_display_str(0, 0, "happy new year:)");
+			oled_display_str(0, 0, "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
 //			oled_scroll_start();
 //			pit_delay_ms(1, 1000);
 //

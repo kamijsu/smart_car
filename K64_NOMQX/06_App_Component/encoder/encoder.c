@@ -6,8 +6,8 @@
 #include "encoder.h"
 
 //各编码器所用FTM模块号
-static const uint8 encoder_ftm_mod_table[] = { ENCODER0_FTM_MOD,
-ENCODER1_FTM_MOD };
+static const uint8 encoder_ftm_mod_table[] =
+{ ENCODER0_FTM_MOD, ENCODER1_FTM_MOD };
 //各编码器方向
 static const uint8 encoder_dir_table[] = { ENCODER0_DIR, ENCODER1_DIR };
 

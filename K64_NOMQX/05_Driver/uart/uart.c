@@ -8,19 +8,21 @@
 //各UART模块基地址
 static UART_Type * const uart_table[] = UART_BASE_PTRS;
 //UART各模块RX引脚号
-static const uint8 uart_rx_pin_table[] = { UART_MOD0_RX_PIN, UART_MOD1_RX_PIN,
-UART_MOD2_RX_PIN, UART_MOD3_RX_PIN, UART_MOD4_RX_PIN, UART_MOD5_RX_PIN };
+static const uint8 uart_rx_pin_table[] =
+{ UART_MOD0_RX_PIN, UART_MOD1_RX_PIN, UART_MOD2_RX_PIN,
+  UART_MOD3_RX_PIN, UART_MOD4_RX_PIN, UART_MOD5_RX_PIN };
 //UART各模块TX引脚号
-static const uint8 uart_tx_pin_table[] = { UART_MOD0_TX_PIN, UART_MOD1_TX_PIN,
-UART_MOD2_TX_PIN, UART_MOD3_TX_PIN, UART_MOD4_TX_PIN, UART_MOD5_TX_PIN };
+static const uint8 uart_tx_pin_table[] =
+{ UART_MOD0_TX_PIN, UART_MOD1_TX_PIN, UART_MOD2_TX_PIN,
+  UART_MOD3_TX_PIN, UART_MOD4_TX_PIN, UART_MOD5_TX_PIN };
 //UART各模块PCR的MUX值
-static const uint8 uart_pcr_mux_table[] = { UART_MOD0_PCR_MUX,
-UART_MOD1_PCR_MUX, UART_MOD2_PCR_MUX, UART_MOD3_PCR_MUX,
-UART_MOD4_PCR_MUX, UART_MOD5_PCR_MUX };
+static const uint8 uart_pcr_mux_table[] =
+{ UART_MOD0_PCR_MUX, UART_MOD1_PCR_MUX, UART_MOD2_PCR_MUX,
+  UART_MOD3_PCR_MUX, UART_MOD4_PCR_MUX, UART_MOD5_PCR_MUX };
 //UART模块发送接收中断请求号
-static const IRQn_Type uart_rx_tx_irq_table[] = { UART0_RX_TX_IRQn,
-		UART1_RX_TX_IRQn, UART2_RX_TX_IRQn, UART3_RX_TX_IRQn, UART4_RX_TX_IRQn,
-		UART5_RX_TX_IRQn };
+static const IRQn_Type uart_rx_tx_irq_table[] =
+{ UART0_RX_TX_IRQn, UART1_RX_TX_IRQn, UART2_RX_TX_IRQn,
+  UART3_RX_TX_IRQn, UART4_RX_TX_IRQn, UART5_RX_TX_IRQn };
 
 //==========================================================================
 //函数名称: uart_init
