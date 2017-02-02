@@ -4,6 +4,12 @@
 //==========================================================================
 
 #include "oled.h"
+//使用可变参数
+#include <stdarg.h>
+//使用vasprintf
+#include <stdio.h>
+//使用free
+#include <stdlib.h>
 
 //当前数据/命令选择信号的电平
 static uint8 current_dc_level;
@@ -365,6 +371,66 @@ void oled_display_str(uint8 col, uint8 page, uint8* str) {
 			oled_write_data(char_lib[index][j]);
 		}
 	}
+}
+
+//==========================================================================
+//函数名称: oled_printf
+//函数返回: 显示的字符数，若小于0，说明内存不足，显示失败
+//参数说明: col:起始列号，取值范围为[0,OLED_WIDTH-8]，这里为[0,120]
+//         page:起始页号，取值范围为[0,OLED_PAGE_NUM-1]，这里为[0,7]
+//         fmt:格式控制字符串，用法同标准printf
+//         ...:可变参数，类型需与格式控制字符串一致
+//功能概要: 从起始位置开始，显示格式化后的字符串
+//备注: 仅支持ASCII码字符集的可显示字符;
+//     字符大小为8*16，一个字符占用8列、2页;
+//     当字符串到达右边界时，会换行至下两页继续显示，
+//     当字符串到达下边界时，会换行至第一页继续显示;
+//     寻址方式需为按页寻址;
+//     不支持float和double型的格式化，但可以按如下方法模拟显示格式化的浮点数:
+//     float fval;		//要显示的浮点数
+//     uint8 col, page;	//列号和页号
+//     int32 d;			//浮点数整数部分
+//     int32 temp;		//临时变量
+//     uint32 f;		//浮点数小数部分
+//     //获取浮点数整数部分
+//     d = (int32) fval;
+//     //获取浮点数小数部分，精度为3位
+//     temp = (int32) ((fval - d) * 1000);
+//     f = temp > 0 ? temp : -temp;
+//     //当值为(-1.0f,0.0f)时，需要额外显示负号
+//     if (fval < 0.0f && fval > -1.0f) {
+//         oled_printf(col, page, "-");
+//         //更新当前列号和页号
+//         if ((col += 8) > OLED_WIDTH - 8) {
+//             col = 0;
+//             if ((page += 2) >= OLED_PAGE_NUM) {
+//                 page -= OLED_PAGE_NUM;
+//             }
+//         }
+//     }
+//     //显示格式化后的浮点数
+//     oled_printf(col, page, "%d.%03u", d, f);
+//==========================================================================
+int32 oled_printf(uint8 col, uint8 page, uint8* fmt, ...) {
+	va_list arg;	//指向可变参数的指针
+	int32 result;	//显示的字符数
+	char* ptr;		//指向格式化后的字符串的指针
+
+	//获取可变参数列表的第一个参数的地址
+	va_start(arg, fmt);
+	//调用vasprintf，动态申请内存，格式化字符串，并将结果保存至ptr
+	result = vasprintf(&ptr, fmt, arg);
+	//结果大于等于0时，说明格式化成功
+	if (result >= 0) {
+		//显示格式化后的字符串
+		oled_display_str(col, page, ptr);
+		//释放申请内存
+		free(ptr);
+	}
+	//清空va_list可变参数列表
+	va_end(arg);
+	//返回显示的字符数
+	return result;
 }
 
 //==========================================================================

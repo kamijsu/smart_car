@@ -136,7 +136,7 @@ int main(void) {
 //	oled_display_str(0, 4, "3");
 //	oled_display_str(0, 6, "4");
 //	oled_set_display_offset(16);
-	display = 11594945.35874f;
+	display = 15555555.35874f;
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
@@ -171,24 +171,38 @@ int main(void) {
 //			var32 = uart_printf(1, "%d\r\n", (int32)(f*1000));
 //			var32 = uart_printf(1, "中文测试");
 
-			float fval;		//要发送的浮点数
+//
+
+//			uart_printf(1,"%*d\n",4,500);
+			oled_fill(0x00);
+
+			float fval;		//要显示的浮点数
+			uint8 col, page;	//列号和页号
 			int32 d;			//浮点数整数部分
 			int32 temp;		//临时变量
 			uint32 f;		//浮点数小数部分
 
 			fval = display;
+			col = page = 0;
 
 			//获取浮点数整数部分
 			d = (int32) fval;
 			//获取浮点数小数部分，精度为3位
-			temp = (int32) ((fval * 1000) - d * 1000);
+			temp = (int32) ((fval - d) * 1000);
 			f = temp > 0 ? temp : -temp;
-			//当值为(-1.0f,0.0f)时，需要额外发送负号
+			//当值为(-1.0f,0.0f)时，需要额外显示负号
 			if (fval < 0.0f && fval > -1.0f) {
-				uart_printf(UART_MOD1, "-");
+				oled_printf(col, page, "-");
+				//更新当前列号和页号
+				if ((col += 8) > OLED_WIDTH - 8) {
+					col = 0;
+					if ((page += 2) >= OLED_PAGE_NUM) {
+						page -= OLED_PAGE_NUM;
+					}
+				}
 			}
-			//发送格式化后的浮点数
-			uart_printf(UART_MOD1, "%d.%03u\r\n", d, f);
+			//显示格式化后的浮点数
+			oled_printf(col, page, "%d.%03u", d, f);
 
 			display /= -2.0f;
 

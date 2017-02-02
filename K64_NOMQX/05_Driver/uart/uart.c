@@ -213,7 +213,7 @@ void uart_send_string(uint8 mod, uint8* str) {
 //     //获取浮点数整数部分
 //     d = (int32) fval;
 //     //获取浮点数小数部分，精度为3位
-//     temp = (int32) ((fval * 1000) - d * 1000);
+//     temp = (int32) ((fval - d) * 1000);
 //     f = temp > 0 ? temp : -temp;
 //     //当值为(-1.0f,0.0f)时，需要额外发送负号
 //     if (fval < 0.0f && fval > -1.0f) {
