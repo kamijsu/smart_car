@@ -2,8 +2,20 @@
 //============================================================================
 
 #define GLOBLE_VAR  //只需在main.c中定义一次，用来防止全局变量的重复定义
-
+//#define _STDARG_H
+#include <stdarg.h>
 #include "includes.h"   //包含总头文件
+
+
+
+int mySprintf(char* buff,int x,int y,char* fmt,...){
+	int res;
+	__VALIST arg;
+	va_start(arg,fmt);
+	res = vsprintf(buff,fmt,arg);
+	va_end(arg);
+	return res;
+}
 
 int main(void) {
 	//1. 声明主函数使用的变量
@@ -36,8 +48,8 @@ int main(void) {
 	uint8 eeprom_size;
 	uint8 eeprom_split;
 	uint32* ptr32;
-	uint32 array[1];
-	uint8 digest[16];
+	uint8 buff[1024];
+
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -157,15 +169,18 @@ int main(void) {
 
 			f = arm_sin_f32(f);
 //
-			ptr32 = (uint32*)malloc(sizeof(uint32)*30720);
-			if(ptr32 == NULL){
-				uart_send_string(1,"内存已满!\r\n");
-			}
-			else{
-				uart_send_string(1,"申请成功!\r\n");
-			}
-			free(ptr32);
-
+//			ptr32 = (uint32*)malloc(sizeof(uint32)*30720);
+//			if(ptr32 == NULL){
+//				uart_send_string(1,"内存已满!\r\n");
+//			}
+//			else{
+//				uart_send_string(1,"申请成功!\r\n");
+//			}
+//			free(ptr32);
+			mySprintf(buff,0,0,"%%%20o\r\n",rng_next_uint32());
+			uart_send_string(1,buff);
+//			__VALIST
+//			va_start();
 //			if (i == 1) {
 //				oled_set_contrast(0);
 ////				oled_scroll_stop();

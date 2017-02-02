@@ -7,9 +7,6 @@
 #define _CRYPTO_H
 
 #include "common.h"
-#include "mmcau.h"
-#include "rng.h"
-#include <string.h>
 
 //定义DES和AES工作模式
 #define CRYPTO_MODE_ECB		(0)		//电码本

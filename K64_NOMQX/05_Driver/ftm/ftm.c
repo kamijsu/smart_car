@@ -4,6 +4,8 @@
 //==========================================================================
 
 #include "ftm.h"
+//包含gpio.h，因为要用到上拉引脚功能
+#include "gpio.h"
 
 //FTM各模块基地址
 static FTM_Type * const ftm_table[] = FTM_BASE_PTRS;

@@ -7,7 +7,6 @@
 #define _FRAME_H
 
 #include "common.h"
-#include "crc16_modbus.h"
 #include "uart.h"
 
 //==========================================================================
