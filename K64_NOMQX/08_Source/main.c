@@ -36,6 +36,8 @@ int main(void) {
 	uint8 eeprom_size;
 	uint8 eeprom_split;
 	uint32* ptr32;
+	uint32 array[1];
+	uint8 digest[16];
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -154,9 +156,16 @@ int main(void) {
 			uvar32 = pit_get_time_us(1);
 
 			f = arm_sin_f32(f);
+//
+			ptr32 = (uint32*)malloc(sizeof(uint32)*30720);
+			if(ptr32 == NULL){
+				uart_send_string(1,"内存已满!\r\n");
+			}
+			else{
+				uart_send_string(1,"申请成功!\r\n");
+			}
+			free(ptr32);
 
-			ptr32 = (uint32*)malloc(sizeof(uint32)*1024);
-			uart_send1(1,ptr32[0]);
 //			if (i == 1) {
 //				oled_set_contrast(0);
 ////				oled_scroll_stop();
@@ -178,6 +187,7 @@ int main(void) {
 
 			uvar322 = pit_get_time_us(1);
 //			printf("%d\r\n", (int32) (uvar322 - uvar32));
+//			uart_send1(1,ptr32[0]);
 
 		}
 
