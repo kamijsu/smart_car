@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include "adc.h"
 #include "gpio.h"
 #include "pit.h"
@@ -36,7 +37,7 @@
 #include "frame_bytes.h"
 #include <math.h>
 #include "rng.h"
-#include "arm_math.h"
+//#include "arm_math.h"
 #include "mmcau.h"
 #include "crypto.h"
 #include "flash.h"

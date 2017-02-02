@@ -26,24 +26,10 @@ void UART1_RX_TX_IRQHandler() {
 		if (!err) {
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
-//			uart_send1(UART_MOD1, ch);
+			uart_send1(UART_MOD1, ch);
 //			oled_write_data(ch);
-			switch (ch) {
-			case 0x65:
-				oled_set_vcomh(OLED_VCOMH_065);
-				uart_send_string(1,"设置为65");
-				break;
-			case 0x77:
-				oled_set_vcomh(OLED_VCOMH_077);
-				uart_send_string(1,"设置为77");
-				break;
-			case 0x83:
-				oled_set_vcomh(OLED_VCOMH_083);
-				uart_send_string(1,"设置为83");
-				break;
 			}
 
-		}
 	}
 
 	ENABLE_INTERRUPTS;

@@ -35,6 +35,7 @@ int main(void) {
 	uint8 dflash_size;
 	uint8 eeprom_size;
 	uint8 eeprom_split;
+	uint32* ptr32;
 
 	/* 小车相关参数变量 */
 	Car car;
@@ -44,7 +45,7 @@ int main(void) {
 
 	//2. 关总中断
 	DISABLE_INTERRUPTS;
-
+//vsprintf()
 	//3. 初始化外设模块
 	light_init(LIGHT_BLUE, LIGHT_ON); //蓝灯初始化
 //	light_init(LIGHT_GREEN, LIGHT_OFF);
@@ -152,6 +153,7 @@ int main(void) {
 
 			uvar32 = pit_get_time_us(1);
 
+
 //			if (i == 1) {
 //				oled_set_contrast(0);
 ////				oled_scroll_stop();
@@ -162,7 +164,7 @@ int main(void) {
 //				i = 1;
 //			}
 
-			oled_display_str(0, 0, "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+//			oled_display_str(0, 0, "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
 //			oled_scroll_start();
 //			pit_delay_ms(1, 1000);
 //
