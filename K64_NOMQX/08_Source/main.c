@@ -2,20 +2,8 @@
 //============================================================================
 
 #define GLOBLE_VAR  //只需在main.c中定义一次，用来防止全局变量的重复定义
-//#define _STDARG_H
-#include <stdarg.h>
+
 #include "includes.h"   //包含总头文件
-
-
-
-int mySprintf(char* buff,int x,int y,char* fmt,...){
-	int res;
-	__VALIST arg;
-	va_start(arg,fmt);
-	res = vsprintf(buff,fmt,arg);
-	va_end(arg);
-	return res;
-}
 
 int main(void) {
 	//1. 声明主函数使用的变量
@@ -50,10 +38,9 @@ int main(void) {
 	uint32* ptr32;
 	uint8 buff[1024];
 
-
 	/* 小车相关参数变量 */
 	Car car;
-
+	float display;
 	/*串口调试工具用临时变量*/
 	float data_out[4];
 
@@ -99,7 +86,7 @@ int main(void) {
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
 //	d = 1.3;
-	f = 1.3f;
+	f = -13.3f;
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 //	pit_enable_int(PIT_CH2);   		//使能pit中断
@@ -134,8 +121,7 @@ int main(void) {
 //			FLASH_EEPROM_SPLIT_1_7);
 //	uart_send1(UART_USE, result);
 
-
-	oled_set_scroll(OLED_SCROLL_DIR_LEFT,0,1,OLED_SCROLL_INTERVAL_FRAMES_2);
+	oled_set_scroll(OLED_SCROLL_DIR_LEFT, 0, 1, OLED_SCROLL_INTERVAL_FRAMES_2);
 	oled_set_contrast(255);
 //	oled_set_display_clk(15,2);
 //	oled_set_precharge_period(8,8);
@@ -150,7 +136,7 @@ int main(void) {
 //	oled_display_str(0, 4, "3");
 //	oled_display_str(0, 6, "4");
 //	oled_set_display_offset(16);
-
+	display = 11594945.35874f;
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
@@ -167,7 +153,9 @@ int main(void) {
 
 			uvar32 = pit_get_time_us(1);
 
-			f = arm_sin_f32(f);
+//			display = arm_sin_f32(display);
+//			f/=2.0f;
+
 //
 //			ptr32 = (uint32*)malloc(sizeof(uint32)*30720);
 //			if(ptr32 == NULL){
@@ -177,8 +165,35 @@ int main(void) {
 //				uart_send_string(1,"申请成功!\r\n");
 //			}
 //			free(ptr32);
-			mySprintf(buff,0,0,"%%%20o\r\n",rng_next_uint32());
-			uart_send_string(1,buff);
+//			i = rng_next_uint32();
+//			var32 = uart_printf(1, "%d.%03d\r\n", (int32)f,(uint32)((f*1000 - (int32)f * 1000) * -1));
+//			var32 = uart_printf(1, "%#X\r\n", rng_next_uint32());
+//			var32 = uart_printf(1, "%d\r\n", (int32)(f*1000));
+//			var32 = uart_printf(1, "中文测试");
+
+			float fval;		//要发送的浮点数
+			int32 d;			//浮点数整数部分
+			int32 temp;		//临时变量
+			uint32 f;		//浮点数小数部分
+
+			fval = display;
+
+			//获取浮点数整数部分
+			d = (int32) fval;
+			//获取浮点数小数部分，精度为3位
+			temp = (int32) ((fval * 1000) - d * 1000);
+			f = temp > 0 ? temp : -temp;
+			//当值为(-1.0f,0.0f)时，需要额外发送负号
+			if (fval < 0.0f && fval > -1.0f) {
+				uart_printf(UART_MOD1, "-");
+			}
+			//发送格式化后的浮点数
+			uart_printf(UART_MOD1, "%d.%03u\r\n", d, f);
+
+			display /= -2.0f;
+
+//			uart_printf(1, "%d\r\n", var32);
+//			uart_send_string(1,"12345678901234567890123456789012345678901234567890");
 //			__VALIST
 //			va_start();
 //			if (i == 1) {
@@ -201,8 +216,7 @@ int main(void) {
 //			pit_delay_ms(1, 1000);
 
 			uvar322 = pit_get_time_us(1);
-//			printf("%d\r\n", (int32) (uvar322 - uvar32));
-//			uart_send1(1,ptr32[0]);
+//			uart_printf(1,"\r\n%d\r\n", (int32) (uvar322 - uvar32));
 
 		}
 

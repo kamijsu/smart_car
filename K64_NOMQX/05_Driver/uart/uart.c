@@ -4,6 +4,12 @@
 //==========================================================================
 
 #include "uart.h"
+//使用可变参数
+#include <stdarg.h>
+//使用vasprintf
+#include <stdio.h>
+//使用free
+#include <stdlib.h>
 
 //各UART模块基地址
 static UART_Type * const uart_table[] = UART_BASE_PTRS;
@@ -189,6 +195,53 @@ void uart_send_string(uint8 mod, uint8* str) {
 	while (*str != '\0') {
 		uart_send1(mod, *str++);
 	}
+}
+
+//==========================================================================
+//函数名称: uart_printf
+//函数返回: 发送的字符数，若小于0，说明内存不足，发送失败
+//参数说明: mod:UART模块号:
+//             UART_MODx，x为模块号;
+//         fmt:格式控制字符串，用法同标准printf
+//         ...:可变参数，类型需与格式控制字符串一致
+//功能概要: 发送格式化后的字符串
+//备注: 不支持float和double型的格式化，但可以按如下方法模拟发送格式化的浮点数:
+//     float fval;		//要发送的浮点数
+//     int32 d;			//浮点数整数部分
+//     int32 temp;		//临时变量
+//     uint32 f;		//浮点数小数部分
+//     //获取浮点数整数部分
+//     d = (int32) fval;
+//     //获取浮点数小数部分，精度为3位
+//     temp = (int32) ((fval * 1000) - d * 1000);
+//     f = temp > 0 ? temp : -temp;
+//     //当值为(-1.0f,0.0f)时，需要额外发送负号
+//     if (fval < 0.0f && fval > -1.0f) {
+//         uart_printf(UART_MOD1, "-");
+//     }
+//     //发送格式化后的浮点数
+//     uart_printf(UART_MOD1, "%d.%03u", d, f);
+//==========================================================================
+int32 uart_printf(uint8 mod, uint8* fmt, ...) {
+	va_list arg;	//指向可变参数的指针
+	int32 result;	//发送的字符数
+	char* ptr;		//指向格式化后的字符串的指针
+
+	//获取可变参数列表的第一个参数的地址
+	va_start(arg, fmt);
+	//调用vasprintf，动态申请内存，格式化字符串，并将结果保存至ptr
+	result = vasprintf(&ptr, fmt, arg);
+	//结果大于等于0时，说明格式化成功
+	if (result >= 0) {
+		//发送格式化后的字符串
+		uart_send_string(mod, ptr);
+		//释放申请内存
+		free(ptr);
+	}
+	//清空va_list可变参数列表
+	va_end(arg);
+	//返回发送的字符数
+	return result;
 }
 
 //==========================================================================
