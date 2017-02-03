@@ -24,7 +24,6 @@
 #include "reed_switch.h"
 #include "control.h"
 #include "structs.h"
-#include "printf.h"
 #include "visual_scope.h"
 #include "ftm.h"
 #include "temp_sensor.h"

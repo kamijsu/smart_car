@@ -87,7 +87,6 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_cmd&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_data&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_string&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/printf&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/structs&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/visual_scope&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/08_Source&quot;"/>
@@ -246,7 +245,6 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_cmd&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_data&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_string&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/printf&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/structs&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/visual_scope&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/08_Source&quot;"/>

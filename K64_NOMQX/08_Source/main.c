@@ -99,7 +99,6 @@ int main(void) {
 
 	frame.len = 255;
 	memset(data, 0xEE, 1024);
-//	FMC_PFB0CR |= FMC_PFB0CR_S_B_INV_MASK;
 	uint8 read_data[1024];
 	memset(read_data, 0xCC, 1024);
 
@@ -107,38 +106,10 @@ int main(void) {
 	cmd.len = 1;
 	cmd.data[0] = 7;
 
-//	oled_display_str(0, 0, "123");
-//	oled_display_str(0, 2, "happy new year:)");
-//	oled_display_str(0, 6, "happy new year:)");
-//	oled_set_scroll(OLED_SCROLL_DIR_RIGHT, OLED_PAGE0, OLED_PAGE1,
-//	OLED_SCROLL_INTERVAL_FRAMES_2);
-//	oled_set_start_line(16);
-//	oled_set_scroll_with_vertical(OLED_SCROLL_DIR_RIGHT, 2, 3,
-//			OLED_SCROLL_INTERVAL_FRAMES_25, 0, 16, 1);
-//	oled_scroll_start();
-
-	i = 1;
-
 //	result = flash_partition(FLASH_DFLASH_SIZE_32, FLASH_EEPROM_SIZE_128,
 //			FLASH_EEPROM_SPLIT_1_7);
 //	uart_send1(UART_USE, result);
 
-	oled_set_scroll(OLED_SCROLL_DIR_LEFT, 0, 1, OLED_SCROLL_INTERVAL_FRAMES_2);
-	oled_set_contrast(255);
-//	oled_set_display_clk(15,2);
-//	oled_set_precharge_period(8,8);
-//	oled_set_remap(false,false);
-//
-
-//	oled_display_str(0, 2, "123");
-
-//	oled_set_multiplex_ratio(48);
-//	oled_display_str(0, 0, "1");
-//	oled_display_str(0, 2, "2");
-//	oled_display_str(0, 4, "3");
-//	oled_display_str(0, 6, "4");
-//	oled_set_display_offset(16);
-	display = 15555555.35874f;
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
 
@@ -155,42 +126,9 @@ int main(void) {
 
 			uvar32 = pit_get_time_us(1);
 
-//			display = arm_sin_f32(display);
-//			f/=2.0f;
-
-//
-//			ptr32 = (uint32*)malloc(sizeof(uint32)*30720);
-//			if(ptr32 == NULL){
-//				uart_send_string(1,"内存已满!\r\n");
-//			}
-//			else{
-//				uart_send_string(1,"申请成功!\r\n");
-//			}
-//			free(ptr32);
-//			i = rng_next_uint32();
-//			var32 = uart_printf(1, "%d.%03d\r\n", (int32)f,(uint32)((f*1000 - (int32)f * 1000) * -1));
-//			var32 = uart_printf(1, "%#X\r\n", rng_next_uint32());
-//			var32 = uart_printf(1, "%d\r\n", (int32)(f*1000));
-//			var32 = uart_printf(1, "中文测试");
-
-//
-
-//			uart_printf(1,"%*d\n",4,500);
 //			oled_fill(0x00);
-//			var32 = oled_printf(0, 0, "temp:%5.2f", temp_sensor_get_temp());
-//			uart_printf(1,"%d\r\n",var32);
+			oled_printf(0, 0, "temp:%5.2f", temp_sensor_get_temp());
 
-//			uart_printf(UART_MOD1,"%d\r\n",sizeof(buff));
-//
-//			oled_display_str(0,0,"0000000000");
-//			oled_printf(0,0,"%10.2f",512.25f);
-
-			var32 = frame_string_printf("%5.2f", 123.321f);
-
-//			uart_printf(1,"\r\n%d\r\n",var32);
-
-//			var32 = snprintf(buff,10,"12345678");
-//			uart_printf(UART_MOD1,"%s\r\n%d\r\n",buff,var32);
 
 			uvar322 = pit_get_time_us(1);
 //			uart_printf(1,"%d\r\n", (int32) (uvar322 - uvar32));
