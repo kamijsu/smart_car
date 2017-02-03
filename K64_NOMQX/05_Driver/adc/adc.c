@@ -238,7 +238,7 @@ uint16 adc_single_get_ad(uint8 mod, uint8 se_ch, uint8 se_sel) {
 float adc_single_get_vtg(uint8 mod, uint8 se_ch, uint8 se_sel) {
 	ADC_Type * adc_ptr;	//ADC基地址
 	uint16 ad_val;		//采样AD值，无符号
-	float radio;		//AD值转电压时的比例系数
+	float ratio;		//AD值转电压时的比例系数
 	uint8 mode;			//转换模式
 
 	//获取ADC基地址
@@ -256,19 +256,19 @@ float adc_single_get_vtg(uint8 mod, uint8 se_ch, uint8 se_sel) {
 	//获取转换模式
 	mode = REG_GET_MASK(ADC_CFG1_REG(adc_ptr),
 			ADC_CFG1_MODE_MASK) >> ADC_CFG1_MODE_SHIFT;
-	//根据转换模式计算比例系数，除数为((1<<数据位数)-1)
+	//根据转换模式计算比例系数，除数为(1<<数据位数)
 	switch (mode) {
 	case ADC_ACCURACY_SINGLE_8_DIFF_9:
-		radio = ADC_VTG / 255.0f;
+		ratio = ADC_VTG / 256.0f;
 		break;
 	case ADC_ACCURACY_SINGLE_10_DIFF_11:
-		radio = ADC_VTG / 1023.0f;
+		ratio = ADC_VTG / 1024.0f;
 		break;
 	case ADC_ACCURACY_SINGLE_12_DIFF_13:
-		radio = ADC_VTG / 4095.0f;
+		ratio = ADC_VTG / 4096.0f;
 		break;
 	case ADC_ACCURACY_SINGLE_DIFF_16:
-		radio = ADC_VTG / 65535.0f;
+		ratio = ADC_VTG / 65536.0f;
 		break;
 	}
 	//等待ADC转换完成
@@ -320,7 +320,7 @@ int16 adc_diff_get_ad(uint8 mod, uint8 diff_group) {
 float adc_diff_get_vtg(uint8 mod, uint8 diff_group) {
 	ADC_Type * adc_ptr;	//ADC基地址
 	int16 ad_val;		//采样AD值，有符号
-	float radio;		//AD值转电压时的比例系数
+	float ratio;		//AD值转电压时的比例系数
 	uint8 mode;			//转换模式
 
 	//获取ADC基地址
@@ -333,19 +333,19 @@ float adc_diff_get_vtg(uint8 mod, uint8 diff_group) {
 	//获取转换模式
 	mode = REG_GET_MASK(ADC_CFG1_REG(adc_ptr),
 			ADC_CFG1_MODE_MASK) >> ADC_CFG1_MODE_SHIFT;
-	//根据转换模式计算比例系数，除数为((1<<数据位数)-1)
+	//根据转换模式计算比例系数，除数为(1<<数据位数)
 	switch (mode) {
 	case ADC_ACCURACY_SINGLE_8_DIFF_9:
-		radio = ADC_VTG / 255.0f;
+		ratio = ADC_VTG / 256.0f;
 		break;
 	case ADC_ACCURACY_SINGLE_10_DIFF_11:
-		radio = ADC_VTG / 1023.0f;
+		ratio = ADC_VTG / 1024.0f;
 		break;
 	case ADC_ACCURACY_SINGLE_12_DIFF_13:
-		radio = ADC_VTG / 4095.0f;
+		ratio = ADC_VTG / 4096.0f;
 		break;
 	case ADC_ACCURACY_SINGLE_DIFF_16:
-		radio = ADC_VTG / 32767.0f;
+		ratio = ADC_VTG / 32768.0f;
 		break;
 	}
 	//等待ADC转换完成
@@ -354,5 +354,5 @@ float adc_diff_get_vtg(uint8 mod, uint8 diff_group) {
 	//获取采样AD值
 	ad_val = ADC_R_REG(adc_ptr, 0);
 	//转化为电压值，并返回
-	return ad_val * radio;
+	return ad_val * ratio;
 }
