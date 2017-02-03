@@ -277,7 +277,7 @@ float adc_single_get_vtg(uint8 mod, uint8 se_ch, uint8 se_sel) {
 	//获取采样AD值
 	ad_val = ADC_R_REG(adc_ptr, 0);
 	//转化为电压值，并返回
-	return ad_val * radio;
+	return ad_val * ratio;
 }
 
 //==========================================================================
