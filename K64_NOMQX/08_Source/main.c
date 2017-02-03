@@ -61,6 +61,8 @@ int main(void) {
 //	gpio_init(COM_PORTB | 19, GPIO_OUTPUT, GPIO_LEVEL_LOW);
 //	pit_init(PIT_CH2,1);
 	rng_init();
+
+	temp_sensor_init();
 //	motor_init(MOTOR0);			//左电机初始化
 //	motor_init(MOTOR1);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
@@ -174,63 +176,24 @@ int main(void) {
 //
 
 //			uart_printf(1,"%*d\n",4,500);
-			oled_fill(0x00);
+//			oled_fill(0x00);
+//			var32 = oled_printf(0, 0, "temp:%5.2f", temp_sensor_get_temp());
+//			uart_printf(1,"%d\r\n",var32);
 
-			float fval;		//要显示的浮点数
-			uint8 col, page;	//列号和页号
-			int32 d;			//浮点数整数部分
-			int32 temp;		//临时变量
-			uint32 f;		//浮点数小数部分
-
-			fval = display;
-			col = page = 0;
-
-			//获取浮点数整数部分
-			d = (int32) fval;
-			//获取浮点数小数部分，精度为3位
-			temp = (int32) ((fval - d) * 1000);
-			f = temp > 0 ? temp : -temp;
-			//当值为(-1.0f,0.0f)时，需要额外显示负号
-			if (fval < 0.0f && fval > -1.0f) {
-				oled_printf(col, page, "-");
-				//更新当前列号和页号
-				if ((col += 8) > OLED_WIDTH - 8) {
-					col = 0;
-					if ((page += 2) >= OLED_PAGE_NUM) {
-						page -= OLED_PAGE_NUM;
-					}
-				}
-			}
-			//显示格式化后的浮点数
-			oled_printf(col, page, "%d.%03u", d, f);
-
-			display /= -2.0f;
-
-//			uart_printf(1, "%d\r\n", var32);
-//			uart_send_string(1,"12345678901234567890123456789012345678901234567890");
-//			__VALIST
-//			va_start();
-//			if (i == 1) {
-//				oled_set_contrast(0);
-////				oled_scroll_stop();
-//				i = 0;
-//			} else {
-//				oled_set_contrast(255);
-////				oled_scroll_start();
-//				i = 1;
-//			}
-
-//			oled_display_str(0, 0, "[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
-//			oled_scroll_start();
-//			pit_delay_ms(1, 1000);
+//			uart_printf(UART_MOD1,"%d\r\n",sizeof(buff));
 //
-//
-//
-//			oled_scroll_stop();
-//			pit_delay_ms(1, 1000);
+//			oled_display_str(0,0,"0000000000");
+//			oled_printf(0,0,"%10.2f",512.25f);
+
+			var32 = frame_string_printf("%5.2f", 123.321f);
+
+//			uart_printf(1,"\r\n%d\r\n",var32);
+
+//			var32 = snprintf(buff,10,"12345678");
+//			uart_printf(UART_MOD1,"%s\r\n%d\r\n",buff,var32);
 
 			uvar322 = pit_get_time_us(1);
-//			uart_printf(1,"\r\n%d\r\n", (int32) (uvar322 - uvar32));
+//			uart_printf(1,"%d\r\n", (int32) (uvar322 - uvar32));
 
 		}
 
@@ -240,7 +203,9 @@ int main(void) {
 //			switch (frame.type) {
 //			case FRAME_STRING_TYPE:	//字符串帧
 //				//发送字符串回去
-//				frame_send_info(frame);
+////				frame_send_info(frame);
+//				frame_string_parse(frame, buff);
+//				uart_printf(UART_USE, "%s", buff);
 //				break;
 //			case FRAME_CMD_TYPE:	//命令帧
 //				//解帧，获取命令信息

@@ -112,22 +112,7 @@ void uart_send_string(uint8 mod, uint8* str);
 //         fmt:格式控制字符串，用法同标准printf
 //         ...:可变参数，类型需与格式控制字符串一致
 //功能概要: 发送格式化后的字符串
-//备注: 不支持float和double型的格式化，但可以按如下方法模拟发送格式化的浮点数:
-//     float fval;		//要发送的浮点数
-//     int32 d;			//浮点数整数部分
-//     int32 temp;		//临时变量
-//     uint32 f;		//浮点数小数部分
-//     //获取浮点数整数部分
-//     d = (int32) fval;
-//     //获取浮点数小数部分，精度为3位
-//     temp = (int32) ((fval - d) * 1000);
-//     f = temp > 0 ? temp : -temp;
-//     //当值为(-1.0f,0.0f)时，需要额外发送负号
-//     if (fval < 0.0f && fval > -1.0f) {
-//         uart_printf(UART_MOD1, "-");
-//     }
-//     //发送格式化后的浮点数
-//     uart_printf(UART_MOD1, "%d.%03u", d, f);
+//备注: 若要支持浮点数的格式化，编译时需添加-u _printf_float选项
 //==========================================================================
 int32 uart_printf(uint8 mod, uint8* fmt, ...);
 

@@ -160,30 +160,7 @@ void oled_display_str(uint8 col, uint8 page, uint8* str);
 //     当字符串到达右边界时，会换行至下两页继续显示，
 //     当字符串到达下边界时，会换行至第一页继续显示;
 //     寻址方式需为按页寻址;
-//     不支持float和double型的格式化，但可以按如下方法模拟显示格式化的浮点数:
-//     float fval;		//要显示的浮点数
-//     uint8 col, page;	//列号和页号
-//     int32 d;			//浮点数整数部分
-//     int32 temp;		//临时变量
-//     uint32 f;		//浮点数小数部分
-//     //获取浮点数整数部分
-//     d = (int32) fval;
-//     //获取浮点数小数部分，精度为3位
-//     temp = (int32) ((fval - d) * 1000);
-//     f = temp > 0 ? temp : -temp;
-//     //当值为(-1.0f,0.0f)时，需要额外显示负号
-//     if (fval < 0.0f && fval > -1.0f) {
-//         oled_printf(col, page, "-");
-//         //更新当前列号和页号
-//         if ((col += 8) > OLED_WIDTH - 8) {
-//             col = 0;
-//             if ((page += 2) >= OLED_PAGE_NUM) {
-//                 page -= OLED_PAGE_NUM;
-//             }
-//         }
-//     }
-//     //显示格式化后的浮点数
-//     oled_printf(col, page, "%d.%03u", d, f);
+//     若要支持浮点数的格式化，编译时需添加-u _printf_float选项
 //==========================================================================
 int32 oled_printf(uint8 col, uint8 page, uint8* fmt, ...);
 
