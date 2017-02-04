@@ -31,6 +31,8 @@ void UART1_RX_TX_IRQHandler() {
 				dac_set_buffer_val(0,0,val);
 				val = 0;
 				num = 0;
+				DAC0_SR = 0;
+				dac_software_trigger(0);
 			}
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);

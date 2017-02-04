@@ -328,7 +328,7 @@ void oled_display_str(uint8 col, uint8 page, uint8* str) {
 	//填充低页字符数据
 	for (i = 0, x = col, y = page; str[i] != '\0'; i++, x += 8) {
 		//获取该字符的字符库索引
-		index = str[i] - 32;
+		index = str[i] - ' ';
 		//当前横坐标越界时，换行
 		if (x > OLED_WIDTH - 8) {
 			x = 0;
@@ -354,7 +354,7 @@ void oled_display_str(uint8 col, uint8 page, uint8* str) {
 	//填充高页字符数据
 	for (i = 0, x = col, y = page; str[i] != '\0'; i++, x += 8) {
 		//获取该字符的字符库索引
-		index = str[i] - 32;
+		index = str[i] - ' ';
 		//当前横坐标越界时，换行
 		if (x > OLED_WIDTH - 8) {
 			x = 0;
