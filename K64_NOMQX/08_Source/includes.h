@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "adc.h"
+#include "dac.h"
 #include "gpio.h"
 #include "pit.h"
 #include "uart.h"

@@ -61,8 +61,8 @@ int main(void) {
 //	gpio_init(COM_PORTB | 19, GPIO_OUTPUT, GPIO_LEVEL_LOW);
 //	pit_init(PIT_CH2,1);
 	rng_init();
-
-	temp_sensor_init();
+	dac_init(DAC_MOD0, DAC_REF_VTG_VDDA);
+//	temp_sensor_init();
 //	motor_init(MOTOR0);			//左电机初始化
 //	motor_init(MOTOR1);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
@@ -78,7 +78,9 @@ int main(void) {
 
 //	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
-
+	adc_init(ADC_MOD1, ADC_CLK_DIV_4, ADC_ACCURACY_SINGLE_12_DIFF_13,
+	ADC_HARDWARE_AVG_8, ADC_ADLSTS_12, ADC_ADHSC_NORMAL,
+	ADC_CAL_ENABLE);
 //	spi_master_init(SPI_MOD2, SPI_CONFIG0, SPI_BAUD_SCALER_12,
 //	SPI_FORMAT_CPOL0_CPHA0, 8, SPI_BIT_ORDER_MSB,
 //	SPI_DELAY_SCALER_12, SPI_DELAY_SCALER_12,
@@ -126,9 +128,11 @@ int main(void) {
 
 			uvar32 = pit_get_time_us(1);
 
-//			oled_fill(0x00);
-			oled_printf(0, 0, "temp:%5.2f", temp_sensor_get_temp());
+			uvar16 = adc_single_get_ad(1, ADC_SE6, ADC_SE_SEL_A);
 
+			oled_printf(0, 0, "AD:%5d", uvar16);
+			oled_printf(0, 2, "AD:%5X", uvar16);
+			oled_printf(0, 4, "VTG:%5.2f", uvar16 * 3300.0f / 4096.0f);
 
 			uvar322 = pit_get_time_us(1);
 //			uart_printf(1,"%d\r\n", (int32) (uvar322 - uvar32));

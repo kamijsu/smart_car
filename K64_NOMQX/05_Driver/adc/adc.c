@@ -25,9 +25,9 @@ static bool adc_cal(uint8 mod) {
 
 	//正常供电配置，选择输入时钟8分频，长时间采样，输入时钟为总线时钟/2
 	REG_SET_VAL(ADC_CFG1_REG(adc_ptr),
-			0|ADC_CFG1_ADIV(ADC_CLK_DIV_8)|ADC_CFG1_ADLSMP_MASK|ADC_CFG1_ADICLK(1));
+			ADC_CFG1_ADIV(ADC_CLK_DIV_8)|ADC_CFG1_ADLSMP_MASK|ADC_CFG1_ADICLK(1));
 	//高速转换，长时间采样20个额外ADCK周期
-	REG_SET_VAL(ADC_CFG2_REG(adc_ptr), 0|ADC_CFG2_ADHSC_MASK);
+	REG_SET_VAL(ADC_CFG2_REG(adc_ptr), ADC_CFG2_ADHSC_MASK);
 	//选择软件触发，并设置参考电压为VREFH和VREFL
 	REG_CLR_MASK(ADC_SC2_REG(adc_ptr), ADC_SC2_ADTRG_MASK|ADC_SC2_REFSEL_MASK);
 	//设置单次转换，清除采样均值数

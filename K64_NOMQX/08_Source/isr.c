@@ -15,6 +15,8 @@
 //==========================================================================
 void UART1_RX_TX_IRQHandler() {
 	FrameFramingResult res;
+	static uint8 num = 0;
+	static uint16 val = 0;
 	uint8 ch;
 	bool err = true;
 	DISABLE_INTERRUPTS;
@@ -24,6 +26,12 @@ void UART1_RX_TX_IRQHandler() {
 
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
+			val = (val<<8) + ch;
+			if(++num >=2){
+				dac_set_buffer_val(0,0,val);
+				val = 0;
+				num = 0;
+			}
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
 			uart_send1(UART_MOD1, ch);
