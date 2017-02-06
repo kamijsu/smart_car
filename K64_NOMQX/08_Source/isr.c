@@ -26,22 +26,38 @@ void UART1_RX_TX_IRQHandler() {
 
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
-			val = (val<<8) + ch;
-			if(++num >=2){
-				dac_set_buffer_val(0,0,val);
+			val = (val << 8) + ch;
+			if (++num >= 2) {
+//				dac_set_buffer_val(0, 0, val);
 				val = 0;
 				num = 0;
-				DAC0_SR = 0;
 				dac_software_trigger(0);
 			}
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
 			uart_send1(UART_MOD1, ch);
 //			oled_write_data(ch);
-			}
+		}
 
 	}
 
+	ENABLE_INTERRUPTS;
+}
+
+void DAC0_IRQHandler() {
+	DISABLE_INTERRUPTS;
+	if (dac_get_index_top_int(0)) {
+		dac_clear_index_top_int(0);
+		uart_printf(1, "索引到达0\r\n");
+	}
+	if (dac_get_index_bottom_int(0)) {
+		dac_clear_index_bottom_int(0);
+		uart_printf(1, "索引到达上限\r\n");
+	}
+	if (dac_get_watermark_int(0)) {
+		dac_clear_watermark_int(0);
+		uart_printf(1, "索引到达水印\r\n");
+	}
 	ENABLE_INTERRUPTS;
 }
 

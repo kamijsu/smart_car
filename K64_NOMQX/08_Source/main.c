@@ -62,7 +62,7 @@ int main(void) {
 //	pit_init(PIT_CH2,1);
 	rng_init();
 	dac_init(DAC_MOD0, DAC_REF_VTG_VDDA);
-	dac_enable_buffer(DAC_MOD0, DAC_BUFFER_MODE_NORMAL, 3, DAC_WATERMARK_WORD_1,
+	dac_enable_buffer(DAC_MOD0, DAC_BUFFER_MODE_NORMAL, 2, DAC_WATERMARK_WORD_1,
 	DAC_TRIGGER_SOFTWARE);
 //	temp_sensor_init();
 //	motor_init(MOTOR0);			//左电机初始化
@@ -95,6 +95,7 @@ int main(void) {
 	f = -13.3f;
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
+	dac_set_buffer_int(0, false, true, false);
 //	pit_enable_int(PIT_CH2);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	frame_enable_re_int();
@@ -132,8 +133,13 @@ int main(void) {
 
 			uvar16 = adc_single_get_ad(1, ADC_SE6, ADC_SE_SEL_A);
 
+
+
 			oled_fill(0x00);
-			dac_set_buffer_val(0, 1, 0x0DCB);
+
+//			dac_set_buffer_val(0, 1, 0x0111);
+
+//			dac_set_buffer_index(0,0);
 
 //			oled_printf(0, 0, "AD:%5d", uvar16);
 			oled_printf(0, 6, "AD:%0X", uvar16);
