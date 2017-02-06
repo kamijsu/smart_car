@@ -62,6 +62,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/flash&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/ftm&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/gpio&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/i2c&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/mmcau&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/pit&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/rng&quot;"/>
@@ -221,6 +222,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/flash&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/ftm&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/gpio&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/i2c&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/mmcau&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/pit&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/rng&quot;"/>

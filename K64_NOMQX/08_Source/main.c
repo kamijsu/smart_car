@@ -127,8 +127,6 @@ int main(void) {
 
 			custom_oled_update_temp();
 
-//			oled_printf(0,0,)
-
 			uvar322 = pit_get_time_us(1);
 			uart_printf(1,"ÏûºÄÊ±¼ä£º%dus\r\n", (int32) (uvar322 - uvar32));
 
