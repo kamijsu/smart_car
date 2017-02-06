@@ -46,7 +46,7 @@ int main(void) {
 
 	//2. 关总中断
 	DISABLE_INTERRUPTS;
-//vsprintf()
+
 	//3. 初始化外设模块
 	light_init(LIGHT_BLUE, LIGHT_ON); //蓝灯初始化
 //	light_init(LIGHT_GREEN, LIGHT_OFF);
@@ -61,10 +61,7 @@ int main(void) {
 //	gpio_init(COM_PORTB | 19, GPIO_OUTPUT, GPIO_LEVEL_LOW);
 //	pit_init(PIT_CH2,1);
 	rng_init();
-	dac_init(DAC_MOD0, DAC_REF_VTG_VDDA);
-	dac_enable_buffer(DAC_MOD0, DAC_BUFFER_MODE_NORMAL, 2, DAC_WATERMARK_WORD_1,
-	DAC_TRIGGER_SOFTWARE);
-//	temp_sensor_init();
+	temp_sensor_init();
 //	motor_init(MOTOR0);			//左电机初始化
 //	motor_init(MOTOR1);			//右电机初始化
 //	gyro_acce_init();			//陀螺仪加速度计初始化
@@ -80,14 +77,12 @@ int main(void) {
 
 //	crc_init_protocol(CRC_CRC16_MODBUS);
 	frame_init();
-	adc_init(ADC_MOD1, ADC_CLK_DIV_4, ADC_ACCURACY_SINGLE_12_DIFF_13,
-	ADC_HARDWARE_AVG_8, ADC_ADLSTS_12, ADC_ADHSC_NORMAL,
-	ADC_CAL_ENABLE);
 //	spi_master_init(SPI_MOD2, SPI_CONFIG0, SPI_BAUD_SCALER_12,
 //	SPI_FORMAT_CPOL0_CPHA0, 8, SPI_BIT_ORDER_MSB,
 //	SPI_DELAY_SCALER_12, SPI_DELAY_SCALER_12,
 //	SPI_DELAY_SCALER_12);
 	oled_init();
+	custom_oled_display_init();
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
@@ -95,7 +90,6 @@ int main(void) {
 	f = -13.3f;
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
-	dac_set_buffer_int(0, false, true, false);
 //	pit_enable_int(PIT_CH2);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	frame_enable_re_int();
@@ -131,25 +125,12 @@ int main(void) {
 
 			uvar32 = pit_get_time_us(1);
 
-			uvar16 = adc_single_get_ad(1, ADC_SE6, ADC_SE_SEL_A);
+			custom_oled_update_temp();
 
-
-
-			oled_fill(0x00);
-
-//			dac_set_buffer_val(0, 1, 0x0111);
-
-//			dac_set_buffer_index(0,0);
-
-//			oled_printf(0, 0, "AD:%5d", uvar16);
-			oled_printf(0, 6, "AD:%0X", uvar16);
-////			oled_printf(0, 4, "VTG:%5.2f", uvar16 * 3300.0f / 4096.0f);
-			oled_printf(0, 0, "C2:%0X", DAC0_C2);
-			oled_printf(0, 2, "SR:%0X", DAC0_SR);
-			oled_printf(0, 4, "VAL:%0X", dac_get_buffer_val(0, 1));
+//			oled_printf(0,0,)
 
 			uvar322 = pit_get_time_us(1);
-//			uart_printf(1,"%d\r\n", (int32) (uvar322 - uvar32));
+			uart_printf(1,"消耗时间：%dus\r\n", (int32) (uvar322 - uvar32));
 
 		}
 
