@@ -239,7 +239,7 @@ uint16 spi_master_send(uint8 mod, uint8 config, uint8 cs, uint16 data,
 	while (!REG_GET_MASK(SPI_SR_REG(spi_ptr), SPI_SR_TCF_MASK)) {
 	}
 	//清除传输完成标志
-	REG_SET_MASK(SPI_SR_REG(spi_ptr), SPI_SR_TCF_MASK);
+	REG_SET_VAL(SPI_SR_REG(spi_ptr), SPI_SR_TCF_MASK);
 	//返回接收到的数据
 	return SPI_POPR_REG(spi_ptr);
 }
@@ -354,7 +354,7 @@ bool spi_slave_send(uint8 mod, uint32 data) {
 		//为空时，添加发送数据
 		REG_SET_VAL(SPI_PUSHR_SLAVE_REG(spi_ptr), data);
 		//尝试清除发送队列空标志，若队列不为空，则仍会置位
-		REG_SET_MASK(SPI_SR_REG(spi_ptr), SPI_SR_TFFF_MASK);
+		REG_SET_VAL(SPI_SR_REG(spi_ptr), SPI_SR_TFFF_MASK);
 		//发送成功
 		return true;
 	} else {
@@ -385,7 +385,7 @@ bool spi_slave_re(uint8 mod, uint32* data) {
 		//不为空时，从接收队列取出最先受到的数据
 		*data = SPI_POPR_REG(spi_ptr);
 		//尝试清除接收队列不为空标志，若队列不为空，则仍会置位
-		REG_SET_MASK(SPI_SR_REG(spi_ptr), SPI_SR_RFDF_MASK);
+		REG_SET_VAL(SPI_SR_REG(spi_ptr), SPI_SR_RFDF_MASK);
 		//接收成功
 		return true;
 	} else {

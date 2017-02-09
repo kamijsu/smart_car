@@ -23,7 +23,7 @@
 //定义ADC高速配置
 #define TEMP_SENSOR_ADC_ADHSC			ADC_ADHSC_NORMAL				//正常转换时序
 //定义是否使能ADC校对功能
-#define TEMP_SENSOR_ADC_CAL				ADC_CAL_ENABLE					//使能ADC校对功能
+#define TEMP_SENSOR_ADC_ENABLE_CAL		true							//使能ADC校对功能
 //定义所使用的ADC差分通道组(这里使用差分输入获取ADC转换结果)
 #define TEMP_SENSOR_ADC_DIFF_GROUP		ADC_DIFF_GROUP_TEMP
 

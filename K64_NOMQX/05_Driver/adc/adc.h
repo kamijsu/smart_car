@@ -79,10 +79,6 @@
 #define ADC_ADHSC_NORMAL		(0)	//正常转换时序
 #define ADC_ADHSC_HIGH_SPEED	(1)	//高速转换时序
 
-//定义是否使能ADC校对功能
-#define ADC_CAL_ENABLE			(1)	//使能ADC校对功能
-#define ADC_CAL_DISABLE			(0)	//禁止ADC校对功能
-
 //==========================================================================
 //函数名称: adc_init
 //函数返回: true: 若使能校对功能，且校对功能配置成功，或者禁止校对功能;
@@ -112,9 +108,9 @@
 //         adhsc:高速配置:
 //               ADC_ADHSC_NORMAL:    正常转换时序;
 //               ADC_ADHSC_HIGH_SPEED:高速转换时序;
-//         cal:是否使能ADC校对功能:
-//             ADC_CAL_ENABLE: 使能ADC校对功能;
-//             ADC_CAL_DISABLE:禁止ADC校对功能;
+//         enable_cal:是否使能ADC校对功能:
+//                    true: 使能ADC校对功能;
+//                    false:禁止ADC校对功能;
 //功能概要: 初始化ADC模块
 //备注: 采样时间 = SFCAdder + AverageNum * (BCT + LSTAdder + HSCAdder);
 //     SFCAdder:如果 adlsts == ADC_ADLSTS_DISABLE，
@@ -139,7 +135,7 @@
 //     其中，ADCK周期为总线时钟分频后的时钟周期，在这里，总线时钟频率为48MHz
 //==========================================================================
 bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
-		uint8 adlsts, uint8 adhsc, uint8 cal);
+		uint8 adlsts, uint8 adhsc, bool enable_cal);
 
 //==========================================================================
 //函数名称: adc_single_get_ad

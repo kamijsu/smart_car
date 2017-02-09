@@ -18,7 +18,7 @@ bool temp_sensor_init() {
 	//按照配置初始化ADC模块
 	return adc_init(TEMP_SENSOR_ADC_MOD, TEMP_SENSOR_ADC_CLK_DIV,
 	TEMP_SENSOR_ADC_ACCURACY, TEMP_SENSOR_ADC_HARDWARE_AVG,
-	TEMP_SENSOR_ADC_ADLSTS, TEMP_SENSOR_ADC_ADHSC, TEMP_SENSOR_ADC_CAL);
+	TEMP_SENSOR_ADC_ADLSTS, TEMP_SENSOR_ADC_ADHSC, TEMP_SENSOR_ADC_ENABLE_CAL);
 }
 
 //==========================================================================

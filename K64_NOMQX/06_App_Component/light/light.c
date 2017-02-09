@@ -19,7 +19,7 @@
 //==========================================================================
 void light_init(uint8 light, uint8 state) {
 	//配置为输出
-	gpio_init(light, GPIO_OUTPUT, state);
+	gpio_init(light, GPIO_DIR_OUTPUT, state);
 }
 
 //==========================================================================
@@ -35,7 +35,7 @@ void light_init(uint8 light, uint8 state) {
 //功能概要: 设置小灯状态，小灯需要被初始化
 //==========================================================================
 void light_set(uint8 light, uint8 state) {
-	gpio_set(light, state);
+	gpio_set_level(light, state);
 }
 
 //==========================================================================
@@ -48,6 +48,6 @@ void light_set(uint8 light, uint8 state) {
 //功能概要: 切换小灯状态，小灯需要被初始化
 //==========================================================================
 void light_change(uint8 light) {
-	gpio_reverse(light);
+	gpio_toggle_level(light);
 }
 

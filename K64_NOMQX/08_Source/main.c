@@ -83,6 +83,11 @@ int main(void) {
 //	SPI_DELAY_SCALER_12);
 	oled_init();
 	custom_oled_display_init();
+
+	i2c_init(I2C_MOD0,I2C_MUL_1,0x3F,I2C_ADDR_MODE_BITS_7,0x10,false);
+	i2c_init(I2C_MOD2,I2C_MUL_1,0x3F,I2C_ADDR_MODE_BITS_7,0x12,false);
+
+
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
@@ -115,20 +120,29 @@ int main(void) {
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-
 		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 		}
 		if (time0_flag.f_1s) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
+			I2CResult result;
 
 			uvar32 = pit_get_time_us(1);
+
+			oled_fill(0x00);
+
+			oled_printf(0,6,"PCR:%X",PORTB_PCR1);
+			result = i2c_master_send(0,0x12,data,4);
+			oled_printf(0,2,"I2C0S:%X",I2C0_S);
+			oled_printf(0,4,"I2C2S:%X",I2C2_S);
+			uart_printf(1,"%d\r\n",result);
 
 			custom_oled_update_temp();
 
 			uvar322 = pit_get_time_us(1);
-			uart_printf(1,"消耗时间：%dus\r\n", (int32) (uvar322 - uvar32));
+
+//			uart_printf(1,"消耗时间：%dus\r\n", (int32) (uvar322 - uvar32));
 
 		}
 

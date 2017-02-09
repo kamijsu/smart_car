@@ -673,8 +673,8 @@ void ftm_qd_init(uint8 mod, uint8 mode, uint8 dir) {
 	com_port_pin_set_mux(pha_port_pin, pcr_mux);
 	com_port_pin_set_mux(phb_port_pin, pcr_mux);
 	//上拉引脚电阻
-	gpio_pull(pha_port_pin, GPIO_LEVEL_HIGH);
-	gpio_pull(phb_port_pin, GPIO_LEVEL_HIGH);
+	gpio_set_pull(pha_port_pin, GPIO_LEVEL_HIGH);
+	gpio_set_pull(phb_port_pin, GPIO_LEVEL_HIGH);
 	//配置正交解码模式
 	if (mode == FTM_QD_MODE_PHAB) {
 		//AB相

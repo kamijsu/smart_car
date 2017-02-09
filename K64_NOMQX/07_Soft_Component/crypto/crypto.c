@@ -86,14 +86,14 @@ static void crypto_msb_to_lsb(unsigned int* msb) {
 //函数返回: 无
 //参数说明: b1:异或操作数1的首地址
 //         b2:异或操作数2的首地址
-//         len:异或操作数的长度
+//         len:异或操作数的长度，必须为4的倍数
 //         dest:存储异或结果的地址
-//功能概要: 对b1和b2进行异或，将结果存至dest
+//功能概要: 对b1和b2进行4字节异或，将结果存至dest
 //==========================================================================
 static void crypto_xor(uint8* b1, uint8* b2, uint32 len, uint8* dest) {
-	uint32 i;
-	for (i = 0; i < len; i++) {
-		*(dest + i) = *(b1 + i) ^ *(b2 + i);
+	//4字节异或
+	for (; len >= 4; len -= 4, dest += 4, b1 += 4, b2 += 4) {
+		*(uint32*) dest = *(uint32*) b1 ^ *(uint32*) b2;
 	}
 }
 

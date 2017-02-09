@@ -219,7 +219,7 @@ static void oled_write_cmd(uint8 cmd) {
 	//若当前不为命令信号电平
 	if (current_dc_level != OLED_DC_CMD_LEVEL) {
 		//设置为命令信号
-		gpio_set(OLED_DC, OLED_DC_CMD_LEVEL);
+		gpio_set_level(OLED_DC, OLED_DC_CMD_LEVEL);
 		current_dc_level = OLED_DC_CMD_LEVEL;
 	}
 	//发送命令
@@ -239,7 +239,7 @@ void oled_write_data(uint8 data) {
 	//若当前不为数据信号电平
 	if (current_dc_level != OLED_DC_DATA_LEVEL) {
 		//设置为数据信号
-		gpio_set(OLED_DC, OLED_DC_DATA_LEVEL);
+		gpio_set_level(OLED_DC, OLED_DC_DATA_LEVEL);
 		current_dc_level = OLED_DC_DATA_LEVEL;
 	}
 	//发送数据
@@ -257,9 +257,9 @@ void oled_write_data(uint8 data) {
 //==========================================================================
 void oled_init() {
 	//使能复位信号，并设置复位信号有效
-	gpio_init(OLED_RST, GPIO_OUTPUT, OLED_RST_VALID_LEVEL);
+	gpio_init(OLED_RST, GPIO_DIR_OUTPUT, OLED_RST_VALID_LEVEL);
 	//使能数据/命令选择信号，并选择命令信号
-	gpio_init(OLED_DC, GPIO_OUTPUT, OLED_DC_CMD_LEVEL);
+	gpio_init(OLED_DC, GPIO_DIR_OUTPUT, OLED_DC_CMD_LEVEL);
 	//当前数据/命令选择信号的电平为命令信号电平
 	current_dc_level = OLED_DC_CMD_LEVEL;
 	//按照设置初始化SPI模块
@@ -269,7 +269,7 @@ void oled_init() {
 
 	//复位信号需要保持有效至少3μs，这里初始化DC和SPI需要8μs左右，因此未添加延时
 	//设置复位信号无效
-	gpio_set(OLED_RST, OLED_RST_INVALID_LEVEL);
+	gpio_set_level(OLED_RST, OLED_RST_INVALID_LEVEL);
 
 	//屏幕左右、上下均反置
 	oled_set_remap(true, true);

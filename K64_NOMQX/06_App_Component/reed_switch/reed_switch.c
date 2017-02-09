@@ -13,9 +13,9 @@
 //==========================================================================
 void reed_switch_init() {
 	//初始化输入引脚
-	gpio_init(REED_SWITCH_INPUT, GPIO_INPUT, REED_SWITCH_INPUT_PULL);
+	gpio_init(REED_SWITCH_INPUT, GPIO_DIR_INPUT, REED_SWITCH_INPUT_PULL);
 	//初始化输出引脚
-	gpio_init(REED_SWITCH_OUTPUT, GPIO_OUTPUT, REED_SWITCH_OUTPUT_LEVEL);
+	gpio_init(REED_SWITCH_OUTPUT, GPIO_DIR_OUTPUT, REED_SWITCH_OUTPUT_LEVEL);
 }
 
 //==========================================================================
