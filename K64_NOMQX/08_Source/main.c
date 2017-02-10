@@ -84,9 +84,11 @@ int main(void) {
 	oled_init();
 	custom_oled_display_init();
 
-	i2c_init(I2C_MOD0,I2C_MUL_1,0x3F,I2C_ADDR_MODE_BITS_7,0x10,false);
-	i2c_init(I2C_MOD2,I2C_MUL_1,0x3F,I2C_ADDR_MODE_BITS_7,0x12,false);
-
+	i2c_init(I2C_MOD0,I2C_MUL_4,0x3F,I2C_ADDR_MODE_BITS_7,0x10,true);
+	i2c_init(I2C_MOD2,I2C_MUL_4,0x3F,I2C_ADDR_MODE_BITS_7,0x12,true);
+//	gpio_init(COM_PORTA|13,GPIO_DIR_OUTPUT,GPIO_LEVEL_LOW);
+	REG_SET_MASK(I2C2_C1,I2C_C1_TX_MASK);
+//	i2c_slave_set_ack(2,false);
 
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
@@ -97,12 +99,17 @@ int main(void) {
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 //	pit_enable_int(PIT_CH2);   		//使能pit中断
 //	uart_enable_re_int(UART_USE);   //使能uart1接收中断
+	i2c_slave_enable_int(I2C_MOD0);
+	i2c_slave_enable_int(I2C_MOD2);
 	frame_enable_re_int();
 //	reed_switch_enable_int();
 //	ftm_timer_enable_int(FTM_MOD0,10);
 
 	frame.len = 255;
-	memset(data, 0xEE, 1024);
+	for(i=0;i<=15;i++){
+		data[i] = 0x11 * i;
+	}
+//	memset(data, 0xEE, 1024);
 	uint8 read_data[1024];
 	memset(read_data, 0xCC, 1024);
 
@@ -130,18 +137,21 @@ int main(void) {
 
 			uvar32 = pit_get_time_us(1);
 
-			oled_fill(0x00);
-
-			oled_printf(0,6,"PCR:%X",PORTB_PCR1);
-			result = i2c_master_send(0,0x12,data,4);
-			oled_printf(0,2,"I2C0S:%X",I2C0_S);
-			oled_printf(0,4,"I2C2S:%X",I2C2_S);
+			result = i2c_master_send(0,0x12,data,3);
+//			result = i2c_master_send(2,0x10,data,3);
 			uart_printf(1,"%d\r\n",result);
+//			result = i2c_master_send(2,0x00,data,10);
+//			uart_printf(1,"%d\r\n",result);
+			oled_fill(0x00);
+			oled_printf(0,4,"I2C2S:%X",I2C2_S);
 
-			custom_oled_update_temp();
+
+			oled_printf(0,6,"SDA:%d SCL:%d",gpio_get_level(COM_PORTB|1),gpio_get_level(COM_PORTB|0));
+			oled_printf(0,2,"I2C0S:%X",I2C0_S);
+
+//			custom_oled_update_temp();
 
 			uvar322 = pit_get_time_us(1);
-
 //			uart_printf(1,"消耗时间：%dus\r\n", (int32) (uvar322 - uvar32));
 
 		}

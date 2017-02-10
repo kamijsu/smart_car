@@ -65,6 +65,51 @@ void SPI0_IRQHandler() {
 	ENABLE_INTERRUPTS;
 }
 
+void I2C0_IRQHandler() {
+	I2CSlaveIntType int_type;
+	uint8 data;
+
+	DISABLE_INTERRUPTS;
+
+	int_type = i2c_slave_handle_int(0);
+//	uart_printf(1,"从机0中断类型:%d\r\n",int_type);
+	switch (int_type) {
+	case I2CSlaveReDataInt:
+		data = i2c_slave_re_data(0);
+//		uart_printf(1,"从机0接收数据:%X\r\n",data);
+		break;
+	}
+
+	ENABLE_INTERRUPTS;
+}
+
+void I2C2_IRQHandler() {
+	I2CSlaveIntType int_type;
+	uint8 data;
+
+	DISABLE_INTERRUPTS;
+
+	int_type = i2c_slave_handle_int(2);
+//	uart_printf(1,"从机2中断类型:%d\r\n",int_type);
+	switch (int_type) {
+	case I2CSlaveCalledReInt:
+//		i2c_slave_set_ack(2,true);
+			break;
+	case I2CSlaveReDataInt:
+//		i2c_slave_set_ack(2,false);
+		//不读取数据会导致总线被占据，从而无法进行下一次传输
+		data = i2c_slave_re_data(2);
+//		pit_delay_ms(1,1000);
+//		uart_printf(1,"从机2控制寄存器:%X\r\n",I2C2_C1);
+		uart_printf(1,"从机2接收数据:%X\r\n",data);
+		break;
+	case I2CSlaveGeneralCalledInt:
+		break;
+	}
+
+	ENABLE_INTERRUPTS;
+}
+
 void FTM0_IRQHandler() {
 	if (ftm_timer_get_int(0)) {
 		ftm_timer_clear_int(0);

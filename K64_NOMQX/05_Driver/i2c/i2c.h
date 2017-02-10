@@ -35,13 +35,33 @@
 #define I2C_ADDR_MODE_BITS_10	(1)		//10位地址模式
 
 typedef enum {
-	I2CSuccess, I2CNAck, I2CArbitrationLost
+	I2CSuccess, I2CNAck, I2CArbitrationLost,I2CTimeout
 } I2CResult;
+
+typedef enum {
+	I2CSlaveNoInt,
+	I2CSlaveArbitrationLostInt,
+	I2CSlaveCalledReInt,
+	I2CSlaveCalledSendInt,
+	I2CSlaveReDataInt,
+	I2CSlaveSendDataInt,
+	I2CSlaveGeneralCalledInt
+} I2CSlaveIntType;
 
 void i2c_init(uint8 mod, uint8 mul, uint8 icr, uint8 addr_mode, uint16 addr,
 		bool enable_general_call_addr);
 
 I2CResult i2c_master_send(uint8 mod, uint8 addr, uint8* data, uint32 len);
+
+void i2c_slave_enable_int(uint8 mod);
+
+void i2c_slave_disable_int(uint8 mod);
+
+void i2c_slave_set_ack(uint8 mod, bool ack);
+
+I2CSlaveIntType i2c_slave_handle_int(uint8 mod);
+
+uint8 i2c_slave_re_data(uint8 mod);
 
 //根据I2C模块所设置的引脚号，定义相应的PCR的MUX值
 #ifdef I2C_MOD0_SCL_PIN
