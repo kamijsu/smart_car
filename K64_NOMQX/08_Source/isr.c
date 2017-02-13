@@ -66,6 +66,8 @@ void SPI0_IRQHandler() {
 }
 
 void I2C0_IRQHandler() {
+	static uint8 time = 0;
+
 	I2CSlaveIntType int_type;
 	uint8 data;
 
@@ -74,9 +76,20 @@ void I2C0_IRQHandler() {
 	int_type = i2c_slave_handle_int(0);
 //	uart_printf(1,"从机0中断类型:%d\r\n",int_type);
 	switch (int_type) {
-	case I2CSlaveReDataInt:
-		data = i2c_slave_re_data(0);
-//		uart_printf(1,"从机0接收数据:%X\r\n",data);
+	case I2CSlaveDataReInt:
+		data = i2c_slave_re(0);
+//		uart_printf(1, "从机0接收数据:%X\r\n", data);
+		break;
+	case I2CSlaveCalledSendInt:
+		time = 0;
+		i2c_slave_send(0, time * 0x11);
+		//		uart_printf(1, "叫我发数据了\r\n");
+		break;
+	case I2CSlaveDataSendInt:
+		time = (time + 1) % 16;
+//		data = rng_next_uint8();
+		i2c_slave_send(0, time * 0x11);
+		//		uart_printf(1, "从机2发送数据:%X\r\n", data);
 		break;
 	}
 
@@ -84,26 +97,37 @@ void I2C0_IRQHandler() {
 }
 
 void I2C2_IRQHandler() {
+	static uint8 time = 0;
+	static bool re = true;
 	I2CSlaveIntType int_type;
+	I2CMasterResult result;
 	uint8 data;
 
 	DISABLE_INTERRUPTS;
 
 	int_type = i2c_slave_handle_int(2);
-//	uart_printf(1,"从机2中断类型:%d\r\n",int_type);
+//	uart_printf(1, "从机2中断类型:%d\r\n", int_type);
 	switch (int_type) {
 	case I2CSlaveCalledReInt:
-//		i2c_slave_set_ack(2,true);
-			break;
-	case I2CSlaveReDataInt:
+//		i2c_slave_set_ack(2,false);
+		break;
+	case I2CSlaveDataReInt:
 //		i2c_slave_set_ack(2,false);
 		//不读取数据会导致总线被占据，从而无法进行下一次传输
-		data = i2c_slave_re_data(2);
-//		pit_delay_ms(1,1000);
-//		uart_printf(1,"从机2控制寄存器:%X\r\n",I2C2_C1);
-		uart_printf(1,"从机2接收数据:%X\r\n",data);
+		data = i2c_slave_re(2);
+//		uart_printf(1, "从机2接收数据:%X\r\n", data);
 		break;
-	case I2CSlaveGeneralCalledInt:
+	case I2CSlaveCalledGeneralInt:
+		break;
+	case I2CSlaveCalledSendInt:
+		time = 0;
+		i2c_slave_send(2, time * 0x11);
+//		uart_printf(1, "叫我发数据了\r\n");
+		break;
+	case I2CSlaveDataSendInt:
+		time = (time + 1) % 16;
+		//		data = rng_next_uint8();
+		i2c_slave_send(2, time * 0x11);
 		break;
 	}
 

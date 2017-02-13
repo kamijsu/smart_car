@@ -16,8 +16,8 @@
 
 //定义I2C各模块的引脚设置，通过更改COM_PORTx|x的x以选择引脚，
 //SCL、SDA分别为时钟信号、数据信号引脚
-#define I2C_MOD0_SCL_PIN	(COM_PORTB|0)	//B0  B2  D2  D8  E24
-#define I2C_MOD0_SDA_PIN	(COM_PORTB|1)	//B1  B3  D3  D9  E25
+#define I2C_MOD0_SCL_PIN	(COM_PORTB|2)	//B0  B2  D2  D8  E24
+#define I2C_MOD0_SDA_PIN	(COM_PORTB|3)	//B1  B3  D3  D9  E25
 
 #define I2C_MOD1_SCL_PIN	(COM_PORTC|10)	//C10 E1
 #define I2C_MOD1_SDA_PIN	(COM_PORTC|11)	//C11 E0
@@ -31,27 +31,42 @@
 #define I2C_MUL_4	(2)		//乘数因子为4
 
 //定义I2C地址模式
-#define I2C_ADDR_MODE_BITS_7	(0)		//7位地址模式
-#define I2C_ADDR_MODE_BITS_10	(1)		//10位地址模式
+#define I2C_ADDR_MODE_BITS_7	(7)		//7位地址模式
+#define I2C_ADDR_MODE_BITS_10	(10)	//10位地址模式
+
+#define I2C_TIMEOUT_MAX		(0x2000000u)
 
 typedef enum {
-	I2CSuccess, I2CNAck, I2CArbitrationLost,I2CTimeout
-} I2CResult;
+	I2CMasterSuccess,
+	I2CMasterNAck,
+	I2CMasterArbitrationLost,
+	I2CMasterTimeoutSlave,
+	I2CMasterTimeoutStop,
+	I2CMasterIsBusy
+} I2CMasterResult;
 
 typedef enum {
 	I2CSlaveNoInt,
-	I2CSlaveArbitrationLostInt,
+	I2CSlaveCalledGeneralInt,
 	I2CSlaveCalledReInt,
 	I2CSlaveCalledSendInt,
-	I2CSlaveReDataInt,
-	I2CSlaveSendDataInt,
-	I2CSlaveGeneralCalledInt
+	I2CSlaveDataReInt,
+	I2CSlaveDataSendInt,
+	I2CSlaveDataSendOverInt,
+	I2CSlaveArbitrationLostInt
 } I2CSlaveIntType;
 
 void i2c_init(uint8 mod, uint8 mul, uint8 icr, uint8 addr_mode, uint16 addr,
 		bool enable_general_call_addr);
 
-I2CResult i2c_master_send(uint8 mod, uint8 addr, uint8* data, uint32 len);
+I2CMasterResult i2c_master_send(uint8 mod, uint8 addr_mode, uint16 addr,
+		uint8* data, uint32 len);
+
+I2CMasterResult i2c_master_send_re(uint8 mod, uint8 addr_mode, uint16 addr,
+		uint8* send_data, uint32 send_len, uint8* re_data, uint32 re_len);
+
+I2CMasterResult i2c_master_re(uint8 mod, uint8 addr_mode, uint16 addr,
+		uint8* data, uint32 len);
 
 void i2c_slave_enable_int(uint8 mod);
 
@@ -61,7 +76,9 @@ void i2c_slave_set_ack(uint8 mod, bool ack);
 
 I2CSlaveIntType i2c_slave_handle_int(uint8 mod);
 
-uint8 i2c_slave_re_data(uint8 mod);
+uint8 i2c_slave_re(uint8 mod);
+
+void i2c_slave_send(uint8 mod, uint8 data);
 
 //根据I2C模块所设置的引脚号，定义相应的PCR的MUX值
 #ifdef I2C_MOD0_SCL_PIN

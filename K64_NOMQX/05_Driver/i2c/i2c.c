@@ -24,62 +24,110 @@ I2C_MOD1_SDA_PCR_MUX, I2C_MOD2_SDA_PCR_MUX };
 //I2C各模块中断请求号
 static const IRQn_Type i2c_irq_table[] = { I2C0_IRQn, I2C1_IRQn, I2C2_IRQn };
 
-static void i2c_send_start(I2C_Type* i2c_ptr) {
-	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK|I2C_C1_TX_MASK);
-}
-
-static void i2c_send_restart(I2C_Type* i2c_ptr) {
-	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_RSTA_MASK);
-}
-
-static void i2c_send_stop(I2C_Type* i2c_ptr) {
-	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK|I2C_C1_TX_MASK);
-}
-
-static void i2c_set_ack(I2C_Type* i2c_ptr, bool ack) {
-	if (ack) {
-		REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TXAK_MASK);
-	} else {
-		REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TXAK_MASK);
-	}
-}
-
-#define I2C_DIR_WRITE	(0x0)
-#define I2C_DIR_READ	(0x1)
-
-static uint8 i2c_re_data(I2C_Type* i2c_ptr) {
-	return I2C_D_REG(i2c_ptr);
-}
-
-static I2CResult i2c_wait_ack(I2C_Type* i2c_ptr) {
+static I2CMasterResult i2c_master_send_byte(I2C_Type* i2c_ptr, uint8 byte,
+		uint8 old_c1) {
 	uint8 status;	//状态寄存器的值
-	uint32 timeout;	//从机响应超时数值
+	uint32 timeout;	//响应超时数值
+	I2CMasterResult error_type;	//发送错误类型
 
-	//等待从机响应
+	//发送一字节
+	REG_SET_VAL(I2C_D_REG(i2c_ptr), I2C_D_DATA(byte));
+
+	//等待从机响应，包括主机发送数据时间和从机响应时间，
+	//若为首次发送，还会包括等待开始信号生效时间和开始信号保持时间
 	timeout = 0;
 	do {
-		//约4s，包括主机发送数据时间和从机响应时间，若为开始信号后首次发送，还会包括开始信号保持时间
-		if (timeout++ >= 0x2000000u) {
-			return I2CTimeout;
+		//若从机响应超时
+		if (timeout++ >= I2C_TIMEOUT_MAX) {
+			//跳转至错误处理
+			error_type = I2CMasterTimeoutSlave;
+			goto error_end;
 		}
+		//获取状态寄存器的值
 		status = I2C_S_REG(i2c_ptr);
 	} while (!REG_GET_MASK(status, I2C_S_IICIF_MASK));
+
 	//清除中断标志
 	REG_SET_VAL(I2C_S_REG(i2c_ptr), status);
 
 	//若发生仲裁丢失
 	if (REG_GET_MASK(status, I2C_S_ARBL_MASK)) {
-		//返回仲裁丢失
-		return I2CArbitrationLost;
+		//跳转至错误处理
+		error_type = I2CMasterArbitrationLost;
+		goto error_end;
 	}
-	//判断从机是否响应
+
+	//若从机未响应
 	if (REG_GET_MASK(status, I2C_S_RXAK_MASK)) {
-		//返回未响应
-		return I2CNAck;
-	} else {
-		//返回发送成功
-		return I2CSuccess;
+		//跳转至错误处理，未响应时需要发送停止信号
+		error_type = I2CMasterNAck;
+		goto error_stop;
 	}
+
+	//返回发送成功
+	return I2CMasterSuccess;
+
+	error_stop:
+	//发送停止信号
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK);
+	//重置timeout
+	timeout = 0;
+	//等待停止信号生效
+	while (REG_GET_MASK(I2C_S_REG(i2c_ptr), I2C_S_BUSY_MASK)) {
+		//停止信号响应超时，即从机未响应主机最后一个字节数据
+		if (++timeout >= I2C_TIMEOUT_MAX) {
+			error_type = I2CMasterTimeoutStop;
+			break;
+		}
+	}
+
+	error_end:
+	//恢复旧控制寄存器C1的值
+	REG_SET_VAL(I2C_C1_REG(i2c_ptr), old_c1);
+	//返回发送错误类型
+	return error_type;
+}
+
+static I2CMasterResult i2c_master_re_byte(I2C_Type* i2c_ptr, uint8* byte,
+		uint8 old_c1) {
+	uint8 status;	//状态寄存器的值
+	uint32 timeout;	//响应超时数值
+	I2CMasterResult error_type;	//接收错误类型
+
+	//接收一字节
+	*byte = I2C_D_REG(i2c_ptr);
+
+	//等待从机响应，包括从机响应时间和从机发送数据时间
+	timeout = 0;
+	do {
+		//若从机响应超时
+		if (timeout++ >= I2C_TIMEOUT_MAX) {
+			//跳转至错误处理
+			error_type = I2CMasterTimeoutSlave;
+			goto error_end;
+		}
+		//获取状态寄存器的值
+		status = I2C_S_REG(i2c_ptr);
+	} while (!REG_GET_MASK(status, I2C_S_IICIF_MASK));
+
+	//清除中断标志
+	REG_SET_VAL(I2C_S_REG(i2c_ptr), status);
+
+	//若发生仲裁丢失
+	if (REG_GET_MASK(status, I2C_S_ARBL_MASK)) {
+		//跳转至错误处理
+		error_type = I2CMasterArbitrationLost;
+		goto error_end;
+	}
+
+	//返回接收成功
+	return I2CMasterSuccess;
+
+	error_end:
+	//恢复旧控制寄存器C1的值
+	REG_SET_VAL(I2C_C1_REG(i2c_ptr), old_c1);
+	//返回发送错误类型
+	return error_type;
 }
 
 //icr:时钟速率
@@ -151,86 +199,341 @@ void i2c_init(uint8 mod, uint8 mul, uint8 icr, uint8 addr_mode, uint16 addr,
 	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_IICEN_MASK);
 }
 
-I2CResult i2c_master_send(uint8 mod, uint8 addr, uint8* data, uint32 len) {
-	I2C_Type * i2c_ptr;	//I2C基地址
-	I2CResult result;	//发送结果
-	bool enable_int;	//是否使能接收中断
+I2CMasterResult i2c_master_send(uint8 mod, uint8 addr_mode, uint16 addr,
+		uint8* data, uint32 len) {
+	I2C_Type * i2c_ptr;		//I2C基地址
+	I2CMasterResult result;	//发送结果
+	uint8 old_c1;			//旧控制寄存器C1的值
+	uint32 timeout;			//停止信号响应超时数值
 
 	//获取I2C基地址
 	i2c_ptr = i2c_table[mod];
+	//获取旧控制寄存器C1的值
+	old_c1 = I2C_C1_REG(i2c_ptr);
 
-	//判断是否使能接收中断
-	if (REG_GET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_IICIE_MASK)) {
-		//使能接收中断
-		enable_int = true;
-		//暂时关闭接收中断
-		REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_IICIE_MASK);
-	} else {
-		//未使能接收中断
-		enable_int = false;
+	//若该I2C模块已经被设置为主机，返回正在工作
+	if (REG_GET_MASK(old_c1, I2C_C1_MST_MASK)) {
+		return I2CMasterIsBusy;
 	}
+
+	//暂时关闭中断
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_IICIE_MASK);
 
 	//发送开始信号，并转换为发送模式
 	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK|I2C_C1_TX_MASK);
-	//等待开始信号生效
-	while (!REG_GET_MASK(I2C_S_REG(i2c_ptr), I2C_S_BUSY_MASK)) {
-	}
 
-	//发送7位地址，且主机为写模式
-	REG_SET_VAL(I2C_D_REG(i2c_ptr), I2C_D_DATA(addr<<1));
-	//等待发送结果
-	result = i2c_wait_ack(i2c_ptr);
-	//若发送失败
-	if (result != I2CSuccess) {
-		//停止发送数据
-		len = 0;
+	//判断地址模式
+	if (addr_mode == I2C_ADDR_MODE_BITS_10) {
+		//按照标准发送10位地址的高2位，且主机为写模式
+		result = i2c_master_send_byte(i2c_ptr, 0xF0 | ((addr & 0x300) >> 7),
+				old_c1);
+		//失败时，返回发送结果
+		if (result != I2CMasterSuccess) {
+			return result;
+		}
+		//发送10位地址的低8位
+		result = i2c_master_send_byte(i2c_ptr, addr, old_c1);
+	} else {
+		//发送7位地址，且主机为写模式
+		result = i2c_master_send_byte(i2c_ptr, addr << 1, old_c1);
+	}
+	//失败时，返回发送结果
+	if (result != I2CMasterSuccess) {
+		return result;
 	}
 
 	//发送所有数据
 	while (len--) {
-		//发送数据
-		REG_SET_VAL(I2C_D_REG(i2c_ptr), I2C_D_DATA(*data++));
-		//等待发送结果
-		result = i2c_wait_ack(i2c_ptr);
-		//若发送失败
-		if (result != I2CSuccess) {
-			//停止发送数据
+		result = i2c_master_send_byte(i2c_ptr, *data++, old_c1);
+		//失败时，返回发送结果
+		if (result != I2CMasterSuccess) {
+			return result;
+		}
+	}
+
+	//发送停止信号
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK);
+	//初始化timeout
+	timeout = 0;
+	//等待停止信号生效
+	while (REG_GET_MASK(I2C_S_REG(i2c_ptr), I2C_S_BUSY_MASK)) {
+		//停止信号响应超时，即从机未响应主机最后一个字节数据
+		if (++timeout >= I2C_TIMEOUT_MAX) {
+			result = I2CMasterTimeoutStop;
 			break;
 		}
 	}
 
-	//发送停止信号，并转换为接收模式
-	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK|I2C_C1_TX_MASK);
-	//恢复接收中断
-	if (enable_int) {
-		REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_IICIE_MASK);
-	}
-	if (result == I2CSuccess || result == I2CNAck) {
-		//等待停止信号生效
-		while (REG_GET_MASK(I2C_S_REG(i2c_ptr), I2C_S_BUSY_MASK)) {
-		}
-	}
+	//恢复旧控制寄存器C1的值
+	REG_SET_VAL(I2C_C1_REG(i2c_ptr), old_c1);
 	//返回发送结果
 	return result;
 }
 
+I2CMasterResult i2c_master_send_re(uint8 mod, uint8 addr_mode, uint16 addr,
+		uint8* send_data, uint32 send_len, uint8* re_data, uint32 re_len) {
+	I2C_Type * i2c_ptr;		//I2C基地址
+	I2CMasterResult result;	//发送接收结果
+	uint8 old_c1;			//旧控制寄存器C1的值
+	uint32 timeout;			//停止信号响应超时数值
+	uint8 dummy;			//无效读数据
+
+	//获取I2C基地址
+	i2c_ptr = i2c_table[mod];
+	//获取旧控制寄存器C1的值
+	old_c1 = I2C_C1_REG(i2c_ptr);
+
+	//若该I2C模块已经被设置为主机，返回正在工作
+	if (REG_GET_MASK(old_c1, I2C_C1_MST_MASK)) {
+		return I2CMasterIsBusy;
+	}
+
+	//暂时关闭中断
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_IICIE_MASK);
+
+	//发送开始信号，并转换为发送模式
+	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK|I2C_C1_TX_MASK);
+
+	//判断地址模式
+	if (addr_mode == I2C_ADDR_MODE_BITS_10) {
+		//按照标准发送10位地址的高2位，且主机为写模式
+		result = i2c_master_send_byte(i2c_ptr, 0xF0 | ((addr & 0x300) >> 7),
+				old_c1);
+		//失败时，返回结果
+		if (result != I2CMasterSuccess) {
+			return result;
+		}
+		//发送10位地址的低8位
+		result = i2c_master_send_byte(i2c_ptr, addr, old_c1);
+	} else {
+		//发送7位地址，且主机为写模式
+		result = i2c_master_send_byte(i2c_ptr, addr << 1, old_c1);
+	}
+	//失败时，返回结果
+	if (result != I2CMasterSuccess) {
+		return result;
+	}
+
+	//发送所有数据
+	while (send_len--) {
+		result = i2c_master_send_byte(i2c_ptr, *send_data++, old_c1);
+		//失败时，返回结果
+		if (result != I2CMasterSuccess) {
+			return result;
+		}
+	}
+
+	//发送重新开始信号
+	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_RSTA_MASK);
+
+	//判断地址模式
+	if (addr_mode == I2C_ADDR_MODE_BITS_10) {
+		//按照标准发送10位地址的高2位，且主机为读模式
+		result = i2c_master_send_byte(i2c_ptr, 0xF1 | ((addr & 0x300) >> 7),
+				old_c1);
+	} else {
+		//发送7位地址，且主机为读模式
+		result = i2c_master_send_byte(i2c_ptr, (addr << 1) | 1, old_c1);
+	}
+	//失败时，返回结果
+	if (result != I2CMasterSuccess) {
+		return result;
+	}
+
+	//设置为发送应答信号，并转换为接收模式
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TXAK_MASK|I2C_C1_TX_MASK);
+
+	//接收数据量大于等于2时
+	if (re_len >= 2) {
+		//接收1字节无效数据
+		result = i2c_master_re_byte(i2c_ptr, &dummy, old_c1);
+		//失败时，返回结果
+		if (result != I2CMasterSuccess) {
+			return result;
+		}
+		//接收数据至剩余2字节数据未接收
+		for (; re_len > 2; --re_len) {
+			result = i2c_master_re_byte(i2c_ptr, re_data++, old_c1);
+			//失败时，返回结果
+			if (result != I2CMasterSuccess) {
+				return result;
+			}
+		}
+	}
+
+	//设置为发送非应答信号
+	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TXAK_MASK);
+
+	if (re_len <= 1) {
+		//若接收数据量小于等于1，接收1字节无效数据
+		result = i2c_master_re_byte(i2c_ptr, &dummy, old_c1);
+	} else {
+		//否则接收倒数第2个字节
+		result = i2c_master_re_byte(i2c_ptr, re_data++, old_c1);
+	}
+	//失败时，返回结果
+	if (result != I2CMasterSuccess) {
+		return result;
+	}
+
+	//发送停止信号
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK);
+
+	//读取最后一个字节数据
+	*re_data = I2C_D_REG(i2c_ptr);
+
+	//初始化timeout
+	timeout = 0;
+	//等待停止信号生效
+	while (REG_GET_MASK(I2C_S_REG(i2c_ptr), I2C_S_BUSY_MASK)) {
+		//停止信号响应超时，即从机未响应主机非应答信号
+		if (++timeout >= I2C_TIMEOUT_MAX) {
+			result = I2CMasterTimeoutStop;
+			break;
+		}
+	}
+
+	//恢复旧控制寄存器C1的值
+	REG_SET_VAL(I2C_C1_REG(i2c_ptr), old_c1);
+	//返回结果
+	return result;
+}
+
+I2CMasterResult i2c_master_re(uint8 mod, uint8 addr_mode, uint16 addr,
+		uint8* data, uint32 len) {
+	I2C_Type * i2c_ptr;		//I2C基地址
+	I2CMasterResult result;	//接收结果
+	uint8 old_c1;			//旧控制寄存器C1的值
+	uint32 timeout;			//停止信号响应超时数值
+	uint8 dummy;			//无效读数据
+
+	//获取I2C基地址
+	i2c_ptr = i2c_table[mod];
+	//获取旧控制寄存器C1的值
+	old_c1 = I2C_C1_REG(i2c_ptr);
+
+	//若该I2C模块已经被设置为主机，返回正在工作
+	if (REG_GET_MASK(old_c1, I2C_C1_MST_MASK)) {
+		return I2CMasterIsBusy;
+	}
+
+	//暂时关闭中断
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_IICIE_MASK);
+
+	//发送开始信号，并转换为发送模式
+	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK|I2C_C1_TX_MASK);
+
+	//判断地址模式
+	if (addr_mode == I2C_ADDR_MODE_BITS_10) {
+		//按照标准发送10位地址的高2位，且主机为写模式
+		result = i2c_master_send_byte(i2c_ptr, 0xF0 | ((addr & 0x300) >> 7),
+				old_c1);
+		//失败时，返回结果
+		if (result != I2CMasterSuccess) {
+			return result;
+		}
+		//发送10位地址的低8位
+		result = i2c_master_send_byte(i2c_ptr, addr, old_c1);
+		//失败时，返回结果
+		if (result != I2CMasterSuccess) {
+			return result;
+		}
+
+		//发送重新开始信号
+		REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_RSTA_MASK);
+
+		//按照标准发送10位地址的高2位，且主机为读模式
+		result = i2c_master_send_byte(i2c_ptr, 0xF1 | ((addr & 0x300) >> 7),
+				old_c1);
+	} else {
+		//发送7位地址，且主机为读模式
+		result = i2c_master_send_byte(i2c_ptr, (addr << 1) | 1, old_c1);
+	}
+	//失败时，返回结果
+	if (result != I2CMasterSuccess) {
+		return result;
+	}
+
+	//设置为发送应答信号，并转换为接收模式
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TXAK_MASK|I2C_C1_TX_MASK);
+
+	//接收数据量大于等于2时
+	if (len >= 2) {
+		//接收1字节无效数据
+		result = i2c_master_re_byte(i2c_ptr, &dummy, old_c1);
+		//失败时，返回结果
+		if (result != I2CMasterSuccess) {
+			return result;
+		}
+		//接收数据至剩余2字节数据未接收
+		for (; len > 2; --len) {
+			result = i2c_master_re_byte(i2c_ptr, data++, old_c1);
+			//失败时，返回结果
+			if (result != I2CMasterSuccess) {
+				return result;
+			}
+		}
+	}
+
+	//设置为发送非应答信号
+	REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TXAK_MASK);
+
+	if (len <= 1) {
+		//若接收数据量小于等于1，接收1字节无效数据
+		result = i2c_master_re_byte(i2c_ptr, &dummy, old_c1);
+	} else {
+		//否则接收倒数第2个字节
+		result = i2c_master_re_byte(i2c_ptr, data++, old_c1);
+	}
+	//失败时，返回结果
+	if (result != I2CMasterSuccess) {
+		return result;
+	}
+
+	//发送停止信号
+	REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_MST_MASK);
+
+	//读取最后一个字节数据
+	*data = I2C_D_REG(i2c_ptr);
+
+	//初始化timeout
+	timeout = 0;
+	//等待停止信号生效
+	while (REG_GET_MASK(I2C_S_REG(i2c_ptr), I2C_S_BUSY_MASK)) {
+		//停止信号响应超时，即从机未响应主机非应答信号
+		if (++timeout >= I2C_TIMEOUT_MAX) {
+			result = I2CMasterTimeoutStop;
+			break;
+		}
+	}
+
+	//恢复旧控制寄存器C1的值
+	REG_SET_VAL(I2C_C1_REG(i2c_ptr), old_c1);
+	//返回结果
+	return result;
+}
+
 void i2c_slave_enable_int(uint8 mod) {
+	//使能从机中断
 	REG_SET_MASK(I2C_C1_REG(i2c_table[mod]), I2C_C1_IICIE_MASK);
 	//允许接收中断
 	ENABLE_IRQ(i2c_irq_table[mod]);
 }
 
 void i2c_slave_disable_int(uint8 mod) {
+	//关闭从机中断
 	REG_CLR_MASK(I2C_C1_REG(i2c_table[mod]), I2C_C1_IICIE_MASK);
-	//允许接收中断
+	//禁止接收中断
 	DISABLE_IRQ(i2c_irq_table[mod]);
 }
 
 //从机地址匹配时(包括广播地址)一定发送应答信号，匹配到广播地址后，接收的数据一定发送应答信号，更改应答信号类型后，下一次发生应答信号请求时生效
 void i2c_slave_set_ack(uint8 mod, bool ack) {
 	if (ack) {
+		//发送应答信号
 		REG_CLR_MASK(I2C_C1_REG(i2c_table[mod]), I2C_C1_TXAK_MASK);
 	} else {
+		//发送非应答信号
 		REG_SET_MASK(I2C_C1_REG(i2c_table[mod]), I2C_C1_TXAK_MASK);
 	}
 }
@@ -238,44 +541,77 @@ void i2c_slave_set_ack(uint8 mod, bool ack) {
 //从机中断发生时，应答信号已经按照设置发送出去，但未读/写数据寄存器时，总线会被从机占据，主机会在下一次传输数据时等待从机释放总线
 I2CSlaveIntType i2c_slave_handle_int(uint8 mod) {
 	I2C_Type * i2c_ptr;	//I2C基地址
-	uint8 status;
-	I2CSlaveIntType int_type;
+	uint8 status;		//状态寄存器的值
+	volatile uint8 dummy;	//无效读数据
 
 	//获取I2C基地址
 	i2c_ptr = i2c_table[mod];
+	//获取状态寄存器的值
 	status = I2C_S_REG(i2c_ptr);
 
-//	uart_printf(1, "从机状态:%X\r\n", status);
+	//查看中断标志是否置位
 	if (!REG_GET_MASK(status, I2C_S_IICIF_MASK)) {
-		int_type = I2CSlaveNoInt;
-	} else if (REG_GET_MASK(status, I2C_S_ARBL_MASK)) {
-		int_type = I2CSlaveArbitrationLostInt;
-	} else if (REG_GET_MASK(status, I2C_S_IAAS_MASK)) {
-//		REG_CLR_MASK(status, I2C_S_IAAS_MASK);
+		//返回无中断发送
+		return I2CSlaveNoInt;
+	}
+
+	//清除中断标志
+	REG_SET_VAL(I2C_S_REG(i2c_ptr), status);
+
+	//查看是否被寻址为从机
+	if (REG_GET_MASK(status, I2C_S_IAAS_MASK)) {
 		//写C1寄存器可以清除IAAS标志
+		//被寻址为从机时，查看主机发送方向
 		if (REG_GET_MASK(status, I2C_S_SRW_MASK)) {
-			int_type = I2CSlaveCalledSendInt;
+			//主机读取数据时，从机转换为发送模式
 			REG_SET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TX_MASK);
+			//返回被寻址发送中断
+			return I2CSlaveCalledSendInt;
 		} else {
+			//主机发送数据时，从机转换为接收模式
 			REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TX_MASK);
-			if (i2c_slave_re_data(mod) == 0) {
-				int_type = I2CSlaveGeneralCalledInt;
+			//若接收的地址为0x00，且从机为7位地址模式
+			if (I2C_D_REG(i2c_table[mod])
+					== 0&& !REG_GET_MASK(I2C_C2_REG(i2c_ptr),I2C_C2_ADEXT_MASK)) {
+				//返回被广播寻址中断
+				return I2CSlaveCalledGeneralInt;
 			} else {
-				int_type = I2CSlaveCalledReInt;
+				//否则返回被寻址接收中断
+				return I2CSlaveCalledReInt;
 			}
-		}
-	} else {
-		if (REG_GET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TX_MASK)) {
-			int_type = I2CSlaveSendDataInt;
-		} else {
-			int_type = I2CSlaveReDataInt;
 		}
 	}
 
-	REG_SET_VAL(I2C_S_REG(i2c_ptr), status);
-	return int_type;
+	//查看是否仲裁丢失
+	if (REG_GET_MASK(status, I2C_S_ARBL_MASK)) {
+		//返回仲裁丢失中断
+		return I2CSlaveArbitrationLostInt;
+	}
+
+	//查看从机数据方向
+	if (REG_GET_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TX_MASK)) {
+		//若为发送模式，查看是否接收到非应答信号
+		if (REG_GET_MASK(status, I2C_S_RXAK_MASK)) {
+			//接收到非应答信号时，转换为接收模式
+			REG_CLR_MASK(I2C_C1_REG(i2c_ptr), I2C_C1_TX_MASK);
+			//读取一次数据寄存器
+			dummy = I2C_D_REG(i2c_table[mod]);
+			//返回数据发送完毕中断
+			return I2CSlaveDataSendOverInt;
+		} else {
+			//接收到应答信号时，返回数据发送中断
+			return I2CSlaveDataSendInt;
+		}
+	} else {
+		//若为接收模式，返回数据接收中断
+		return I2CSlaveDataReInt;
+	}
 }
 
-uint8 i2c_slave_re_data(uint8 mod) {
+uint8 i2c_slave_re(uint8 mod) {
 	return I2C_D_REG(i2c_table[mod]);
+}
+
+void i2c_slave_send(uint8 mod, uint8 data) {
+	REG_SET_VAL(I2C_D_REG(i2c_table[mod]), I2C_D_DATA(data));
 }
