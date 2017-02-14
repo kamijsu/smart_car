@@ -115,7 +115,7 @@ void I2C2_IRQHandler() {
 //		i2c_slave_set_ack(2,false);
 		//不读取数据会导致总线被占据，从而无法进行下一次传输
 		data = i2c_slave_re(2);
-//		uart_printf(1, "从机2接收数据:%X\r\n", data);
+		uart_printf(1, "从机2接收数据:%X\r\n", data);
 		break;
 	case I2CSlaveCalledGeneralInt:
 		break;

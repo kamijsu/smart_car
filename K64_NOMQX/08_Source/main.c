@@ -73,8 +73,8 @@ int main(void) {
 	oled_init();
 	custom_oled_display_init();
 
-	i2c_init(I2C_MOD0, I2C_MUL_1, 0x3F, I2C_ADDR_MODE_BITS_10, 0x10, true);
-	i2c_init(I2C_MOD2, I2C_MUL_1, 0x3F, I2C_ADDR_MODE_BITS_10, 0x012, true);
+	i2c_init(I2C_MOD0, I2C_MUL_1, 0x3F, I2C_ADDR_MODE_BITS_7, 0x10, true);
+	i2c_init(I2C_MOD2, I2C_MUL_1, 0x3F, I2C_ADDR_MODE_BITS_10, 0x100, true);
 
 //	i2c_slave_set_ack(2,false);
 
@@ -111,7 +111,7 @@ int main(void) {
 	cmd.data[0] = 7;
 
 	uint8 re_data[1024];
-	uint32 num = 1024;
+	uint32 num = 2;
 
 //	result = flash_partition(FLASH_DFLASH_SIZE_32, FLASH_EEPROM_SIZE_128,
 //			FLASH_EEPROM_SPLIT_1_7);
@@ -119,7 +119,7 @@ int main(void) {
 	I2CMasterResult result;
 	uint8 mod = 0;
 	uint8 addr_mode = 10;
-	uint16 addr = 0x12;
+	uint16 addr = 0x100;
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -128,46 +128,32 @@ int main(void) {
 	//主循环开始==================================================================
 	for (;;) {
 
-		if (rng_next_bool()) {
-			if (rng_next_bool()) {
-				result = i2c_master_send(mod, addr_mode, addr, data, num);
-				uart_printf(1, "主机%d发送结果:%d\r\n", mod, result);
-			} else {
-				memset(re_data, 0xFE, 1024);
-				result = i2c_master_re(mod, addr_mode, addr, re_data, num);
-				uart_printf(1, "主机%d接收结果:%d\r\n", mod, result);
-				if (result == I2CMasterSuccess) {
-					for (i = 0; i < num; i++) {
-						j = i % 16;
-						if (re_data[i] != 0x11 * j) {
-							uart_printf(1, "有错误数据接收到\r\n");
-							break;
-						}
-					}
-				}
-			}
-		} else {
-			if (rng_next_bool()) {
-				memset(re_data, 0xFE, 1024);
+		result = i2c_master_send(mod, addr_mode, addr, data, num);
+//		uart_printf(1, "主机%d发送结果:%d\r\n", mod, result);
+		pit_delay_ms(1, 5000);
 
-				result = i2c_master_send_re(mod, addr_mode, addr, data, num,
-						re_data, num);
 
-				uart_printf(1, "主机%d发送接收结果:%d\r\n", mod, result);
-				if (result == I2CMasterSuccess) {
-					for (i = 0; i < num; i++) {
-						j = i % 16;
-						if (re_data[i] != 0x11 * j) {
-							uart_printf(1, "有错误数据接收到\r\n");
-							break;
-						}
-					}
-				}
-			} else {
-
-			}
+		memset(re_data, 0xFE, 1024);
+		result = i2c_master_re(mod, addr_mode, addr, re_data, num);
+//		uart_printf(1, "主机%d接收结果:%d\r\n", mod, result);
+		for (i = 0; i < num+1; i++) {
+//			uart_printf(1, "主机%d接收数据:%X\r\n", mod, re_data[i]);
 		}
-		pit_delay_ms(1, rng_next_uint8());
+		pit_delay_ms(1, 5000);
+
+
+
+		memset(re_data, 0xFE, 1024);
+
+		result = i2c_master_send_re(mod, addr_mode, addr, data, num, re_data,
+				num);
+
+//		uart_printf(1, "主机%d发送接收结果:%d\r\n", mod, result);
+		for (i = 0; i < num+1; i++) {
+//			uart_printf(1, "主机%d接收数据:%X\r\n", mod, re_data[i]);
+		}
+
+		pit_delay_ms(1, 5000);
 
 //		uint8 re_data[1024];
 //		memset(re_data, 0xFE, 1024);
