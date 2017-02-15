@@ -56,6 +56,7 @@ void SPI0_IRQHandler() {
 	uint32 data;
 	DISABLE_INTERRUPTS;
 	if (spi_slave_re(SPI_MOD0, &data)) {
+		uart_printf(1,"SPI0接收到数据:%X\r\n",data);
 		if (!spi_slave_send(SPI_MOD0, data)) {
 			uart_send_string(UART_USE, "SPI发送失败!\r\n");
 		}

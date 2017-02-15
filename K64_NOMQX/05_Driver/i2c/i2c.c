@@ -816,7 +816,7 @@ void i2c_slave_set_ack(uint8 mod, bool ack) {
 I2CSlaveIntType i2c_slave_handle_int(uint8 mod) {
 	I2C_Type * i2c_ptr;	//I2C基地址
 	uint8 status;		//状态寄存器的值
-	volatile uint8 dummy;	//无效读数据
+	vuint8 dummy;		//无效读数据
 
 	//获取I2C基地址
 	i2c_ptr = i2c_table[mod];
