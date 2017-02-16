@@ -59,6 +59,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/adc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/crc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/dac&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/dma&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/flash&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/ftm&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/gpio&quot;"/>
@@ -219,6 +220,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/adc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/crc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/dac&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/dma&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/flash&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/ftm&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/gpio&quot;"/>

@@ -325,6 +325,9 @@ void i2c_slave_set_ack(uint8 mod, bool ack);
 //     将会额外接收一个字节数据，为0b1111 0xx0，xx为从机高2位地址，
 //     若从机地址为0x100，将接收到0xF2，需要自行将该数据视为无效数据;
 //
+//     若从机为10位地址模式，且地址为0x000，I2CSlaveCalledReInt会被误判为
+//     I2CSlaveCalledGeneralInt，因此建议不要将地址设为0x000;
+//
 //     中断发生时，应答信号已经按照设置发送出去
 //==========================================================================
 I2CSlaveIntType i2c_slave_handle_int(uint8 mod);
