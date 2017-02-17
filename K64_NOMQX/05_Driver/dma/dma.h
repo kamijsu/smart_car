@@ -28,7 +28,7 @@
 #define DMA_CH15	(15)
 
 //定义DMA通道的请求源
-#define DMA_REQ_DISABLED		(0)		//关闭该通道的DMA请求
+#define DMA_REQ_DISABLED		(0)		//关闭该通道的DMA请求源
 #define DMA_REQ_UART0_RX		(2)		//UART0接收触发DMA请求
 #define DMA_REQ_UART0_TX		(3)		//UART0发送触发DMA请求
 #define DMA_REQ_UART1_RX		(4)		//UART1接收触发DMA请求
@@ -92,6 +92,10 @@
 #define DMA_REQ_ALWAYS_EN4		(62)	//始终触发DMA请求
 #define DMA_REQ_ALWAYS_EN5		(63)	//始终触发DMA请求
 
+//定义DMA通道的触发模式
+#define DMA_MODE_NORMAL			(0)		//正常模式
+#define DMA_MODE_PERIODIC		(1)		//周期触发模式
+
 //定义DMA数据宽度
 #define DMA_DATA_WIDTH_BYTE_1	(0)		//数据宽度为1个字节
 #define DMA_DATA_WIDTH_BYTE_2	(1)		//数据宽度为2个字节
@@ -132,5 +136,25 @@
 #define DMA_MODULO_BYTE_512M	(0x1D)	//模数大小为512M个字节
 #define DMA_MODULO_BYTE_1G		(0x1E)	//模数大小为1G个字节
 #define DMA_MODULO_BYTE_2G		(0x1F)	//模数大小为2G个字节
+
+void dma_init(uint8 ch, uint8 req, uint8 mode, uint32 minor_loop_bytes,
+		uint16 major_loop_iteration_cnt, uint32 src_addr, uint8 src_data_width,
+		int16 src_addr_offset, uint8 src_modulo, int32 src_addr_last_adj,
+		uint32 dest_addr, uint8 dest_data_width, int16 dest_addr_offset,
+		uint8 dest_modulo, int32 dest_addr_last_adj, bool auto_disable_req);
+
+void dma_enable_req(uint8 ch);
+
+void dma_disable_req(uint8 ch);
+
+void dma_enable_major_int(uint8 ch);
+
+void dma_disable_major_int(uint8 ch);
+
+bool dma_get_major_int(uint8 ch);
+
+void dma_clear_major_int(uint8 ch);
+
+void dma_software_req(uint8 ch);
 
 #endif

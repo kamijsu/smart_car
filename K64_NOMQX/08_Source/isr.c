@@ -24,12 +24,28 @@ void UART1_RX_TX_IRQHandler() {
 
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
+			if (ch == 't') {
+				dma_software_req(0);
+				uart_printf(1, "触发了一次DMA请求！\r\n");
+			}
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
 			uart_send1(UART_MOD1, ch);
 //			oled_write_data(ch);
 		}
 
+	}
+
+	ENABLE_INTERRUPTS;
+}
+
+void DMA0_IRQHandler() {
+	DISABLE_INTERRUPTS;
+
+	if (dma_get_major_int(0)) {
+		uart_printf(1, "主循环完成中断:%d\r\n", dma_get_major_int(0));
+		dma_clear_major_int(0);
+		uart_printf(1, "DMA0主循环完成！\r\n");
 	}
 
 	ENABLE_INTERRUPTS;
@@ -56,7 +72,7 @@ void SPI0_IRQHandler() {
 	uint32 data;
 	DISABLE_INTERRUPTS;
 	if (spi_slave_re(SPI_MOD0, &data)) {
-		uart_printf(1,"SPI0接收到数据:%X\r\n",data);
+		uart_printf(1, "SPI0接收到数据:%X\r\n", data);
 		if (!spi_slave_send(SPI_MOD0, data)) {
 			uart_send_string(UART_USE, "SPI发送失败!\r\n");
 		}

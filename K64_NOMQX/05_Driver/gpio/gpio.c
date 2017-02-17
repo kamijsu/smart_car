@@ -41,11 +41,15 @@ void gpio_init(uint8 port_pin, uint8 dir, uint8 level) {
 
 	//配置引脚方向
 	if (dir == GPIO_DIR_INPUT) {
-		REG_CLR_SHIFT(GPIO_PDDR_REG(gpio_ptr), pin);	//配置为输入
-		gpio_set_pull(port_pin, level);  //设定引脚上下拉状态
+		//配置为输入
+		REG_CLR_SHIFT(GPIO_PDDR_REG(gpio_ptr), pin);
+		//设定引脚上下拉状态
+		gpio_set_pull(port_pin, level);
 	} else {
-		REG_SET_SHIFT(GPIO_PDDR_REG(gpio_ptr), pin);	//配置为输出
-		gpio_set_level(port_pin, level);  //设定引脚电平状态
+		//配置为输出
+		REG_SET_SHIFT(GPIO_PDDR_REG(gpio_ptr), pin);
+		//设定引脚电平状态
+		gpio_set_level(port_pin, level);
 	}
 }
 
@@ -71,10 +75,12 @@ void gpio_set_level(uint8 port_pin, uint8 level) {
 	//设定引脚电平状态为指定电平
 	switch (level) {
 	case GPIO_LEVEL_LOW:
-		REG_CLR_SHIFT(GPIO_PDOR_REG(gpio_ptr), pin);	//设定为低电平
+		//设定为低电平
+		REG_CLR_SHIFT(GPIO_PDOR_REG(gpio_ptr), pin);
 		break;
 	case GPIO_LEVEL_HIGH:
-		REG_SET_SHIFT(GPIO_PDOR_REG(gpio_ptr), pin);	//设定为高电平
+		//设定为高电平
+		REG_SET_SHIFT(GPIO_PDOR_REG(gpio_ptr), pin);
 		break;
 	default:
 		break;
@@ -211,14 +217,18 @@ void gpio_set_pull(uint8 port_pin, uint8 level) {
 	port_ptr = port_table[port];
 
 	if (level == GPIO_LEVEL_UNKNOWN) {
-		REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PE_MASK);	//关闭上下拉电阻
+		//关闭上下拉电阻
+		REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PE_MASK);
 	} else {
 		if (level == GPIO_LEVEL_LOW) {
-			REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PS_MASK);	//引脚下拉电阻使能
+			//引脚下拉电阻使能
+			REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PS_MASK);
 		} else {
-			REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PS_MASK);	//引脚上拉电阻使能
+			//引脚上拉电阻使能
+			REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PS_MASK);
 		}
-		REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PE_MASK);	//开启上下拉电阻
+		//开启上下拉电阻
+		REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_PE_MASK);
 	}
 }
 

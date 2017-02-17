@@ -20,13 +20,20 @@ static const IRQn_Type pit_irq_table[4] = { PIT0_IRQn, PIT1_IRQn, PIT2_IRQn,
 void pit_init(uint8 ch, uint32 ms) {
 	uint32 load_value;		//该通道加载值寄存器的值
 
-	REG_SET_MASK(SIM_SCGC6, SIM_SCGC6_PIT_MASK);	//开PIT时钟门
-	REG_CLR_MASK(PIT_MCR, PIT_MCR_MDIS_MASK);		//PIT模块定时器时钟使能
-	REG_SET_MASK(PIT_MCR, PIT_MCR_FRZ_MASK);		//在调试模式下定时器停止
-	load_value = PIT_WORK_FREQ * ms - 1;	//根据产生中断的时间周期计算加载值寄存器的值
-	REG_SET_VAL(PIT_LDVAL(ch), load_value);			//设置该通道加载值寄存器的值
-	REG_CLR_MASK(PIT_TCTRL(ch), PIT_TCTRL_TIE_MASK);	//禁止该通道发送中断请求
-	REG_SET_MASK(PIT_TCTRL(ch), PIT_TCTRL_TEN_MASK);	//该通道定时器时钟使能
+	//开PIT时钟门
+	REG_SET_MASK(SIM_SCGC6, SIM_SCGC6_PIT_MASK);
+	//PIT模块定时器时钟使能
+	REG_CLR_MASK(PIT_MCR, PIT_MCR_MDIS_MASK);
+	//在调试模式下定时器停止
+	REG_SET_MASK(PIT_MCR, PIT_MCR_FRZ_MASK);
+	//根据产生中断的时间周期计算加载值寄存器的值
+	load_value = PIT_WORK_FREQ * ms - 1;
+	//设置该通道加载值寄存器的值
+	REG_SET_VAL(PIT_LDVAL(ch), load_value);
+	//禁止该通道发送中断请求
+	REG_CLR_MASK(PIT_TCTRL(ch), PIT_TCTRL_TIE_MASK);
+	//该通道定时器时钟使能
+	REG_SET_MASK(PIT_TCTRL(ch), PIT_TCTRL_TEN_MASK);
 }
 
 //==========================================================================
@@ -37,9 +44,12 @@ void pit_init(uint8 ch, uint32 ms) {
 //功能概要: 使能PIT通道中断
 //==========================================================================
 void pit_enable_int(uint8 ch) {
-	REG_SET_MASK(PIT_TFLG(ch), PIT_TFLG_TIF_MASK);	//先清除该通道中断标志，以防止使能中断后立即产生中断
-	REG_SET_MASK(PIT_TCTRL(ch), PIT_TCTRL_TIE_MASK);	//允许该通道发送中断请求
-	ENABLE_IRQ(pit_irq_table[ch]);						//允许接收该通道发送的中断请求
+	//先清除该通道中断标志，以防止使能中断后立即产生中断
+	REG_SET_MASK(PIT_TFLG(ch), PIT_TFLG_TIF_MASK);
+	//允许该通道发送中断请求
+	REG_SET_MASK(PIT_TCTRL(ch), PIT_TCTRL_TIE_MASK);
+	//允许接收该通道发送的中断请求
+	ENABLE_IRQ(pit_irq_table[ch]);
 }
 
 //==========================================================================
@@ -50,8 +60,10 @@ void pit_enable_int(uint8 ch) {
 //功能概要: 关闭PIT通道中断
 //==========================================================================
 void pit_disable_int(uint8 ch) {
-	REG_CLR_MASK(PIT_TCTRL(ch), PIT_TCTRL_TIE_MASK);	//禁止该通道发送中断请求
-	DISABLE_IRQ(pit_irq_table[ch]);						//禁止接收该通道发送的中断请求
+	//禁止该通道发送中断请求
+	REG_CLR_MASK(PIT_TCTRL(ch), PIT_TCTRL_TIE_MASK);
+	//禁止接收该通道发送的中断请求
+	DISABLE_IRQ(pit_irq_table[ch]);
 }
 
 //==========================================================================
