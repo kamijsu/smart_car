@@ -10,10 +10,12 @@ int main(void) {
 	uint32 start, end;
 	uint32 i, j;
 
-	uint8 src[281];
-	for(i=0;i<250;i++){
+	uint8 src1[10240];
+	uint8 src[10240];
+	for(i=0;i<10240;i++){
 		src[i] = i%256;
 	}
+	uint8 dest1[10240];
 	uint8 dest[10240];
 	memset(dest, 0xFF, 10240);
 
@@ -35,15 +37,22 @@ int main(void) {
 	custom_oled_display_init();
 
 
-//	dma_init(DMA_CH1, DMA_REQ_ALWAYS_EN0, DMA_MODE_NORMAL, 1024, 10, (uint32) src,
-//		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -10240, (uint32) dest,
-//		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -10240, false);
-//	dma_enable_req(1);
+	dma_init(DMA_CH1, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 1, 1, (uint32) src1,
+		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -1, (uint32) dest1,
+		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -1, false);
+	dma_enable_req(1);
 
-	dma_init(DMA_CH0, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 9, 1, (uint32) src,
-	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_BYTE_16, 0, (uint32) dest,
-	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, 0, true);
 
+	dma_init(DMA_CH2, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 1, 1, (uint32) src1,
+			DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -1, (uint32) dest1,
+			DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -1, false);
+		dma_enable_req(2);
+
+	dma_init(DMA_CH0, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 1, 3, (uint32) src,
+	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, 0, (uint32) dest,
+	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, 0, false);
+
+//	dma_set_major_link(0,true,2);
 	dma_enable_req(0);
 
 	//4. 给有关变量赋初值
@@ -54,6 +63,8 @@ int main(void) {
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
 	dma_enable_major_int(0);
+	dma_enable_major_int(1);
+	dma_enable_major_int(2);
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -74,16 +85,16 @@ int main(void) {
 
 
 			uart_printf(1, "通道0主循环剩余迭代次数:%d\r\n", dma_get_major_loop_iteration_cnt(0));
-			uart_printf(1, "通道0当前源  地址:%X\r\n", dma_get_src_addr(0));
-			uart_printf(1, "通道0当前目标地址:%X\r\n", dma_get_dest_addr(0));
+//			uart_printf(1, "通道0当前源  地址:%X\r\n", dma_get_src_addr(0));
+//			uart_printf(1, "通道0当前目标地址:%X\r\n", dma_get_dest_addr(0));
 
 //			dma_set_src_addr(0,(uint32)src);
 //			dma_set_dest_addr(0,(uint32)dest);
 
 //			memset(src, 0xFF, 1024);
 
-			uart_printf(1, "错误:%X\r\n", DMA_ES);
-			uart_printf(1, "通道0状态控制寄存器:%X\r\n", DMA_CSR(0));
+//			uart_printf(1, "错误:%X\r\n", DMA_ES);
+//			uart_printf(1, "通道0状态控制寄存器:%X\r\n", DMA_CSR(0));
 
 			for (i = 0; i < 1024; i++) {
 				if (dest[i] != 0xFF) {

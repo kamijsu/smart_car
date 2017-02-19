@@ -20,6 +20,12 @@ static const IRQn_Type dma_irq_table[] = { DMA0_IRQn, DMA1_IRQn, DMA2_IRQn,
 //若源地址数据宽度为2字节，目标地址数据宽度为4字节，读2次源地址，再写1次目标地址，组成一次读写，
 //在这次读写中，源地址偏移2次，目标地址偏移1次;
 //
+//一次DMA请求被接收后，进行一次副循环;
+//
+//正常模式下，请求源每触发一次，发起一次DMA请求;
+//周期触发模式下，每一个周期触发一次，若触发时请求源也正被触发，发起一次DMA请求，
+//周期由PIT通道的中断周期决定，仅DMA0-DMA3通道可以使用周期触发模式，对应的PIT通道为PIT0-PIT3;
+//
 //使能模数功能后，会依照模数大小，使得地址在偏移时，仅有低位可以变化，而高位不会变化，
 //若模数大小为2的n次方，则可变化的位数为n，如模数大小为16个字节，初始地址为0x12345670，
 //仅低4位可以变化，而0x1234567x不会变化;
@@ -126,20 +132,43 @@ void dma_clear_major_int(uint8 ch) {
 }
 
 //无论是否接收该通道的DMA请求，软件触发的DMA请求一定被接收
+//若通道状态为正在启动，此时软件触发的DMA请求会丢失
 void dma_software_req(uint8 ch) {
 	//软件触发一次DMA请求
 	REG_SET_VAL(DMA_SSRT, DMA_SSRT_SSRT(ch));
+}
+
+DMAChannelState dma_get_ch_state(uint8 ch) {
+	uint16 state;	//通道控制和状态寄存器的值
+
+	//获取通道控制和状态寄存器的值
+	state = DMA_CSR(ch);
+
+	if (REG_GET_MASK(state, DMA_CSR_START_MASK)) {
+		//返回通道正在启动
+		return DMAChannelStarting;
+	}
+	if (REG_GET_MASK(state, DMA_CSR_ACTIVE_MASK)) {
+		//返回通道正在执行
+		return DMAChannelExecuting;
+	}
+	if (REG_GET_MASK(state, DMA_CSR_DONE_MASK)) {
+		//返回通道完成主循环
+		return DMAChannelDone;
+	}
+	//返回通道空闲
+	return DMAChannelIdle;
 }
 
 //获取主循环剩余迭代次数
 uint16 dma_get_major_loop_iteration_cnt(uint8 ch) {
 	//查看是否使能副循环通道连接
 	if (REG_GET_MASK(DMA_CITER_ELINKNO(ch), DMA_CITER_ELINKNO_ELINK_MASK)) {
-		//使能副循环通道连接
+		//使能副循环通道连接时
 		return REG_GET_MASK(DMA_CITER_ELINKYES(ch),
 				DMA_CITER_ELINKYES_CITER_MASK) >> DMA_CITER_ELINKYES_CITER_SHIFT;
 	} else {
-		//关闭副循环通道连接
+		//关闭副循环通道连接时
 		return REG_GET_MASK(DMA_CITER_ELINKNO(ch), DMA_CITER_ELINKNO_CITER_MASK)
 				>> DMA_CITER_ELINKNO_CITER_SHIFT;
 	}
@@ -172,5 +201,40 @@ void dma_set_auto_disable_req(uint8 ch, bool enable) {
 	} else {
 		//关闭主循环完成后自动不接收DMA请求
 		REG_CLR_MASK(DMA_CSR(ch), DMA_CSR_DREQ_MASK);
+	}
+}
+
+//当该通道的一次副循环完成后，自动软件触发一次连接通道的DMA请求
+//若此次副循环完成后即完成主循环，将不会触发连接通道的DMA请求
+void dma_set_minor_link(uint8 ch, bool enable, uint8 link_ch) {
+	//清除连接通道
+	REG_CLR_MASK(DMA_CITER_ELINKYES(ch), DMA_CITER_ELINKYES_LINKCH_MASK);
+	REG_CLR_MASK(DMA_BITER_ELINKYES(ch), DMA_BITER_ELINKYES_LINKCH_MASK);
+	if (enable) {
+		//使能副循环通道连接，并设置连接通道
+		REG_SET_MASK(DMA_CITER_ELINKYES(ch),
+				DMA_CITER_ELINKYES_ELINK_MASK|DMA_CITER_ELINKYES_LINKCH(link_ch));
+		REG_SET_MASK(DMA_BITER_ELINKYES(ch),
+				DMA_BITER_ELINKYES_ELINK_MASK|DMA_BITER_ELINKYES_LINKCH(link_ch));
+	} else {
+		//关闭副循环通道连接
+		REG_CLR_MASK(DMA_CITER_ELINKNO(ch), DMA_CITER_ELINKNO_ELINK_MASK);
+		REG_CLR_MASK(DMA_BITER_ELINKNO(ch), DMA_BITER_ELINKNO_ELINK_MASK);
+	}
+}
+
+//当该通道的一次主循环完成后，自动软件触发一次连接通道的DMA请求
+void dma_set_major_link(uint8 ch, bool enable, uint8 link_ch) {
+	//清除该通道完成标志
+	REG_SET_VAL(DMA_CDNE, DMA_CDNE_CDNE(ch));
+	if (enable) {
+		//清除连接通道
+		REG_CLR_MASK(DMA_CSR(ch), DMA_CSR_MAJORLINKCH_MASK);
+		//使能主循环通道连接，并设置连接通道
+		REG_SET_MASK(DMA_CSR(ch),
+				DMA_CSR_MAJORELINK_MASK|DMA_CSR_MAJORLINKCH(link_ch));
+	} else {
+		//关闭主循环通道连接
+		REG_CLR_MASK(DMA_CSR(ch), DMA_CSR_MAJORELINK_MASK);
 	}
 }

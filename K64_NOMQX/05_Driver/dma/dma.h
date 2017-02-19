@@ -137,6 +137,14 @@
 #define DMA_MODULO_BYTE_1G		(0x1E)	//模数大小为1G个字节
 #define DMA_MODULO_BYTE_2G		(0x1F)	//模数大小为2G个字节
 
+//定义DMA通道状态
+typedef enum {
+	DMAChannelIdle,			//通道空闲，此时可能请求源发起了一次DMA请求，或者通道完成了一次副循环
+	DMAChannelStarting,		//通道正在启动，软件触发DMA请求，或因通道连接触发DMA请求，通道会变为此状态
+	DMAChannelExecuting,	//通道正在执行
+	DMAChannelDone			//通道完成主循环
+} DMAChannelState;
+
 void dma_init(uint8 ch, uint8 req, uint8 mode, uint32 minor_loop_bytes,
 		uint16 major_loop_iteration_cnt, uint32 src_addr, uint8 src_data_width,
 		int16 src_addr_offset, uint8 src_modulo, int32 src_addr_last_adj,
@@ -157,6 +165,8 @@ void dma_clear_major_int(uint8 ch);
 
 void dma_software_req(uint8 ch);
 
+DMAChannelState dma_get_ch_state(uint8 ch);
+
 uint16 dma_get_major_loop_iteration_cnt(uint8 ch);
 
 uint32 dma_get_src_addr(uint8 ch);
@@ -168,5 +178,9 @@ uint32 dma_get_dest_addr(uint8 ch);
 void dma_set_dest_addr(uint8 ch, uint32 dest_addr);
 
 void dma_set_auto_disable_req(uint8 ch, bool enable);
+
+void dma_set_minor_link(uint8 ch, bool enable, uint8 link_ch);
+
+void dma_set_major_link(uint8 ch, bool enable, uint8 link_ch);
 
 #endif

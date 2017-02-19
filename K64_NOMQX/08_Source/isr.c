@@ -28,18 +28,17 @@ void UART1_RX_TX_IRQHandler() {
 			switch (ch) {
 			case 't':
 				dma_software_req(0);
-				uint16 csr = DMA_CSR(0);
 				uart_printf(1, "触发了一次DMA请求！\r\n");
-				uart_printf(1, "CSR:%X\r\n",csr);
+
 				break;
-			case 'e':
-				dma_enable_req(0);
-				uart_printf(1, "允许接收DMA请求！\r\n");
-				break;
-			case 'd':
-				dma_disable_req(0);
-				uart_printf(1, "禁止接收DMA请求！\r\n");
-				break;
+//			case 'e':
+//				dma_enable_req(0);
+//				uart_printf(1, "允许接收DMA请求！\r\n");
+//				break;
+//			case 'd':
+//				dma_disable_req(0);
+//				uart_printf(1, "禁止接收DMA请求！\r\n");
+//				break;
 			case 'a':
 				dma_set_auto_disable_req(0, true);
 				uart_printf(1, "使能主循环完成后自动不接收DMA请求！\r\n");
@@ -47,6 +46,14 @@ void UART1_RX_TX_IRQHandler() {
 			case 'i':
 				dma_set_auto_disable_req(0, false);
 				uart_printf(1, "关闭主循环完成后自动不接收DMA请求！\r\n");
+				break;
+			case 'e':
+				dma_set_minor_link(0,true,1);
+				uart_printf(1, "开启副循环通道连接！\r\n");
+				break;
+			case 'd':
+				dma_set_minor_link(0,false,1);
+				uart_printf(1, "关闭副循环通道连接！\r\n");
 				break;
 			}
 
@@ -67,6 +74,30 @@ void DMA0_IRQHandler() {
 	if (dma_get_major_int(0)) {
 		dma_clear_major_int(0);
 		uart_printf(1, "DMA0主循环完成！\r\n");
+
+	}
+
+	ENABLE_INTERRUPTS;
+}
+
+void DMA1_IRQHandler() {
+	DISABLE_INTERRUPTS;
+
+	if (dma_get_major_int(1)) {
+		dma_clear_major_int(1);
+		uart_printf(1, "DMA1主循环完成！\r\n");
+
+	}
+
+	ENABLE_INTERRUPTS;
+}
+
+void DMA2_IRQHandler() {
+	DISABLE_INTERRUPTS;
+
+	if (dma_get_major_int(2)) {
+		dma_clear_major_int(2);
+		uart_printf(1, "DMA2主循环完成！\r\n");
 
 	}
 
