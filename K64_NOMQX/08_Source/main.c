@@ -10,10 +10,12 @@ int main(void) {
 	uint32 start, end;
 	uint32 i, j;
 
-	uint8 src[1024];
-	memset(src, 0x45, 1024);
-	uint8 dest[1024];
-	memset(dest, 0xFF, 1024);
+	uint8 src[281];
+	for(i=0;i<250;i++){
+		src[i] = i%256;
+	}
+	uint8 dest[10240];
+	memset(dest, 0xFF, 10240);
 
 	//2. 关总中断
 	DISABLE_INTERRUPTS;
@@ -32,9 +34,15 @@ int main(void) {
 	oled_init();
 	custom_oled_display_init();
 
-	dma_init(DMA_CH0, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 4, 7, (uint32) src,
-	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -28, (uint32) dest,
-	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -28, false);
+
+//	dma_init(DMA_CH1, DMA_REQ_ALWAYS_EN0, DMA_MODE_NORMAL, 1024, 10, (uint32) src,
+//		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -10240, (uint32) dest,
+//		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -10240, false);
+//	dma_enable_req(1);
+
+	dma_init(DMA_CH0, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 9, 1, (uint32) src,
+	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_BYTE_16, 0, (uint32) dest,
+	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, 0, true);
 
 	dma_enable_req(0);
 
@@ -63,11 +71,18 @@ int main(void) {
 			start = pit_get_time_us(1);
 
 			custom_oled_update_temp();
-			uart_printf(1, "主循环完成中断:%d\r\n", dma_get_major_int(0));
+
+
+			uart_printf(1, "通道0主循环剩余迭代次数:%d\r\n", dma_get_major_loop_iteration_cnt(0));
+			uart_printf(1, "通道0当前源  地址:%X\r\n", dma_get_src_addr(0));
+			uart_printf(1, "通道0当前目标地址:%X\r\n", dma_get_dest_addr(0));
+
+//			dma_set_src_addr(0,(uint32)src);
+//			dma_set_dest_addr(0,(uint32)dest);
 
 //			memset(src, 0xFF, 1024);
 
-//			uart_printf(1, "错误:%X\r\n", DMA_ERR);
+			uart_printf(1, "错误:%X\r\n", DMA_ES);
 			uart_printf(1, "通道0状态控制寄存器:%X\r\n", DMA_CSR(0));
 
 			for (i = 0; i < 1024; i++) {

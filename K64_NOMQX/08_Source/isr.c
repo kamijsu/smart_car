@@ -24,13 +24,35 @@ void UART1_RX_TX_IRQHandler() {
 
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
-			if (ch == 't') {
+
+			switch (ch) {
+			case 't':
 				dma_software_req(0);
+				uint16 csr = DMA_CSR(0);
 				uart_printf(1, "触发了一次DMA请求！\r\n");
+				uart_printf(1, "CSR:%X\r\n",csr);
+				break;
+			case 'e':
+				dma_enable_req(0);
+				uart_printf(1, "允许接收DMA请求！\r\n");
+				break;
+			case 'd':
+				dma_disable_req(0);
+				uart_printf(1, "禁止接收DMA请求！\r\n");
+				break;
+			case 'a':
+				dma_set_auto_disable_req(0, true);
+				uart_printf(1, "使能主循环完成后自动不接收DMA请求！\r\n");
+				break;
+			case 'i':
+				dma_set_auto_disable_req(0, false);
+				uart_printf(1, "关闭主循环完成后自动不接收DMA请求！\r\n");
+				break;
 			}
+
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
-			uart_send1(UART_MOD1, ch);
+//			uart_send1(UART_MOD1, ch);
 //			oled_write_data(ch);
 		}
 
@@ -43,9 +65,9 @@ void DMA0_IRQHandler() {
 	DISABLE_INTERRUPTS;
 
 	if (dma_get_major_int(0)) {
-		uart_printf(1, "主循环完成中断:%d\r\n", dma_get_major_int(0));
 		dma_clear_major_int(0);
 		uart_printf(1, "DMA0主循环完成！\r\n");
+
 	}
 
 	ENABLE_INTERRUPTS;

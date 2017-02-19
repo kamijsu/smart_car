@@ -157,4 +157,16 @@ void dma_clear_major_int(uint8 ch);
 
 void dma_software_req(uint8 ch);
 
+uint16 dma_get_major_loop_iteration_cnt(uint8 ch);
+
+uint32 dma_get_src_addr(uint8 ch);
+
+void dma_set_src_addr(uint8 ch, uint32 src_addr);
+
+uint32 dma_get_dest_addr(uint8 ch);
+
+void dma_set_dest_addr(uint8 ch, uint32 dest_addr);
+
+void dma_set_auto_disable_req(uint8 ch, bool enable);
+
 #endif

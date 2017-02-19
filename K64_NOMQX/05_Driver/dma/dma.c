@@ -11,6 +11,21 @@ static const IRQn_Type dma_irq_table[] = { DMA0_IRQn, DMA1_IRQn, DMA2_IRQn,
 		DMA9_IRQn, DMA10_IRQn, DMA11_IRQn, DMA12_IRQn, DMA13_IRQn, DMA14_IRQn,
 		DMA15_IRQn };
 
+//每次副循环传输字节数必须为源地址和目标地址数据宽度的倍数;
+//地址必须与数据宽度匹配，若数据宽度为4字节，地址必须4字节对齐，即地址为4的倍数;
+//地址每次被读取/写入后的偏移量必须为数据宽度的倍数;
+//
+//一次主循环由若干次副循环组成，一次副循环由若干次读写组成，每次读写中，
+//读次数和写次数的对应关系可以为一对一，也可以为多对一和一对多，这由源地址和目标地址的数据宽度决定，
+//若源地址数据宽度为2字节，目标地址数据宽度为4字节，读2次源地址，再写1次目标地址，组成一次读写，
+//在这次读写中，源地址偏移2次，目标地址偏移1次;
+//
+//使能模数功能后，会依照模数大小，使得地址在偏移时，仅有低位可以变化，而高位不会变化，
+//若模数大小为2的n次方，则可变化的位数为n，如模数大小为16个字节，初始地址为0x12345670，
+//仅低4位可以变化，而0x1234567x不会变化;
+//但若主循环完成后的偏移使得地址的高位发生变化，在下一次主循环中，将会保证变化后的高位不变;
+//可以利用模数功能构件一个循环队列;
+//
 void dma_init(uint8 ch, uint8 req, uint8 mode, uint32 minor_loop_bytes,
 		uint16 major_loop_iteration_cnt, uint32 src_addr, uint8 src_data_width,
 		int16 src_addr_offset, uint8 src_modulo, int32 src_addr_last_adj,
@@ -82,6 +97,7 @@ void dma_disable_req(uint8 ch) {
 	REG_SET_VAL(DMA_CERQ, DMA_CERQ_CERQ(ch));
 }
 
+//即使发生中断，若DMA请求被触发，且该通道接收DMA请求，数据传输仍会进行
 void dma_enable_major_int(uint8 ch) {
 	//清除主循环完成中断的中断标志
 	REG_SET_VAL(DMA_CINT, DMA_CINT_CINT(ch));
@@ -109,7 +125,52 @@ void dma_clear_major_int(uint8 ch) {
 	REG_SET_VAL(DMA_CINT, DMA_CINT_CINT(ch));
 }
 
+//无论是否接收该通道的DMA请求，软件触发的DMA请求一定被接收
 void dma_software_req(uint8 ch) {
 	//软件触发一次DMA请求
-	REG_SET_MASK(DMA_CSR(ch), DMA_CSR_START_MASK);
+	REG_SET_VAL(DMA_SSRT, DMA_SSRT_SSRT(ch));
+}
+
+//获取主循环剩余迭代次数
+uint16 dma_get_major_loop_iteration_cnt(uint8 ch) {
+	//查看是否使能副循环通道连接
+	if (REG_GET_MASK(DMA_CITER_ELINKNO(ch), DMA_CITER_ELINKNO_ELINK_MASK)) {
+		//使能副循环通道连接
+		return REG_GET_MASK(DMA_CITER_ELINKYES(ch),
+				DMA_CITER_ELINKYES_CITER_MASK) >> DMA_CITER_ELINKYES_CITER_SHIFT;
+	} else {
+		//关闭副循环通道连接
+		return REG_GET_MASK(DMA_CITER_ELINKNO(ch), DMA_CITER_ELINKNO_CITER_MASK)
+				>> DMA_CITER_ELINKNO_CITER_SHIFT;
+	}
+}
+
+uint32 dma_get_src_addr(uint8 ch) {
+	//返回当前源地址
+	return DMA_SADDR(ch);
+}
+
+void dma_set_src_addr(uint8 ch, uint32 src_addr) {
+	//设置源地址
+	REG_SET_VAL(DMA_SADDR(ch), DMA_SADDR_SADDR(src_addr));
+}
+
+uint32 dma_get_dest_addr(uint8 ch) {
+	//返回当前目标地址
+	return DMA_DADDR(ch);
+}
+
+void dma_set_dest_addr(uint8 ch, uint32 dest_addr) {
+	//设置目标地址
+	REG_SET_VAL(DMA_DADDR(ch), DMA_DADDR_DADDR(dest_addr));
+}
+
+void dma_set_auto_disable_req(uint8 ch, bool enable) {
+	if (enable) {
+		//使能主循环完成后自动不接收DMA请求
+		REG_SET_MASK(DMA_CSR(ch), DMA_CSR_DREQ_MASK);
+	} else {
+		//关闭主循环完成后自动不接收DMA请求
+		REG_CLR_MASK(DMA_CSR(ch), DMA_CSR_DREQ_MASK);
+	}
 }
