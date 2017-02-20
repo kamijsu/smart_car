@@ -26,39 +26,13 @@ void UART1_RX_TX_IRQHandler() {
 		if (!err) {
 
 			switch (ch) {
-			case 't':
-				dma_software_req(0);
-				uart_printf(1, "触发了一次DMA0请求！\r\n");
-
-				break;
-			case 'y':
-				dma_software_req(1);
-				uart_printf(1, "触发了一次DMA1请求！\r\n");
-
-				break;
-//			case 'e':
-//				dma_enable_req(0);
-//				uart_printf(1, "允许接收DMA请求！\r\n");
-//				break;
-//			case 'd':
-//				dma_disable_req(0);
-//				uart_printf(1, "禁止接收DMA请求！\r\n");
-//				break;
-			case 'a':
-				dma_set_auto_disable_req(0, true);
-				uart_printf(1, "使能主循环完成后自动不接收DMA请求！\r\n");
-				break;
-			case 'i':
-				dma_set_auto_disable_req(0, false);
-				uart_printf(1, "关闭主循环完成后自动不接收DMA请求！\r\n");
-				break;
 			case 'e':
-				dma_set_minor_link(0, true, 1);
-				uart_printf(1, "开启副循环通道连接！\r\n");
+				gpio_enable_dma(COM_PORTB | 0, GPIO_DMA_RISING_EDGE);
+				uart_printf(1, "可以发起DMA请求！\r\n");
 				break;
 			case 'd':
-				dma_set_minor_link(0, false, 1);
-				uart_printf(1, "关闭副循环通道连接！\r\n");
+				gpio_disable_dma(COM_PORTB | 0);
+				uart_printf(1, "不可以发起DMA请求！\r\n");
 				break;
 			}
 

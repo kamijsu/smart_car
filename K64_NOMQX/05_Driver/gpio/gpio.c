@@ -263,12 +263,13 @@ void gpio_set_passive_filter(uint8 port_pin, bool enable) {
 //参数说明: port_pin:(端口号)|(引脚号):
 //                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
 //         int_type:引脚中断类型：
-//                  GPIO_INT_LOW_LEVEL:   低电平触发;
-//                  GPIO_INT_HIGH_LEVEL:  高电平触发;
-//                  GPIO_INT_RISING_EDGE: 上升沿触发;
-//                  GPIO_INT_FALLING_EDGE:下降沿触发;
-//                  GPIO_INT_DOUBLE_EDGE: 双边沿触发;
+//                  GPIO_INT_LOW_LEVEL:   低电平触发中断;
+//                  GPIO_INT_HIGH_LEVEL:  高电平触发中断;
+//                  GPIO_INT_RISING_EDGE: 上升沿触发中断;
+//                  GPIO_INT_FALLING_EDGE:下降沿触发中断;
+//                  GPIO_INT_DOUBLE_EDGE: 双边沿触发中断;
 //功能概要: 当引脚配置为输入时，根据中断类型开启该引脚中断
+//备注: 引脚不可以同时触发中断和DMA请求
 //==========================================================================
 void gpio_enable_int(uint8 port_pin, uint8 int_type) {
 	uint8 port, pin;		//端口号与引脚号
@@ -335,4 +336,47 @@ void gpio_clear_int(uint8 port_pin) {
 	com_port_pin_resolution(port_pin, &port, &pin);
 	//清除中断标志
 	REG_SET_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_ISF_MASK);
+}
+
+//==========================================================================
+//函数名称: gpio_enable_dma
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号):
+//                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
+//         dma_type:引脚DMA类型：
+//                  GPIO_DMA_RISING_EDGE: 上升沿触发DMA请求;
+//                  GPIO_DMA_FALLING_EDGE:下降沿触发DMA请求;
+//                  GPIO_DMA_DOUBLE_EDGE: 双边沿触发DMA请求;
+//功能概要: 当引脚配置为输入时，使能该引脚触发DMA请求
+//备注: 引脚不可以同时触发中断和DMA请求
+//==========================================================================
+void gpio_enable_dma(uint8 port_pin, uint8 dma_type) {
+	uint8 port, pin;		//端口号与引脚号
+	PORT_Type * port_ptr;	//PORT基地址
+
+	//获得端口号与引脚号
+	com_port_pin_resolution(port_pin, &port, &pin);
+	//获取该端口PORT基地址
+	port_ptr = port_table[port];
+
+	//清除引脚DMA类型
+	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_IRQC_MASK);
+	//设置引脚DMA类型
+	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_IRQC(dma_type));
+}
+
+//==========================================================================
+//函数名称: gpio_disable_dma
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号):
+//                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
+//功能概要: 当引脚配置为输入时，关闭该引脚触发DMA请求
+//==========================================================================
+void gpio_disable_dma(uint8 port_pin) {
+	uint8 port, pin;		//端口号与引脚号
+
+	//获得端口号与引脚号
+	com_port_pin_resolution(port_pin, &port, &pin);
+	//禁止该引脚发送DMA请求
+	REG_CLR_MASK(PORT_PCR_REG(port_table[port],pin), PORT_PCR_IRQC_MASK);
 }
