@@ -70,6 +70,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/spi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/uart&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/camera&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/ems&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/encoder&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/gyro_acce&quot;"/>
@@ -231,6 +232,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/spi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/05_Driver/uart&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/camera&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/ems&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/encoder&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/06_App_Component/gyro_acce&quot;"/>
