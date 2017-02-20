@@ -137,10 +137,14 @@
 #define DMA_MODULO_BYTE_1G		(0x1E)	//模数大小为1G个字节
 #define DMA_MODULO_BYTE_2G		(0x1F)	//模数大小为2G个字节
 
+//定义DMA仲裁模式
+#define DMA_ARBITRATION_MODE_FIXED			(0)	//固定优先级仲裁
+#define DMA_ARBITRATION_MODE_ROUND_ROBIN	(1)	//轮询仲裁
+
 //定义DMA通道状态
 typedef enum {
-	DMAChannelIdle,			//通道空闲，此时可能请求源发起了一次DMA请求，或者通道完成了一次副循环
-	DMAChannelStarting,		//通道正在启动，软件触发DMA请求，或因通道连接触发DMA请求，通道会变为此状态
+	DMAChannelIdle,			//通道空闲
+	DMAChannelStarting,		//通道正在启动
 	DMAChannelExecuting,	//通道正在执行
 	DMAChannelDone			//通道完成主循环
 } DMAChannelState;
@@ -182,5 +186,15 @@ void dma_set_auto_disable_req(uint8 ch, bool enable);
 void dma_set_minor_link(uint8 ch, bool enable, uint8 link_ch);
 
 void dma_set_major_link(uint8 ch, bool enable, uint8 link_ch);
+
+void dma_set_arbitration_mode(uint8 arbitration_mode);
+
+uint8 dma_get_priority(uint8 ch);
+
+void dma_set_priority(uint8 ch, uint8 priority);
+
+void dma_set_channel_preemption(uint8 ch, bool enable);
+
+void dma_set_preempt_ability(uint8 ch, bool enable);
 
 #endif
