@@ -6,15 +6,17 @@
 #include "dma.h"
 
 //DMA各通道中断请求号
-static const IRQn_Type dma_irq_table[] = { DMA0_IRQn, DMA1_IRQn, DMA2_IRQn,
-		DMA3_IRQn, DMA4_IRQn, DMA5_IRQn, DMA6_IRQn, DMA7_IRQn, DMA8_IRQn,
-		DMA9_IRQn, DMA10_IRQn, DMA11_IRQn, DMA12_IRQn, DMA13_IRQn, DMA14_IRQn,
-		DMA15_IRQn };
+static const IRQn_Type dma_irq_table[] = {
+DMA0_IRQn,  DMA1_IRQn,  DMA2_IRQn,  DMA3_IRQn,
+DMA4_IRQn,  DMA5_IRQn,  DMA6_IRQn,  DMA7_IRQn,
+DMA8_IRQn,  DMA9_IRQn,  DMA10_IRQn, DMA11_IRQn,
+DMA12_IRQn, DMA13_IRQn, DMA14_IRQn, DMA15_IRQn };
 //各通道优先级寄存器地址
-static vuint8* const dchpri_table[] = { &DMA_DCHPRI0, &DMA_DCHPRI1,
-		&DMA_DCHPRI2, &DMA_DCHPRI3, &DMA_DCHPRI4, &DMA_DCHPRI5, &DMA_DCHPRI6,
-		&DMA_DCHPRI7, &DMA_DCHPRI8, &DMA_DCHPRI9, &DMA_DCHPRI10, &DMA_DCHPRI11,
-		&DMA_DCHPRI12, &DMA_DCHPRI13, &DMA_DCHPRI14, &DMA_DCHPRI15 };
+static vuint8* const dchpri_table[] = {
+&DMA_DCHPRI0,  &DMA_DCHPRI1,  &DMA_DCHPRI2,  &DMA_DCHPRI3,
+&DMA_DCHPRI4,  &DMA_DCHPRI5,  &DMA_DCHPRI6,  &DMA_DCHPRI7,
+&DMA_DCHPRI8,  &DMA_DCHPRI9,  &DMA_DCHPRI10, &DMA_DCHPRI11,
+&DMA_DCHPRI12, &DMA_DCHPRI13, &DMA_DCHPRI14, &DMA_DCHPRI15 };
 
 //==========================================================================
 //函数名称: dma_init
@@ -125,7 +127,10 @@ void dma_init(uint8 ch, uint8 req, uint8 mode, uint32 minor_loop_bytes,
 
 	//设置源地址和目标地址的模数大小和数据宽度
 	REG_SET_VAL(DMA_ATTR(ch),
-			DMA_ATTR_SMOD(src_modulo)|DMA_ATTR_SSIZE(src_data_width)|DMA_ATTR_DMOD(dest_modulo)|DMA_ATTR_DSIZE(dest_data_width));
+			 DMA_ATTR_SMOD(src_modulo)
+			|DMA_ATTR_SSIZE(src_data_width)
+			|DMA_ATTR_DMOD(dest_modulo)
+			|DMA_ATTR_DSIZE(dest_data_width));
 
 	//设置源地址
 	REG_SET_VAL(DMA_SADDR(ch), DMA_SADDR_SADDR(src_addr));
@@ -448,7 +453,7 @@ void dma_set_major_link(uint8 ch, bool enable, uint8 link_ch) {
 //     先响应优先级最高的通道，0-15优先级从低到高，0为最低优先级，15为最高优先级;
 //
 //     轮询仲裁时，从15号通道至0通道依次查询通道是否有DMA请求，若有，则响应该请求，
-//     若无，则继续查询下一个通道，重复该过程
+//     若无，则继续查询下一个通道，重复该过程，这种仲裁模式与优先级无关
 //==========================================================================
 void dma_set_arbitration_mode(uint8 arbitration_mode) {
 	if (arbitration_mode == DMA_ARBITRATION_MODE_ROUND_ROBIN) {
@@ -473,6 +478,21 @@ uint8 dma_get_priority(uint8 ch) {
 			>> DMA_DCHPRI0_CHPRI_SHIFT;
 }
 
+//==========================================================================
+//函数名称: dma_set_priority
+//函数返回: 无
+//参数说明: ch:DMA通道号:
+//            DMA_CHx，x为通道号;
+//         priority:该通道的优先级，取值范围为[0,15]
+//功能概要: 设置该通道的优先级
+//备注: 0-15优先级从低到高，0为最低优先级，15为最高优先级;
+//     各通道默认优先级为通道号，0号通道优先级为0，15号通道优先级为15;
+//     各通道优先级不能重复，每个优先级必须独自属于一个通道;
+//
+//     要设置优先级，一种方法为先设置不接收相关通道的DMA请求，
+//     优先级设置完毕后再恢复接收，另一种方法为先设置为轮询仲裁，
+//     优先级设置完毕后再恢复为固定优先级仲裁
+//==========================================================================
 void dma_set_priority(uint8 ch, uint8 priority) {
 	//清除原先优先级
 	REG_CLR_MASK(*dchpri_table[ch], DMA_DCHPRI0_CHPRI_MASK);
@@ -480,6 +500,21 @@ void dma_set_priority(uint8 ch, uint8 priority) {
 	REG_SET_MASK(*dchpri_table[ch], DMA_DCHPRI0_CHPRI(priority));
 }
 
+//==========================================================================
+//函数名称: dma_set_channel_preemption
+//函数返回: 无
+//参数说明: ch:DMA通道号:
+//            DMA_CHx，x为通道号;
+//         enable:该通道是否可以被抢占:
+//                true: 该通道可以被抢占;
+//                false:该通道不可以被抢占;
+//功能概要: 设置该通道是否可以被抢占
+//备注: 各通道默认不可以被抢占;
+//     通道抢占仅在固定优先级仲裁模式下有效;
+//     若一个高优先级通道发起一次DMA请求，而此时一个低优先级通道正在执行数据传输，
+//     在低优先级通道完成当前的读写后，暂时挂起低优先级通道，
+//     而先执行高优先级通道的数据传输，这就是抢占
+//==========================================================================
 void dma_set_channel_preemption(uint8 ch, bool enable) {
 	if (enable) {
 		//该通道可以被抢占
@@ -490,6 +525,18 @@ void dma_set_channel_preemption(uint8 ch, bool enable) {
 	}
 }
 
+//==========================================================================
+//函数名称: dma_set_preempt_ability
+//函数返回: 无
+//参数说明: ch:DMA通道号:
+//            DMA_CHx，x为通道号;
+//         enable:该通道是否可以抢占别的通道:
+//                true: 该通道可以抢占别的通道;
+//                false:该通道不可以抢占别的通道;
+//功能概要: 设置该通道是否可以抢占别的通道
+//备注: 各通道默认可以抢占别的通道;
+//     通道抢占仅在固定优先级仲裁模式下有效
+//==========================================================================
 void dma_set_preempt_ability(uint8 ch, bool enable) {
 	if (enable) {
 		//该通道可以抢占别的通道

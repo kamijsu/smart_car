@@ -37,16 +37,16 @@ int main(void) {
 	custom_oled_display_init();
 
 
-	dma_init(DMA_CH1, DMA_REQ_ALWAYS_EN0, DMA_MODE_NORMAL, 1, 6, (uint32) src1,
-		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -6, (uint32) dest1,
-		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -6, false);
-//	dma_enable_req(1);
+	dma_init(DMA_CH1, DMA_REQ_ALWAYS_EN0, DMA_MODE_NORMAL, 16, 6, (uint32) src1,
+		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -16*6, (uint32) dest1,
+		DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -16*6, false);
+	dma_enable_req(1);
 
 
 	dma_init(DMA_CH2, DMA_REQ_ALWAYS_EN0, DMA_MODE_NORMAL, 1, 6, (uint32) src1,
 			DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -6, (uint32) dest1,
 			DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -6, false);
-//		dma_enable_req(2);
+		dma_enable_req(2);
 
 	dma_init(DMA_CH0, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 1, 511, (uint32) src,
 	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -1, (uint32) dest,
@@ -58,7 +58,7 @@ int main(void) {
 //	}
 //	dma_set_priority(0,15);
 //	dma_set_priority(15,0);
-	dma_set_minor_link(0,true,1);
+//	dma_set_minor_link(0,true,1);
 //	dma_set_major_link(0,true,2);
 	dma_enable_req(0);
 
@@ -91,11 +91,11 @@ int main(void) {
 			custom_oled_update_temp();
 
 //			dma_show_pri();
-			uart_printf(1, "通道0主循环剩余迭代次数:%d\r\n", dma_get_major_loop_iteration_cnt(0));
+//			uart_printf(1, "通道0主循环剩余迭代次数:%d\r\n", dma_get_major_loop_iteration_cnt(0));
 			uart_printf(1, "通道1主循环剩余迭代次数:%d\r\n", dma_get_major_loop_iteration_cnt(1));
 			uart_printf(1, "通道2主循环剩余迭代次数:%d\r\n", dma_get_major_loop_iteration_cnt(2));
-//			uart_printf(1, "通道0当前源  地址:%X\r\n", dma_get_src_addr(0));
-//			uart_printf(1, "通道0当前目标地址:%X\r\n", dma_get_dest_addr(0));
+			uart_printf(1, "通道1当前源  地址:%X\r\n", dma_get_src_addr(1));
+			uart_printf(1, "通道1当前目标地址:%X\r\n", dma_get_dest_addr(1));
 
 //			dma_set_src_addr(0,(uint32)src);
 //			dma_set_dest_addr(0,(uint32)dest);
