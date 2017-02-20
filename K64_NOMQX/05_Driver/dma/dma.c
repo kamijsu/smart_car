@@ -374,8 +374,21 @@ void dma_set_auto_disable_req(uint8 ch, bool enable) {
 	}
 }
 
-//当该通道的一次副循环完成后，自动软件触发一次连接通道的DMA请求
-//若此次副循环完成后即完成主循环，将不会触发连接通道的DMA请求
+//==========================================================================
+//函数名称: dma_set_minor_link
+//函数返回: 无
+//参数说明: ch:DMA通道号:
+//            DMA_CHx，x为通道号;
+//         enable:是否使能副循环通道连接:
+//                true: 使能副循环通道连接;
+//                false:关闭副循环通道连接;
+//         link_ch:连接通道的通道号，该参数仅在enable为true时有效:
+//                 DMA_CHx，x为通道号;
+//功能概要: 设置是否使能副循环通道连接
+//备注: 请设置为不接收该通道的DMA请求后，再进行设置;
+//     当该通道的一次副循环完成后，自动软件触发一次连接通道的DMA请求;
+//     若此次副循环完成后即完成主循环，将不会触发连接通道的DMA请求
+//==========================================================================
 void dma_set_minor_link(uint8 ch, bool enable, uint8 link_ch) {
 	//清除连接通道
 	REG_CLR_MASK(DMA_CITER_ELINKYES(ch), DMA_CITER_ELINKYES_LINKCH_MASK);
@@ -393,7 +406,20 @@ void dma_set_minor_link(uint8 ch, bool enable, uint8 link_ch) {
 	}
 }
 
-//当该通道的一次主循环完成后，自动软件触发一次连接通道的DMA请求
+//==========================================================================
+//函数名称: dma_set_major_link
+//函数返回: 无
+//参数说明: ch:DMA通道号:
+//            DMA_CHx，x为通道号;
+//         enable:是否使能主循环通道连接:
+//                true: 使能主循环通道连接;
+//                false:关闭主循环通道连接;
+//         link_ch:连接通道的通道号，该参数仅在enable为true时有效:
+//                 DMA_CHx，x为通道号;
+//功能概要: 设置是否使能主循环通道连接
+//备注: 请设置为不接收该通道的DMA请求后，再进行设置;
+//     当该通道的一次主循环完成后，自动软件触发一次连接通道的DMA请求
+//==========================================================================
 void dma_set_major_link(uint8 ch, bool enable, uint8 link_ch) {
 	//清除该通道完成标志
 	REG_SET_VAL(DMA_CDNE, DMA_CDNE_CDNE(ch));
@@ -409,6 +435,21 @@ void dma_set_major_link(uint8 ch, bool enable, uint8 link_ch) {
 	}
 }
 
+//==========================================================================
+//函数名称: dma_set_arbitration_mode
+//函数返回: 无
+//参数说明: arbitration_mode:仲裁模式:
+//                          DMA_ARBITRATION_MODE_FIXED:      固定优先级仲裁;
+//                          DMA_ARBITRATION_MODE_ROUND_ROBIN:轮询仲裁;
+//功能概要: 设置仲裁模式
+//备注: 默认为固定优先级仲裁;
+//
+//     固定优先级仲裁时，若同时有多个通道的DMA请求被触发，按照通道的优先级，
+//     先响应优先级最高的通道，0-15优先级从低到高，0为最低优先级，15为最高优先级;
+//
+//     轮询仲裁时，从15号通道至0通道依次查询通道是否有DMA请求，若有，则响应该请求，
+//     若无，则继续查询下一个通道，重复该过程
+//==========================================================================
 void dma_set_arbitration_mode(uint8 arbitration_mode) {
 	if (arbitration_mode == DMA_ARBITRATION_MODE_ROUND_ROBIN) {
 		//轮询仲裁
@@ -419,6 +460,13 @@ void dma_set_arbitration_mode(uint8 arbitration_mode) {
 	}
 }
 
+//==========================================================================
+//函数名称: dma_get_priority
+//函数返回: 该通道的优先级，取值范围为[0,15]
+//参数说明: ch:DMA通道号:
+//            DMA_CHx，x为通道号;
+//功能概要: 获取该通道的优先级
+//==========================================================================
 uint8 dma_get_priority(uint8 ch) {
 	//获取该通道的优先级
 	return REG_GET_MASK(*dchpri_table[ch], DMA_DCHPRI0_CHPRI_MASK)
