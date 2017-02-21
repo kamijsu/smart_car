@@ -25,17 +25,9 @@ void UART1_RX_TX_IRQHandler() {
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
 
-			switch (ch) {
-			case 'e':
-				gpio_enable_dma(COM_PORTB | 0, GPIO_DMA_RISING_EDGE);
-				uart_printf(1, "可以发起DMA请求！\r\n");
-				break;
-			case 'd':
-				gpio_disable_dma(COM_PORTB | 0);
-				uart_printf(1, "不可以发起DMA请求！\r\n");
-				break;
+			for (uint32 i = 0; i < sizeof(raw_img); i++){
+				uart_printf(1, "%X ", raw_img[i]);
 			}
-
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
 //			uart_send1(UART_MOD1, ch);
@@ -47,13 +39,26 @@ void UART1_RX_TX_IRQHandler() {
 	ENABLE_INTERRUPTS;
 }
 
+void PORTC_IRQHandler() {
+	camera_start_collecting(raw_img);
+	DISABLE_INTERRUPTS;
+	if (camera_get_vsync_int()) {
+
+		oled_printf(0, 4, "start!");
+		camera_clear_vsync_int();
+		camera_disable_vsync_int();
+
+	}
+	ENABLE_INTERRUPTS;
+}
+
 void DMA0_IRQHandler() {
 	DISABLE_INTERRUPTS;
 
-	if (dma_get_major_int(0)) {
-		dma_clear_major_int(0);
-		uart_printf(1, "DMA0主循环完成！\r\n");
-
+	if (camera_get_collect_done_int()) {
+		camera_clear_collect_done_int();
+		oled_printf(0, 2, "done!");
+		vcan_sendimg((void*) raw_img, sizeof(raw_img));
 	}
 
 	ENABLE_INTERRUPTS;

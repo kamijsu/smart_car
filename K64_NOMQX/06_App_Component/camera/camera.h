@@ -59,4 +59,24 @@
 
 void camera_init(uint8* raw_img);
 
+void camera_enable_vsync_int();
+
+void camera_disable_vsync_int();
+
+bool camera_get_vsync_int();
+
+void camera_clear_vsync_int();
+
+void camera_start_collecting(uint8* raw_img);
+
+void camera_enable_collect_done_int();
+
+void camera_disable_collect_done_int();
+
+bool camera_get_collect_done_int();
+
+void camera_clear_collect_done_int();
+
+void vcan_sendimg(void *imgaddr, uint32_t imgsize);
+
 #endif

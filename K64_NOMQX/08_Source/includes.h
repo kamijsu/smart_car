@@ -58,6 +58,8 @@
 #define G_VAR_PREFIX extern volatile	//其他文件中使用全局变量自动加“extern”前缀
 #endif
 
+G_VAR_PREFIX uint8 raw_img[CAMERA_RAW_IMG_BYTES];
+
 //定义全局变量
 //时间标志参数
 G_VAR_PREFIX TimeFlag time0_flag;

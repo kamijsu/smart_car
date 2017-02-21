@@ -9,12 +9,12 @@ int main(void) {
 	//1. 声明主函数使用的变量
 	uint32 start, end;
 	uint32 i, j;
-	uint8 raw_img[CAMERA_RAW_IMG_BYTES];
+
 
 	uint8 src1[10240];
 	uint8 src[10240];
-	for(i=0;i<10240;i++){
-		src[i] = i%256;
+	for (i = 0; i < 10240; i++) {
+		src[i] = i % 256;
 	}
 	uint8 dest1[10240];
 	uint8 dest[10240];
@@ -36,6 +36,7 @@ int main(void) {
 
 	oled_init();
 	custom_oled_display_init();
+
 	camera_init(raw_img);
 
 	//4. 给有关变量赋初值
@@ -45,6 +46,8 @@ int main(void) {
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
+	camera_enable_collect_done_int();
+	camera_enable_vsync_int();
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -61,20 +64,8 @@ int main(void) {
 
 			start = pit_get_time_us(1);
 
-			custom_oled_update_temp();
-
-			uint8 reg = 0x0B;
-			uint8 val = 0xFE;
-
-
-//			i2c_master_send(CAMERA_I2C_MOD, I2C_ADDR_MODE_BITS_7,
-//					CAMERA_ADDR, &reg, 1);
-//
-//			i2c_master_re(CAMERA_I2C_MOD, I2C_ADDR_MODE_BITS_7,
-//					CAMERA_ADDR, &val, 1);
-
-			reg = camera_sccb_read(0x0B);
-			uart_printf(1,"%X\r\n",reg);
+//			custom_oled_update_temp();
+			oled_printf(0,6,"%X",DMA_ES);
 
 			end = pit_get_time_us(1);
 //			uart_printf(UART_USE, "消耗时间：%dus\r\n", end - start);
