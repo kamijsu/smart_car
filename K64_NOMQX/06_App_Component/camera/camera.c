@@ -214,11 +214,14 @@ static const uint8 camera_reg_init_table[][2] = { { CAMERA_REG_COM7, 0x80 }, //¸
 
 };
 
+//ĞèÒªÅäÖÃµÄ¼Ä´æÆ÷ÊıÁ¿
+static const uint8 reg_num = sizeof(camera_reg_init_table)
+		/ sizeof(camera_reg_init_table[0]);
+
 static void camera_sccb_write(uint8* reg_val) {
 	//·¢ËÍ¼Ä´æÆ÷µØÖ·-¼Ä´æÆ÷Öµ¶ÔÖ±µ½³É¹¦
 	while (i2c_master_send(CAMERA_I2C_MOD, I2C_ADDR_MODE_BITS_7,
 	CAMERA_ADDR, reg_val, 2) != I2CMasterSuccess) {
-		pit_delay_ms(1,1);
 	}
 }
 
@@ -238,10 +241,6 @@ static uint8 camera_sccb_read(uint8 reg) {
 }
 
 void camera_init(uint8* raw_img) {
-	//ĞèÒªÅäÖÃµÄ¼Ä´æÆ÷ÊıÁ¿
-	static const uint8 reg_num = sizeof(camera_reg_init_table)
-			/ sizeof(camera_reg_init_table[0]);
-
 	uint8 i;	//ÓÎ±ê
 
 	//³õÊ¼»¯Êı¾İĞÅºÅÒı½Å
@@ -262,7 +261,6 @@ void camera_init(uint8* raw_img) {
 	//³õÊ¼»¯Ê±ÖÓĞÅºÅÒı½Å
 	gpio_init(CAMERA_PCLK, GPIO_DIR_INPUT, GPIO_LEVEL_LOW);
 
-
 	//³õÊ¼»¯DMAÍ¨µÀ
 	dma_init(CAMERA_DMA_CH,			//ÉèÖÃÍ¨µÀ
 			CAMERA_DMA_REQ,			//ÉèÖÃÇëÇóÔ´
@@ -279,43 +277,26 @@ void camera_init(uint8* raw_img) {
 			1,						//Ä¿±êµØÖ·±»Ğ´ÈëºóÆ«ÒÆ1¸ö×Ö½Ú
 			DMA_MODULO_DISABLED,	//½ûÓÃÄ£Êı¹¦ÄÜ
 			-CAMERA_RAW_IMG_BYTES,	//Ö÷Ñ­»·Íê³ÉºóÄ¿±êµØÖ·»Ö¸´Îª³õÊ¼Ä¿±êµØÖ·
-			true);					//Ê¹ÄÜÖ÷Ñ­»·Íê³Éºó×Ô¶¯²»½ÓÊÕDMAÇëÇó
+			false);					//¹Ø±ÕÖ÷Ñ­»·Íê³Éºó×Ô¶¯²»½ÓÊÕDMAÇëÇó
+	//½ÓÊÕ¸ÃÍ¨µÀµÄDMAÇëÇó
 	dma_enable_req(CAMERA_DMA_CH);
+
 	//³õÊ¼»¯I2CÄ£¿é
 	i2c_init(CAMERA_I2C_MOD, CAMERA_I2C_MUL, CAMERA_I2C_ICR,
 	CAMERA_I2C_ADDR_MODE, CAMERA_I2C_ADDR, CAMERA_I2C_ENABLE_GENERAL_CALL_ADDR);
 
-//	camera_sccb_write((uint8*) camera_reg_init_table[0]);
-//	pit_delay_ms(1,1);
-//
-//	for(i=1;i<reg_num;i++){
-//			uint8 val = camera_sccb_read(camera_reg_init_table[i][0]);
-//	//		pit_delay_ms(1,1);
-//	//		if(val != camera_reg_init_table[i][1]){
-//				uart_printf(1,"Òì³££¬¼Ä´æÆ÷µØÖ·:%X£¬ÀíÂÛÖµ:%X£¬Êµ¼ÊÖµ:%X\r\n",camera_reg_init_table[i][0],camera_reg_init_table[i][1],val);
-//	//		}
-//		}
-
-//	pit_delay_ms(1,10);
+	//¸´Î»¸÷¼Ä´æÆ÷Öµ
+	camera_sccb_write((uint8*) camera_reg_init_table[0]);
 	//ÅäÖÃ¸÷¼Ä´æÆ÷Öµ
-	for (i = 0; i < reg_num; i++) {
+	for (i = 1; i < reg_num; i++) {
+		//¸ü¸Ä¼Ä´æÆ÷ÖµĞè¼ä¸ôÖÁÉÙ1.3¦Ìs
+		CAMERA_DELAY_US(1000);
 		camera_sccb_write((uint8*) camera_reg_init_table[i]);
-		pit_delay_ms(1,1);
 	}
-
-//	uart_printf(1,"\r\n");
-//
-//	for(i=1;i<reg_num;i++){
-//		uint8 val = camera_sccb_read(camera_reg_init_table[i][0]);
-////		pit_delay_ms(1,1);
-////		if(val != camera_reg_init_table[i][1]){
-//			uart_printf(1,"Òì³££¬¼Ä´æÆ÷µØÖ·:%X£¬ÀíÂÛÖµ:%X£¬Êµ¼ÊÖµ:%X\r\n",camera_reg_init_table[i][0],camera_reg_init_table[i][1],val);
-////		}
-//	}
 }
 
 void camera_enable_vsync_int() {
-	//ÉÏÉıÑØ´¥·¢³¡ÖĞ¶Ï
+	//³¡ÖĞ¶ÏĞÅºÅÏÂ½µÑØ´¥·¢³¡ÖĞ¶Ï
 	gpio_enable_int(CAMERA_VSYNC, GPIO_INT_FALLING_EDGE);
 }
 
@@ -331,14 +312,13 @@ void camera_clear_vsync_int() {
 	gpio_clear_int(CAMERA_VSYNC);
 }
 
-void camera_start_collecting(uint8* raw_img) {
-//	for(uint8 i=0;i<50;i++){
-//	gpio_clear_int(CAMERA_PCLK);
-//	}
-//	dma_enable_req(CAMERA_DMA_CH);
-//	dma_set_dest_addr(CAMERA_DMA_CH,(uint32) raw_img);
+void camera_start_collecting() {
 	//Ê±ÖÓĞÅºÅÏÂ½µÑØ´¥·¢DMAÇëÇó
-		gpio_enable_dma(CAMERA_PCLK, GPIO_DMA_FALLING_EDGE);
+	gpio_enable_dma(CAMERA_PCLK, GPIO_DMA_FALLING_EDGE);
+}
+
+void camera_stop_collecting() {
+	gpio_disable_dma(CAMERA_PCLK);
 }
 
 void camera_enable_collect_done_int() {
@@ -349,23 +329,18 @@ void camera_disable_collect_done_int() {
 	dma_disable_major_int(CAMERA_DMA_CH);
 }
 
-bool camera_get_collect_done_int() {
-	return dma_get_major_int(CAMERA_DMA_CH);
-}
-
 void camera_clear_collect_done_int() {
 	dma_clear_major_int(CAMERA_DMA_CH);
 }
 
-void vcan_sendimg(void *imgaddr, uint32_t imgsize)
-{
+void vcan_sendimg(void *imgaddr, uint32_t imgsize) {
 #define CMD_IMG     1
-    uint8_t cmdf[2] = {CMD_IMG, ~CMD_IMG};    //É½ÍâÉÏÎ»»ú Ê¹ÓÃµÄÃüÁî
-    uint8_t cmdr[2] = {~CMD_IMG, CMD_IMG};    //É½ÍâÉÏÎ»»ú Ê¹ÓÃµÄÃüÁî
+	uint8_t cmdf[2] = { CMD_IMG, ~CMD_IMG };    //É½ÍâÉÏÎ»»ú Ê¹ÓÃµÄÃüÁî
+	uint8_t cmdr[2] = { ~CMD_IMG, CMD_IMG };    //É½ÍâÉÏÎ»»ú Ê¹ÓÃµÄÃüÁî
 
-    uart_sendN(1, cmdf, sizeof(cmdf));    //ÏÈ·¢ËÍÃüÁî
+	uart_sendN(1, cmdf, sizeof(cmdf));    //ÏÈ·¢ËÍÃüÁî
 
-    uart_sendN(1, (uint8_t *)imgaddr, imgsize); //ÔÙ·¢ËÍÍ¼Ïñ
+	uart_sendN(1, (uint8_t *) imgaddr, imgsize); //ÔÙ·¢ËÍÍ¼Ïñ
 
-    uart_sendN(1, cmdr, sizeof(cmdr));    //ÏÈ·¢ËÍÃüÁî
+	uart_sendN(1, cmdr, sizeof(cmdr));    //ÏÈ·¢ËÍÃüÁî
 }

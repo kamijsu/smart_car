@@ -39,6 +39,27 @@ int main(void) {
 
 	camera_init(raw_img);
 
+//	dma_init(1,			//设置通道
+//				DMA_REQ_PORTB,			//设置请求源
+//				DMA_MODE_NORMAL,		//设置为正常模式
+//				1,						//每次副循环传输1个字节
+//				1,	//主循环迭代次数等于原始图像字节数
+//				(uint32)src,	//设置源地址
+//				DMA_DATA_WIDTH_BYTE_1,	//每次从源地址读取1个字节
+//				0,						//源地址被读取后不偏移
+//				DMA_MODULO_DISABLED,	//禁用模数功能
+//				0,						//主循环完成后源地址不偏移
+//				(uint32) dest,		//设置目标地址
+//				DMA_DATA_WIDTH_BYTE_1,	//每次向目标地址写入1个字节
+//				0,						//目标地址被写入后偏移1个字节
+//				DMA_MODULO_DISABLED,	//禁用模数功能
+//				0,	//主循环完成后目标地址恢复为初始目标地址
+//				false);					//使能主循环完成后自动不接收DMA请求
+//	gpio_init(COM_PORTB|0,GPIO_DIR_INPUT,GPIO_LEVEL_LOW);
+//	gpio_enable_dma(COM_PORTB|0,GPIO_DMA_RISING_EDGE);
+
+//	gpio_init(COM_PORTB|0,GPIO_DIR_OUTPUT,GPIO_LEVEL_LOW);
+
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
@@ -56,6 +77,7 @@ int main(void) {
 	//主循环开始==================================================================
 	for (;;) {
 		if (time0_flag.f_50ms) {
+			camera_enable_vsync_int();
 			time0_flag.f_50ms = 0;
 		}
 		if (time0_flag.f_1s) {
@@ -65,7 +87,9 @@ int main(void) {
 			start = pit_get_time_us(1);
 
 //			custom_oled_update_temp();
-			oled_printf(0,6,"%X",DMA_ES);
+//			oled_printf(0,4,"%X",gpio_get_int(COM_PORTB|0));
+//			oled_printf(0,6,"%X",DMA_HRS);
+
 
 			end = pit_get_time_us(1);
 //			uart_printf(UART_USE, "消耗时间：%dus\r\n", end - start);

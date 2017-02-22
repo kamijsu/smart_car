@@ -10,6 +10,10 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "dma.h"
+#include "pit.h"
+
+//需要提供一个可用的延时函数
+#define CAMERA_DELAY_US(us)		pit_delay_us(PIT_CH1, us)
 
 //定义摄像头的数据信号引脚，D0-D7必须为连续的8个引脚，且D0的引脚号必须为8的倍数，
 //这样才可以使用DMA采集图像数据，数据信号引脚决定了DMA请求源和源地址
@@ -67,7 +71,9 @@ bool camera_get_vsync_int();
 
 void camera_clear_vsync_int();
 
-void camera_start_collecting(uint8* raw_img);
+void camera_start_collecting();
+
+void camera_stop_collecting();
 
 void camera_enable_collect_done_int();
 

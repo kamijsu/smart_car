@@ -361,8 +361,9 @@ void gpio_enable_dma(uint8 port_pin, uint8 dma_type) {
 
 	//清除引脚DMA类型
 	REG_CLR_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_IRQC_MASK);
-	//设置引脚DMA类型
-	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin), PORT_PCR_IRQC(dma_type));
+	//设置引脚DMA类型，并清除已有的DMA请求
+	REG_SET_MASK(PORT_PCR_REG(port_ptr,pin),
+			PORT_PCR_IRQC(dma_type)|PORT_PCR_ISF_MASK);
 }
 
 //==========================================================================

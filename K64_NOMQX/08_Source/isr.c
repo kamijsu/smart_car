@@ -25,9 +25,17 @@ void UART1_RX_TX_IRQHandler() {
 	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
 		if (!err) {
 
-			for (uint32 i = 0; i < sizeof(raw_img); i++){
-				uart_printf(1, "%X ", raw_img[i]);
+			if (ch == 'e') {
+				dma_enable_req(1);
+				uart_printf(1, "可以接收请求！\r\n");
+			} else if (ch == 'd') {
+				dma_disable_req(1);
+				uart_printf(1, "不可以接收请求！\r\n");
 			}
+
+//			for (uint32 i = 0; i < sizeof(raw_img); i++){
+//				uart_printf(1, "%X ", raw_img[i]);
+//			}
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
 //			uart_send1(UART_MOD1, ch);
@@ -40,10 +48,9 @@ void UART1_RX_TX_IRQHandler() {
 }
 
 void PORTC_IRQHandler() {
-	camera_start_collecting(raw_img);
 	DISABLE_INTERRUPTS;
 	if (camera_get_vsync_int()) {
-
+		camera_start_collecting();
 		oled_printf(0, 4, "start!");
 		camera_clear_vsync_int();
 		camera_disable_vsync_int();
@@ -54,12 +61,10 @@ void PORTC_IRQHandler() {
 
 void DMA0_IRQHandler() {
 	DISABLE_INTERRUPTS;
-
-	if (camera_get_collect_done_int()) {
-		camera_clear_collect_done_int();
-		oled_printf(0, 2, "done!");
-		vcan_sendimg((void*) raw_img, sizeof(raw_img));
-	}
+	camera_stop_collecting();
+	camera_clear_collect_done_int();
+	oled_printf(0, 2, "done!");
+	vcan_sendimg((void*) raw_img, sizeof(raw_img));
 
 	ENABLE_INTERRUPTS;
 }
