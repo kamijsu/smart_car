@@ -47,6 +47,7 @@
 #include "i2c.h"
 #include "dma.h"
 #include "camera.h"
+#include "vcan.h"
 
 //防止全局变量重复声明的前缀处理方法，并且添加volatile前缀，
 //因为全局变量会被多个.c文件使用，若不使用volatile前缀，则不会每次去变量所在地址读值，
@@ -58,7 +59,7 @@
 #define G_VAR_PREFIX extern volatile	//其他文件中使用全局变量自动加“extern”前缀
 #endif
 
-G_VAR_PREFIX uint8 raw_img[CAMERA_RAW_IMG_BYTES];
+G_VAR_PREFIX bool img_done;
 
 //定义全局变量
 //时间标志参数

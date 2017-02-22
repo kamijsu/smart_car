@@ -51,10 +51,8 @@ void PORTC_IRQHandler() {
 	DISABLE_INTERRUPTS;
 	if (camera_get_vsync_int()) {
 		camera_start_collecting();
-		oled_printf(0, 4, "start!");
-		camera_clear_vsync_int();
 		camera_disable_vsync_int();
-
+		camera_clear_vsync_int();
 	}
 	ENABLE_INTERRUPTS;
 }
@@ -63,9 +61,7 @@ void DMA0_IRQHandler() {
 	DISABLE_INTERRUPTS;
 	camera_stop_collecting();
 	camera_clear_collect_done_int();
-	oled_printf(0, 2, "done!");
-	vcan_sendimg((void*) raw_img, sizeof(raw_img));
-
+	img_done = true;
 	ENABLE_INTERRUPTS;
 }
 
