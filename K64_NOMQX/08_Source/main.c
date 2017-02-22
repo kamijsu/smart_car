@@ -36,7 +36,7 @@ int main(void) {
 	temp_sensor_init();
 
 	oled_init();
-	custom_oled_display_init();
+//	custom_oled_display_init();
 
 	camera_init(raw_img);
 
@@ -60,19 +60,11 @@ int main(void) {
 		if (raw_img_done && time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 
-//			vcan_send_raw_img(raw_img);
-//			pit_delay_ms(1,1000);
 			camera_extract_raw_img(raw_img, (uint8*) img);
 
+			custom_oled_show_img(img);
 
-			start = pit_get_time_us(1);
 			vcan_send_raw_img(raw_img);
-//			vcan_send_img((uint8*)img);
-
-			end = pit_get_time_us(1);
-
-
-			oled_printf(0,2, "%10dus", end - start);
 
 			raw_img_done = false;
 			camera_enable_vsync_int();
@@ -84,8 +76,6 @@ int main(void) {
 			start = pit_get_time_us(1);
 
 //			custom_oled_update_temp();
-//			oled_printf(0,4,"%X",gpio_get_int(COM_PORTB|0));
-//			oled_printf(0,6,"%X",DMA_HRS);
 
 			end = pit_get_time_us(1);
 //			uart_printf(UART_USE, "ÏûºÄÊ±¼ä£º%dus\r\n", end - start);
