@@ -443,6 +443,7 @@ void camera_clear_collect_done_int() {
 void camera_extract_raw_img(uint8* raw_img, uint8* img) {
 	uint32 num;		//原始图像字节数
 	uint8 black_val, white_val;	//黑白像素点值
+	uint8 temp;		//临时值
 
 	num = CAMERA_RAW_IMG_BYTES;
 	black_val = CAMERA_EXTRACT_BLACK_VAL;
@@ -450,13 +451,14 @@ void camera_extract_raw_img(uint8* raw_img, uint8* img) {
 
 	//解压原始图像，原始图像1表示黑，0表示白
 	while (num--) {
-		*img++ = *raw_img & 0x80 ? black_val : white_val;
-		*img++ = *raw_img & 0x40 ? black_val : white_val;
-		*img++ = *raw_img & 0x20 ? black_val : white_val;
-		*img++ = *raw_img & 0x10 ? black_val : white_val;
-		*img++ = *raw_img & 0x08 ? black_val : white_val;
-		*img++ = *raw_img & 0x04 ? black_val : white_val;
-		*img++ = *raw_img & 0x02 ? black_val : white_val;
-		*img++ = *raw_img++ & 0x01 ? black_val : white_val;
+		temp = *raw_img++;
+		*img++ = temp & 0x80 ? black_val : white_val;
+		*img++ = temp & 0x40 ? black_val : white_val;
+		*img++ = temp & 0x20 ? black_val : white_val;
+		*img++ = temp & 0x10 ? black_val : white_val;
+		*img++ = temp & 0x08 ? black_val : white_val;
+		*img++ = temp & 0x04 ? black_val : white_val;
+		*img++ = temp & 0x02 ? black_val : white_val;
+		*img++ = temp & 0x01 ? black_val : white_val;
 	}
 }

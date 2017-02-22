@@ -43,7 +43,7 @@ int main(void) {
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
-	img_done = false;
+	raw_img_done = false;
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
@@ -57,15 +57,24 @@ int main(void) {
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-		if (img_done && time0_flag.f_50ms) {
+		if (raw_img_done && time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 
 //			vcan_send_raw_img(raw_img);
 //			pit_delay_ms(1,1000);
-			camera_extract_raw_img(raw_img,(uint8*)img);
-			vcan_send_img((uint8*)img);
+			camera_extract_raw_img(raw_img, (uint8*) img);
 
-			img_done = false;
+
+			start = pit_get_time_us(1);
+			vcan_send_raw_img(raw_img);
+//			vcan_send_img((uint8*)img);
+
+			end = pit_get_time_us(1);
+
+
+			oled_printf(0,2, "%10dus", end - start);
+
+			raw_img_done = false;
 			camera_enable_vsync_int();
 		}
 		if (time0_flag.f_1s) {

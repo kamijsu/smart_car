@@ -61,7 +61,7 @@ void DMA0_IRQHandler() {
 	DISABLE_INTERRUPTS;
 	camera_stop_collecting();
 	camera_clear_collect_done_int();
-	img_done = true;
+	raw_img_done = true;
 	ENABLE_INTERRUPTS;
 }
 

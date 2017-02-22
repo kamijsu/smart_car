@@ -59,7 +59,7 @@
 #define G_VAR_PREFIX extern volatile	//其他文件中使用全局变量自动加“extern”前缀
 #endif
 
-G_VAR_PREFIX bool img_done;
+G_VAR_PREFIX bool raw_img_done;
 
 //定义全局变量
 //时间标志参数
