@@ -1,12 +1,12 @@
-//è¯´æ˜è§å·¥ç¨‹æ–‡ä»¶å¤¹ä¸‹çš„Docæ–‡ä»¶å¤¹å†…Readme.txtæ–‡ä»¶
+//ËµÃ÷¼û¹¤³ÌÎÄ¼ş¼ĞÏÂµÄDocÎÄ¼ş¼ĞÄÚReadme.txtÎÄ¼ş
 //============================================================================
 
-#define GLOBLE_VAR  //åªéœ€åœ¨main.cä¸­å®šä¹‰ä¸€æ¬¡ï¼Œç”¨æ¥é˜²æ­¢å…¨å±€å˜é‡çš„é‡å¤å®šä¹‰
+#define GLOBLE_VAR  //Ö»ĞèÔÚmain.cÖĞ¶¨ÒåÒ»´Î£¬ÓÃÀ´·ÀÖ¹È«¾Ö±äÁ¿µÄÖØ¸´¶¨Òå
 
-#include "includes.h"   //åŒ…å«æ€»å¤´æ–‡ä»¶
+#include "includes.h"   //°üº¬×ÜÍ·ÎÄ¼ş
 
 int main(void) {
-	//1. å£°æ˜ä¸»å‡½æ•°ä½¿ç”¨çš„å˜é‡
+	//1. ÉùÃ÷Ö÷º¯ÊıÊ¹ÓÃµÄ±äÁ¿
 	uint32 start, end;
 	uint32 i, j;
 	uint8 raw_img[CAMERA_RAW_IMG_BYTES];
@@ -21,15 +21,15 @@ int main(void) {
 	uint8 dest[10240];
 	memset(dest, 0xFF, 10240);
 
-	//2. å…³æ€»ä¸­æ–­
+	//2. ¹Ø×ÜÖĞ¶Ï
 	DISABLE_INTERRUPTS;
 
-	//3. åˆå§‹åŒ–å¤–è®¾æ¨¡å—
-	light_init(LIGHT_BLUE, LIGHT_ON); //è“ç¯åˆå§‹åŒ–
+	//3. ³õÊ¼»¯ÍâÉèÄ£¿é
+	light_init(LIGHT_BLUE, LIGHT_ON); //À¶µÆ³õÊ¼»¯
 	uart_init(UART_USE, 115200, UART_PARITY_DISABLED, UART_STOP_BIT_1,
-	UART_BIT_ORDER_LSB); //uart1åˆå§‹åŒ–
+	UART_BIT_ORDER_LSB); //uart1³õÊ¼»¯
 
-	pit_init(PIT_CH0, 5);  //pit0åˆå§‹åŒ–ï¼Œå‘¨æœŸ5ms
+	pit_init(PIT_CH0, 5);  //pit0³õÊ¼»¯£¬ÖÜÆÚ5ms
 	pit_init(PIT_CH1, 89478);
 	rng_init();
 
@@ -37,34 +37,27 @@ int main(void) {
 
 	oled_init();
 
-	menu_oled_display();
+//	menu_oled_display();
 //	custom_oled_display_init();
-
-	dma_init(DMA_CH0, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 4, 7, (uint32) src,
-	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -28, (uint32) dest,
-	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -28, false);
-
-//	custom_oled_display_init();
-
 
 	camera_init(raw_img);
 
-	//4. ç»™æœ‰å…³å˜é‡èµ‹åˆå€¼
+	//4. ¸øÓĞ¹Ø±äÁ¿¸³³õÖµ
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
 	raw_img_done = false;
 
-	//5. ä½¿èƒ½æ¨¡å—ä¸­æ–­
-	pit_enable_int(PIT_CH0);   		//ä½¿èƒ½pitä¸­æ–­
-	uart_enable_re_int(UART_USE);   //ä½¿èƒ½uart1æ¥æ”¶ä¸­æ–­
+	//5. Ê¹ÄÜÄ£¿éÖĞ¶Ï
+	pit_enable_int(PIT_CH0);   		//Ê¹ÄÜpitÖĞ¶Ï
+	uart_enable_re_int(UART_USE);   //Ê¹ÄÜuart1½ÓÊÕÖĞ¶Ï
 	camera_enable_collect_done_int();
 	camera_enable_vsync_int();
 
-	//6. å¼€æ€»ä¸­æ–­
+	//6. ¿ª×ÜÖĞ¶Ï
 	ENABLE_INTERRUPTS;
 
-	//è¿›å…¥ä¸»å¾ªç¯
-	//ä¸»å¾ªç¯å¼€å§‹==================================================================
+	//½øÈëÖ÷Ñ­»·
+	//Ö÷Ñ­»·¿ªÊ¼==================================================================
 	for (;;) {
 		if (raw_img_done && time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
@@ -73,7 +66,7 @@ int main(void) {
 
 			custom_oled_show_img(img);
 
-			vcan_send_raw_img(raw_img);
+//			vcan_send_raw_img(raw_img);
 
 			raw_img_done = false;
 			camera_enable_vsync_int();
@@ -86,25 +79,11 @@ int main(void) {
 
 //			custom_oled_update_temp();
 
-//			uart_printf(1, "ä¸»å¾ªç¯å®Œæˆä¸­æ–­:%d\r\n", dma_get_major_int(0));
-
-//			memset(src, 0xFF, 1024);
-
-//			uart_printf(1, "é”™è¯¯:%X\r\n", DMA_ERR);
-//			uart_printf(1, "é€šé“0çŠ¶æ€æ§åˆ¶å¯„å­˜å™¨:%X\r\n", DMA_CSR(0));
-
-			for (i = 0; i < 1024; i++) {
-				if (dest[i] != 0xFF) {
-//					uart_printf(1, "ç›®æ ‡åœ°å€ç¬¬%2dä¸ªå­—èŠ‚:%X\r\n", i, dest[i]);
-				}
-			}
-
-
 			end = pit_get_time_us(1);
-//			uart_printf(UART_USE, "æ¶ˆè€—æ—¶é—´ï¼š%dus\r\n", end - start);
+//			uart_printf(UART_USE, "ÏûºÄÊ±¼ä£º%dus\r\n", end - start);
 
 		}
 
-	} //ä¸»å¾ªç¯end_for
-//ä¸»å¾ªç¯ç»“æŸ==================================================================
+	} //Ö÷Ñ­»·end_for
+//Ö÷Ñ­»·½áÊø==================================================================
 }

@@ -1,17 +1,17 @@
 //===========================================================================
-//æ–‡ä»¶åç§°ï¼šisr.c
-//åŠŸèƒ½æ¦‚è¦ï¼šè‡ªå®šä¹‰ä¸­æ–­æœåŠ¡ä¾‹ç¨‹æºæ–‡ä»¶
-//ç‰ˆæƒæ‰€æœ‰ï¼šè‹å·å¤§å­¦é£æ€å¡å°”åµŒå…¥å¼ä¸­å¿ƒ(sumcu.suda.edu.cn)
-//ç‰ˆæœ¬æ›´æ–°ï¼š2013-05-03    V1.0,2014-05-10    V2.3(WYH) 
+//ÎÄ¼şÃû³Æ£ºisr.c
+//¹¦ÄÜ¸ÅÒª£º×Ô¶¨ÒåÖĞ¶Ï·şÎñÀı³ÌÔ´ÎÄ¼ş
+//°æÈ¨ËùÓĞ£ºËÕÖİ´óÑ§·ÉË¼¿¨¶ûÇ¶ÈëÊ½ÖĞĞÄ(sumcu.suda.edu.cn)
+//°æ±¾¸üĞÂ£º2013-05-03    V1.0,2014-05-10    V2.3(WYH)
 //===========================================================================
 
 #include "includes.h"
 
 //==========================================================================
-//å‡½æ•°åç§°ï¼šUART1_RX_TX_IRQHandler
-//å‚æ•°è¯´æ˜ï¼šæ— 
-//å‡½æ•°è¿”å›ï¼šæ— 
-//åŠŸèƒ½æ¦‚è¦ï¼šUART1ä¸­æ–­æœåŠ¡å‡½æ•°
+//º¯ÊıÃû³Æ£ºUART1_RX_TX_IRQHandler
+//²ÎÊıËµÃ÷£ºÎŞ
+//º¯Êı·µ»Ø£ºÎŞ
+//¹¦ÄÜ¸ÅÒª£ºUART1ÖĞ¶Ï·şÎñº¯Êı
 //==========================================================================
 void UART1_RX_TX_IRQHandler() {
 	FrameFramingResult res;
@@ -79,7 +79,7 @@ void DMA1_IRQHandler() {
 
 	if (dma_get_major_int(1)) {
 		dma_clear_major_int(1);
-		uart_printf(1, "DMA1ä¸»å¾ªç¯å®Œæˆï¼\r\n");
+		uart_printf(1, "DMA1Ö÷Ñ­»·Íê³É£¡\r\n");
 
 	}
 
@@ -91,7 +91,7 @@ void DMA2_IRQHandler() {
 
 	if (dma_get_major_int(2)) {
 		dma_clear_major_int(2);
-		uart_printf(1, "DMA2ä¸»å¾ªç¯å®Œæˆï¼\r\n");
+		uart_printf(1, "DMA2Ö÷Ñ­»·Íê³É£¡\r\n");
 
 	}
 
@@ -102,15 +102,15 @@ void DAC0_IRQHandler() {
 	DISABLE_INTERRUPTS;
 	if (dac_get_index_top_int(0)) {
 		dac_clear_index_top_int(0);
-		uart_printf(1, "ç´¢å¼•åˆ°è¾¾0\r\n");
+		uart_printf(1, "Ë÷Òıµ½´ï0\r\n");
 	}
 	if (dac_get_index_bottom_int(0)) {
 		dac_clear_index_bottom_int(0);
-		uart_printf(1, "ç´¢å¼•åˆ°è¾¾ä¸Šé™\r\n");
+		uart_printf(1, "Ë÷Òıµ½´ïÉÏÏŞ\r\n");
 	}
 	if (dac_get_watermark_int(0)) {
 		dac_clear_watermark_int(0);
-		uart_printf(1, "ç´¢å¼•åˆ°è¾¾æ°´å°\r\n");
+		uart_printf(1, "Ë÷Òıµ½´ïË®Ó¡\r\n");
 	}
 	ENABLE_INTERRUPTS;
 }
@@ -119,12 +119,12 @@ void SPI0_IRQHandler() {
 	uint32 data;
 	DISABLE_INTERRUPTS;
 	if (spi_slave_re(SPI_MOD0, &data)) {
-		uart_printf(1, "SPI0æ¥æ”¶åˆ°æ•°æ®:%X\r\n", data);
+		uart_printf(1, "SPI0½ÓÊÕµ½Êı¾İ:%X\r\n", data);
 		if (!spi_slave_send(SPI_MOD0, data)) {
-			uart_send_string(UART_USE, "SPIå‘é€å¤±è´¥!\r\n");
+			uart_send_string(UART_USE, "SPI·¢ËÍÊ§°Ü!\r\n");
 		}
 	} else {
-		uart_send_string(UART_USE, "SPIæ¥æ”¶å¤±è´¥!\r\n");
+		uart_send_string(UART_USE, "SPI½ÓÊÕÊ§°Ü!\r\n");
 	}
 	ENABLE_INTERRUPTS;
 }
@@ -138,22 +138,22 @@ void I2C0_IRQHandler() {
 	DISABLE_INTERRUPTS;
 
 	int_type = i2c_slave_handle_int(0);
-//	uart_printf(1,"ä»æœº0ä¸­æ–­ç±»å‹:%d\r\n",int_type);
+//	uart_printf(1,"´Ó»ú0ÖĞ¶ÏÀàĞÍ:%d\r\n",int_type);
 	switch (int_type) {
 	case I2CSlaveDataReInt:
 		data = i2c_slave_re(0);
-//		uart_printf(1, "ä»æœº0æ¥æ”¶æ•°æ®:%X\r\n", data);
+//		uart_printf(1, "´Ó»ú0½ÓÊÕÊı¾İ:%X\r\n", data);
 		break;
 	case I2CSlaveCalledSendInt:
 		time = 0;
 		i2c_slave_send(0, time * 0x11);
-		//		uart_printf(1, "å«æˆ‘å‘æ•°æ®äº†\r\n");
+		//		uart_printf(1, "½ĞÎÒ·¢Êı¾İÁË\r\n");
 		break;
 	case I2CSlaveDataSendInt:
 		time = (time + 1) % 16;
 //		data = rng_next_uint8();
 		i2c_slave_send(0, time * 0x11);
-		//		uart_printf(1, "ä»æœº2å‘é€æ•°æ®:%X\r\n", data);
+		//		uart_printf(1, "´Ó»ú2·¢ËÍÊı¾İ:%X\r\n", data);
 		break;
 	}
 
@@ -170,23 +170,23 @@ void I2C2_IRQHandler() {
 	DISABLE_INTERRUPTS;
 
 	int_type = i2c_slave_handle_int(2);
-//	uart_printf(1, "ä»æœº2ä¸­æ–­ç±»å‹:%d\r\n", int_type);
+//	uart_printf(1, "´Ó»ú2ÖĞ¶ÏÀàĞÍ:%d\r\n", int_type);
 	switch (int_type) {
 	case I2CSlaveCalledReInt:
 //		i2c_slave_set_ack(2,false);
 		break;
 	case I2CSlaveDataReInt:
 //		i2c_slave_set_ack(2,false);
-		//ä¸è¯»å–æ•°æ®ä¼šå¯¼è‡´æ€»çº¿è¢«å æ®ï¼Œä»è€Œæ— æ³•è¿›è¡Œä¸‹ä¸€æ¬¡ä¼ è¾“
+		//²»¶ÁÈ¡Êı¾İ»áµ¼ÖÂ×ÜÏß±»Õ¼¾İ£¬´Ó¶øÎŞ·¨½øĞĞÏÂÒ»´Î´«Êä
 		data = i2c_slave_re(2);
-		uart_printf(1, "ä»æœº2æ¥æ”¶æ•°æ®:%X\r\n", data);
+		uart_printf(1, "´Ó»ú2½ÓÊÕÊı¾İ:%X\r\n", data);
 		break;
 	case I2CSlaveCalledGeneralInt:
 		break;
 	case I2CSlaveCalledSendInt:
 		time = 0;
 		i2c_slave_send(2, time * 0x11);
-//		uart_printf(1, "å«æˆ‘å‘æ•°æ®äº†\r\n");
+//		uart_printf(1, "½ĞÎÒ·¢Êı¾İÁË\r\n");
 		break;
 	case I2CSlaveDataSendInt:
 		time = (time + 1) % 16;
@@ -206,19 +206,19 @@ void FTM0_IRQHandler() {
 }
 
 //==========================================================================
-//å‡½æ•°åç§°ï¼šPIT0_IRQHandler
-//å‚æ•°è¯´æ˜ï¼šæ— 
-//å‡½æ•°è¿”å›ï¼šæ— 
-//åŠŸèƒ½æ¦‚è¦ï¼šPIT0ä¸­æ–­æœåŠ¡å‡½æ•°
+//º¯ÊıÃû³Æ£ºPIT0_IRQHandler
+//²ÎÊıËµÃ÷£ºÎŞ
+//º¯Êı·µ»Ø£ºÎŞ
+//¹¦ÄÜ¸ÅÒª£ºPIT0ÖĞ¶Ï·şÎñº¯Êı
 //==========================================================================
 void PIT0_IRQHandler() {
 	static TimeCounter time_counter = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	DISABLE_INTERRUPTS; //å…³ä¸­æ–­
+	DISABLE_INTERRUPTS; //¹ØÖĞ¶Ï
 
-	pit_clear_int(PIT_CH0); //æ¸…æ ‡å¿—
+	pit_clear_int(PIT_CH0); //Çå±êÖ¾
 
-	//è¿™é‡Œä¸ºäº†æ•ˆç‡åœç”¨äº†æ²¡æœ‰ä½¿ç”¨çš„æ—¶é—´æ ‡å¿—
+	//ÕâÀïÎªÁËĞ§ÂÊÍ£ÓÃÁËÃ»ÓĞÊ¹ÓÃµÄÊ±¼ä±êÖ¾
 //	uart_send1(UART_MOD1,'s');
 	++time_counter.c_5ms;
 //	++time_counter.c_10ms;
@@ -236,80 +236,80 @@ void PIT0_IRQHandler() {
 	if (time_counter.c_5ms >= 1) {
 		time_counter.c_5ms = 0;
 		time0_flag.f_5ms = 1;
-	}       //5msç½®æ ‡å¿—
+	}       //5msÖÃ±êÖ¾
 //	if (time_counter.c_10ms >= 2)
 //	{
 //		time_counter.c_10ms = 0;
 //		time0_flag.f_10ms = 1;
-//	}       //10msç½®æ ‡å¿—
+//	}       //10msÖÃ±êÖ¾
 //	if (time_counter.c_15ms >= 3)
 //	{
 //		time_counter.c_15ms = 0;
 //		time0_flag.f_15ms = 1;
-//	}       //15msç½®æ ‡å¿—
+//	}       //15msÖÃ±êÖ¾
 	if (time_counter.c_20ms >= 4) {
 		time_counter.c_20ms = 0;
 		time0_flag.f_20ms = 1;
-	}       //20msç½®æ ‡å¿—
+	}       //20msÖÃ±êÖ¾
 	if (time_counter.c_50ms >= 10) {
 		time_counter.c_50ms = 0;
 		time0_flag.f_50ms = 1;
-	}       //50msç½®æ ‡å¿—
+	}       //50msÖÃ±êÖ¾
 //	if (time_counter.c_100ms >= 20)
 //	{
 //		time_counter.c_100ms = 0;
 //		time0_flag.f_100ms = 1;
-//	}       //100msç½®æ ‡å¿—
+//	}       //100msÖÃ±êÖ¾
 	if (time_counter.c_1s >= 200) {
 		time_counter.c_1s = 0;
 		time0_flag.f_1s = 1;
-	}       //1sç½®æ ‡å¿—
+	}       //1sÖÃ±êÖ¾
 	if (time_counter.c_5s >= 1000) {
 		time_counter.c_5s = 0;
 		time0_flag.f_5s = 1;
-	}       //5sç½®æ ‡å¿—
+	}       //5sÖÃ±êÖ¾
 	if (time_counter.c_10s >= 2000) {
 		time_counter.c_10s = 0;
 		time0_flag.f_10s = 1;
-	}       //10sç½®æ ‡å¿—
+	}       //10sÖÃ±êÖ¾
 	if (time_counter.c_15s >= 3000) {
 		time_counter.c_15s = 0;
 		time0_flag.f_15s = 1;
-	}       //15sç½®æ ‡å¿—
+	}       //15sÖÃ±êÖ¾
 //	if (time_counter.c_30s >= 6000)
 //	{
 //		time_counter.c_30s = 0;
 //		time0_flag.f_30s = 1;
-//	}       //30sç½®æ ‡å¿—
+//	}       //30sÖÃ±êÖ¾
 //	if (time_counter.c_1min >= 12000)
 //	{
 //		time_counter.c_1min = 0;
 //		time0_flag.f_1min = 1;
-//	}       //1minç½®æ ‡å¿—
+//	}       //1minÖÃ±êÖ¾
 
-	ENABLE_INTERRUPTS; //æ¢å¤åŸæ€»ä¸­æ–­è®¾ç½®æƒ…å†µ
+	ENABLE_INTERRUPTS; //»Ö¸´Ô­×ÜÖĞ¶ÏÉèÖÃÇé¿ö
 }
 
 void PIT2_IRQHandler() {
-	pit_clear_int(PIT_CH2); //æ¸…æ ‡å¿—
+	pit_clear_int(PIT_CH2); //Çå±êÖ¾
 }
 
 //============================================================================
-//å‡½æ•°åç§°ï¼šPORTD_IRQHandler
-//å‡½æ•°å‚æ•°ï¼š
-//å‡½æ•°è¿”å›ï¼šæ— 
-//åŠŸèƒ½æ¦‚è¦ï¼šPORTDç«¯å£ä¸­æ–­æœåŠ¡å‡½æ•°
+//º¯ÊıÃû³Æ£ºPORTD_IRQHandler
+//º¯Êı²ÎÊı£º
+//º¯Êı·µ»Ø£ºÎŞ
+//¹¦ÄÜ¸ÅÒª£ºPORTD¶Ë¿ÚÖĞ¶Ï·şÎñº¯Êı
 //============================================================================
 void PORTD_IRQHandler() {
-	uint8_t n;    //å¼•è„šå·
+	uint8_t n;    //Òı½ÅºÅ
 
-	DISABLE_INTERRUPTS; //å…³ä¸­æ–­
+	DISABLE_INTERRUPTS; //¹ØÖĞ¶Ï
 
 	if (reed_switch_get_int()) {
 		reed_switch_clear_int();
 		reed_switch_disable_int();
-		uart_send_string(UART_USE, "äº§ç”Ÿä¸­æ–­ï¼\n");
+		uart_send_string(UART_USE, "²úÉúÖĞ¶Ï£¡\n");
 	}
 
-	ENABLE_INTERRUPTS; //æ¢å¤åŸæ€»ä¸­æ–­è®¾ç½®æƒ…å†µ
+	ENABLE_INTERRUPTS; //»Ö¸´Ô­×ÜÖĞ¶ÏÉèÖÃÇé¿ö
 }

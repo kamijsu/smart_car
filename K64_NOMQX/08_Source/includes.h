@@ -48,6 +48,7 @@
 #include "dma.h"
 #include "camera.h"
 #include "vcan.h"
+#include "menu.h"
 
 //防止全局变量重复声明的前缀处理方法，并且添加volatile前缀，
 //因为全局变量会被多个.c文件使用，若不使用volatile前缀，则不会每次去变量所在地址读值，
