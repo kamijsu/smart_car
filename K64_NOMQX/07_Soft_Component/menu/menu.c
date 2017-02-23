@@ -7,8 +7,8 @@
 #include "oled.h"
 #include "uart.h"
 
-static const uint8 menu_col = 0;	//"菜单"的起始列号
-static const uint8 menu_page = 0;	//"菜单"的起始页号
+static const uint8 menu_col = 0;	//菜单的起始列号
+static const uint8 menu_page = 0;	//菜单的起始页号
 static const uint8 max_row_number = 4;	//最大行号
 
 static const char menu_name[] = "speed";
@@ -17,6 +17,12 @@ static uint8 start_idx = 0;	//OLED起始参数值索引
 static uint8 select_idx = 0; //OLED选择标志索引
 static bool sel_flag = false; //选择标志位
 
+//==========================================================================
+//函数名称: menu_oled_display
+//函数返回: 无
+//参数说明: 无
+//功能概要: 显示菜单内容
+//==========================================================================
 void menu_oled_display()
 {
 	uint8 i;	//游标
@@ -33,6 +39,13 @@ void menu_oled_display()
 		oled_printf(menu_col + 8, menu_page + i * 2,
 						"%.1f", option[current_idx++]);
 }
+
+//==========================================================================
+//函数名称: menu_oled_next_item
+//函数返回: 无
+//参数说明: 无
+//功能概要: 移动到菜单下一选项
+//==========================================================================
 void menu_oled_next_item()
 {
 	if (true == sel_flag && select_idx < 5)
@@ -46,6 +59,13 @@ void menu_oled_next_item()
 	else;
 	menu_oled_display();
 }
+
+//==========================================================================
+//函数名称: menu_oled_last_item
+//函数返回: 无
+//参数说明: 无
+//功能概要: 移动到菜单上一选项
+//==========================================================================
 void menu_oled_last_item()
 {
 	if (true == sel_flag && select_idx > 0)
@@ -59,6 +79,13 @@ void menu_oled_last_item()
 	else;
 	menu_oled_display();
 }
+
+//==========================================================================
+//函数名称: menu_oled_select
+//函数返回: 无
+//参数说明: 无
+//功能概要: 进入菜单选择模式
+//==========================================================================
 void menu_oled_select()
 {
 	if (false == sel_flag)
@@ -69,6 +96,13 @@ void menu_oled_select()
 		menu_oled_display();
 	}
 }
+
+//==========================================================================
+//函数名称: menu_oled_save
+//函数返回: 无
+//参数说明: 无
+//功能概要: 保存菜单选择
+//==========================================================================
 void menu_oled_save()
 {
 	sel_flag = false;
@@ -77,6 +111,13 @@ void menu_oled_save()
 	oled_printf(menu_col, menu_page, "%s = %.1f",
 			menu_name, option[select_idx]);
 }
+
+//==========================================================================
+//函数名称: menu_oled_reset
+//函数返回: 无
+//参数说明: 无
+//功能概要: 重置菜单和选择
+//==========================================================================
 void menu_oled_reset()
 {
 	sel_flag = false;
