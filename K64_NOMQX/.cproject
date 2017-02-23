@@ -249,6 +249,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crc16_modbus&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crypto&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/custom&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/menu&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_bytes&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_cmd&quot;"/>
