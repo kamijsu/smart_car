@@ -19,11 +19,16 @@
 #define GPIO_DIR_OUTPUT		(1)		//输出
 
 //定义GPIO模块中断类型
-#define GPIO_INT_LOW_LEVEL		(8)		//低电平触发
-#define GPIO_INT_HIGH_LEVEL		(12)	//高电平触发
-#define GPIO_INT_RISING_EDGE	(9)		//上升沿触发
-#define GPIO_INT_FALLING_EDGE	(10)	//下降沿触发
-#define GPIO_INT_DOUBLE_EDGE	(11)	//双边沿触发
+#define GPIO_INT_LOW_LEVEL		(8)		//低电平触发中断
+#define GPIO_INT_HIGH_LEVEL		(12)	//高电平触发中断
+#define GPIO_INT_RISING_EDGE	(9)		//上升沿触发中断
+#define GPIO_INT_FALLING_EDGE	(10)	//下降沿触发中断
+#define GPIO_INT_DOUBLE_EDGE	(11)	//双边沿触发中断
+
+//定义GPIO模块DMA类型
+#define GPIO_DMA_RISING_EDGE	(1)		//上升沿触发DMA请求
+#define GPIO_DMA_FALLING_EDGE	(2)		//下降沿触发DMA请求
+#define GPIO_DMA_DOUBLE_EDGE	(3)		//双边沿触发DMA请求
 
 //==========================================================================
 //函数名称: gpio_init
@@ -138,12 +143,13 @@ void gpio_set_passive_filter(uint8 port_pin, bool enable);
 //参数说明: port_pin:(端口号)|(引脚号):
 //                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
 //         int_type:引脚中断类型：
-//                  GPIO_INT_LOW_LEVEL:   低电平触发;
-//                  GPIO_INT_HIGH_LEVEL:  高电平触发;
-//                  GPIO_INT_RISING_EDGE: 上升沿触发;
-//                  GPIO_INT_FALLING_EDGE:下降沿触发;
-//                  GPIO_INT_DOUBLE_EDGE: 双边沿触发;
+//                  GPIO_INT_LOW_LEVEL:   低电平触发中断;
+//                  GPIO_INT_HIGH_LEVEL:  高电平触发中断;
+//                  GPIO_INT_RISING_EDGE: 上升沿触发中断;
+//                  GPIO_INT_FALLING_EDGE:下降沿触发中断;
+//                  GPIO_INT_DOUBLE_EDGE: 双边沿触发中断;
 //功能概要: 当引脚配置为输入时，根据中断类型开启该引脚中断
+//备注: 引脚不可以同时触发中断和DMA请求
 //==========================================================================
 void gpio_enable_int(uint8 port_pin, uint8 int_type);
 
@@ -173,5 +179,28 @@ bool gpio_get_int(uint8 port_pin);
 //功能概要: 当引脚配置为输入时，清除其中断标志
 //==========================================================================
 void gpio_clear_int(uint8 port_pin);
+
+//==========================================================================
+//函数名称: gpio_enable_dma
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号):
+//                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
+//         dma_type:引脚DMA类型：
+//                  GPIO_DMA_RISING_EDGE: 上升沿触发DMA请求;
+//                  GPIO_DMA_FALLING_EDGE:下降沿触发DMA请求;
+//                  GPIO_DMA_DOUBLE_EDGE: 双边沿触发DMA请求;
+//功能概要: 当引脚配置为输入时，使能该引脚触发DMA请求
+//备注: 引脚不可以同时触发中断和DMA请求
+//==========================================================================
+void gpio_enable_dma(uint8 port_pin, uint8 dma_type);
+
+//==========================================================================
+//函数名称: gpio_disable_dma
+//函数返回: 无
+//参数说明: port_pin:(端口号)|(引脚号):
+//                  COM_PORTx|p，x为端口号，p为引脚号，具体见common.h中宏定义;
+//功能概要: 当引脚配置为输入时，关闭该引脚触发DMA请求
+//==========================================================================
+void gpio_disable_dma(uint8 port_pin);
 
 #endif

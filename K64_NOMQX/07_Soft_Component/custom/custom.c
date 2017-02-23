@@ -6,6 +6,7 @@
 #include "custom.h"
 #include "oled.h"
 #include "temp_sensor.h"
+#include "camera.h"
 
 //"温度"的字模数据，纵向取模，字节倒序;
 //汉字大小为16*16，前32字节为"温度"上半部分，后32字节为"温度"下半部分
@@ -66,4 +67,78 @@ void custom_oled_display_init() {
 void custom_oled_update_temp() {
 	oled_printf(temp_col + 40, temp_page, "%*.1f", temp_width,
 			temp_sensor_get_temp());
+}
+
+//==========================================================================
+//函数名称: custom_oled_show_img
+//函数返回: 无
+//参数说明: img:宽*高为80*60的图像首地址
+//功能概要: 在OLED上显示一幅80*60的二值化图像
+//备注: 显示的起始位置为第24列，第1页的第4行;
+//     图像上方的4行被设置为全暗，但中间2列被设置为亮，用于指示图像的中心线;
+//     显示一幅图像需1.2ms
+//==========================================================================
+void custom_oled_show_img(uint8 img[60][80]) {
+	uint8 i, j, k;	//游标
+	uint8 offset;	//行偏移量
+	uint8 byte;		//要发送的字节
+
+	//显示图像的最低4行，显示于OLED最低页的高4行
+	//设置当前地址为起始列
+	oled_set_pos(24, 0);
+	//显示前39列
+	for (i = 0; i < 39; i++) {
+		//默认全暗
+		byte = 0;
+		//若4行中有白像素点，设置该位为亮
+		for (j = 0; j < 4; j++) {
+			if (img[j][i] != CAMERA_EXTRACT_BLACK_VAL) {
+				byte |= 1 << j + 4;
+			}
+		}
+		//发送该字节至OLED
+		oled_write_data(byte);
+	}
+
+	//显示中间2列
+	for (; i < 41; i++) {
+		//默认OLED低4行为亮
+		byte = 0xF;
+		for (j = 0; j < 4; j++) {
+			if (img[j][i] != CAMERA_EXTRACT_BLACK_VAL) {
+				byte |= 1 << j + 4;
+			}
+		}
+		oled_write_data(byte);
+	}
+
+	//显示后39列
+	for (; i < 80; i++) {
+		byte = 0;
+		for (j = 0; j < 4; j++) {
+			if (img[j][i] != CAMERA_EXTRACT_BLACK_VAL) {
+				byte |= 1 << j + 4;
+			}
+		}
+		oled_write_data(byte);
+	}
+
+	//显示剩余7页图像
+	for (i = 0; i < 7; i++) {
+		//计算行偏移量
+		offset = 8 * i + 4;
+		//设置当前地址为起始列
+		oled_set_pos(24, i + 1);
+		//显示该页的80列图像
+		for (j = 0; j < 80; j++) {
+			byte = 0;
+			//若8行中有白像素点，设置该位为亮
+			for (k = 0; k < 8; k++) {
+				if (img[k + offset][j] != CAMERA_EXTRACT_BLACK_VAL) {
+					byte |= 1 << k;
+				}
+			}
+			oled_write_data(byte);
+		}
+	}
 }
