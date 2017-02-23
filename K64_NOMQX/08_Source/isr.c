@@ -22,11 +22,23 @@ void UART1_RX_TX_IRQHandler() {
 //	res = frame_framing();
 //	uart_send1(UART_MOD1, res);
 
-	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
-		if (!err) {
-			if (ch == 't') {
-				dma_software_req(0);
-				uart_printf(1, "触发了一次DMA请求！\r\n");
+	if (uart_re1_parity(UART_MOD1, &ch, &err))
+	{
+		if (!err)
+		{
+			switch (ch)
+			{
+			case 'n':
+				menu_oled_next_item(); break;
+			case 'l':
+				menu_oled_last_item(); break;
+			case 's':
+				menu_oled_select(); break;
+			case 'o':
+				menu_oled_save(); break;
+			case 'r':
+				menu_oled_reset(); break;
+			default: break;
 			}
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
