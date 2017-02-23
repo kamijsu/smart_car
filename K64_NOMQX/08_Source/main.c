@@ -30,7 +30,8 @@ int main(void) {
 	temp_sensor_init();
 
 	oled_init();
-	custom_oled_display_init();
+	menu_oled_display();
+//	custom_oled_display_init();
 
 	dma_init(DMA_CH0, DMA_REQ_DISABLED, DMA_MODE_NORMAL, 4, 7, (uint32) src,
 	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -28, (uint32) dest,
@@ -62,13 +63,13 @@ int main(void) {
 
 			start = pit_get_time_us(1);
 
-			custom_oled_update_temp();
-			uart_printf(1, "主循环完成中断:%d\r\n", dma_get_major_int(0));
+//			custom_oled_update_temp();
+//			uart_printf(1, "主循环完成中断:%d\r\n", dma_get_major_int(0));
 
 //			memset(src, 0xFF, 1024);
 
 //			uart_printf(1, "错误:%X\r\n", DMA_ERR);
-			uart_printf(1, "通道0状态控制寄存器:%X\r\n", DMA_CSR(0));
+//			uart_printf(1, "通道0状态控制寄存器:%X\r\n", DMA_CSR(0));
 
 			for (i = 0; i < 1024; i++) {
 				if (dest[i] != 0xFF) {
