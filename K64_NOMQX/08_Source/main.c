@@ -30,7 +30,7 @@ int main(void) {
 	UART_BIT_ORDER_LSB); //uart1初始化
 
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
-	pit_init(PIT_CH1, 89478);
+	pit_init(PIT_CH1, 71582);
 	rng_init();
 
 	temp_sensor_init();

@@ -120,7 +120,7 @@ static bool adc_cal(uint8 mod) {
 //              ADC_ADLSTS_2:      LSTAdder = 2 个ADCK周期;
 //     HSCAdder:ADC_ADHSC_NORMAL:    HSCAdder = 0个ADCK周期;
 //              ADC_ADHSC_HIGH_SPEED:HSCAdder = 2个ADCK周期;
-//     其中，ADCK周期为总线时钟分频后的时钟周期，在这里，总线时钟频率为48MHz
+//     其中，ADCK周期为总线时钟分频后的时钟周期，在这里，总线时钟频率为60MHz
 //==========================================================================
 bool adc_init(uint8 mod, uint8 clk_div, uint8 accuracy, uint8 hardware_avg,
 		uint8 adlsts, uint8 adhsc, bool enable_cal) {

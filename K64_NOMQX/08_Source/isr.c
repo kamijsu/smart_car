@@ -199,10 +199,13 @@ void I2C2_IRQHandler() {
 }
 
 void FTM0_IRQHandler() {
+	DISABLE_INTERRUPTS;
 	if (ftm_timer_get_int(0)) {
 		ftm_timer_clear_int(0);
-		time0_flag.f_1s = 1;
+//		time0_flag.f_1s = 1;
+//		uart_printf(1,"!!\r\n");
 	}
+	ENABLE_INTERRUPTS;
 }
 
 //==========================================================================

@@ -55,9 +55,9 @@ static const IRQn_Type ftm_irq_table[] =
 //         counter_period:见备注
 //功能概要: 初始化FTM模块，默认未开启中断
 //备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位μs，
-//     当选择向上计数模式时，需满足48000/x*counter_period/1000<=65536，
-//     当选择上下计数模式时，需满足48000/x*counter_period/1000/2<=65535，
-//     48000为这里使用的总线时钟频率，单位kHz，x为FTM_CLK_DIV_x的x，
+//     当选择向上计数模式时，需满足60 * counter_period / x <= 65536，
+//     当选择上下计数模式时，需满足60 * counter_period / x / 2 <= 65535，
+//     60为这里使用的总线时钟频率，单位MHz，x为FTM_CLK_DIV_x的x，
 //     请注意counter_period的值，以防止计数精度丢失;
 //
 //     当选择正交解码模式时，counter_period无效，且此时clk_div代表计数器分频数，
@@ -101,14 +101,14 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADEN_MASK);
 		REG_CLR_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK);
 		//计数周期=(MOD-CNTIN+1)/时钟频率
-		modulo = (FTM_CLK_FREQ >> clk_div) * counter_period / 1000 - 1;
+		modulo = ((FTM_CLK_FREQ / 1000 * counter_period) >> clk_div) - 1;
 		break;
 	case FTM_COUNTER_MODE_UP_DOWN:
 		//上下计数:QUADEN=0;CPWMS=1
 		REG_CLR_MASK(FTM_QDCTRL_REG(ftm_ptr), FTM_QDCTRL_QUADEN_MASK);
 		REG_SET_MASK(FTM_SC_REG(ftm_ptr), FTM_SC_CPWMS_MASK);
 		//计数周期=2*(MOD-CNTIN)/时钟频率
-		modulo = ((FTM_CLK_FREQ >> clk_div) * counter_period / 1000) >> 1;
+		modulo = ((FTM_CLK_FREQ / 1000 * counter_period) >> clk_div) >> 1;
 		break;
 	case FTM_COUNTER_MODE_QD:
 		//正交解码:FTMEN=1;QUADEN=1;(CPWMS=0;)

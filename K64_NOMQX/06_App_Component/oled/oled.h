@@ -31,7 +31,7 @@
 //定义所使用SPI模块的配置号(注意:若相同SPI模块的相同配置号被用于不同应用构件，请保证它们的配置相同)
 #define OLED_SPI_CONFIG			SPI_CONFIG0		//0号配置号
 //定义所使用SPI模块的波特率分频因子
-#define OLED_SPI_BAUD_SCALER	SPI_BAUD_SCALER_2	//总线时钟频率为48MHz时，波特率为24Mbps
+#define OLED_SPI_BAUD_SCALER	SPI_BAUD_SCALER_2	//总线时钟频率为60MHz时，波特率为30Mbps
 //定义所使用SPI模块的帧格式
 #define OLED_SPI_FORMAT		SPI_FORMAT_CPOL0_CPHA0	//平时低电平，第一跳变取数，第二跳变数据上线
 //定义所使用SPI模块的帧数据位数
@@ -39,11 +39,11 @@
 //定义所使用SPI模块的位传输顺序
 #define OLED_SPI_BIT_ORDER		SPI_BIT_ORDER_MSB	//最高有效位，即先发送最高位
 //定义所使用SPI模块的CSC延时时间
-#define OLED_SPI_CSC_SCALER		SPI_DELAY_SCALER_2	//总线时钟频率为48MHz时，延时时间为41.67ns
+#define OLED_SPI_CSC_SCALER		SPI_DELAY_SCALER_2	//总线时钟频率为60MHz时，延时时间为33.3ns
 //定义所使用SPI模块的ASC延时时间
-#define OLED_SPI_ASC_SCALER		SPI_DELAY_SCALER_2	//总线时钟频率为48MHz时，延时时间为41.67ns
+#define OLED_SPI_ASC_SCALER		SPI_DELAY_SCALER_2	//总线时钟频率为60MHz时，延时时间为33.3ns
 //定义所使用SPI模块的DT延时时间
-#define OLED_SPI_DT_SCALER		SPI_DELAY_SCALER_2	//总线时钟频率为48MHz时，延时时间为41.67ns
+#define OLED_SPI_DT_SCALER		SPI_DELAY_SCALER_2	//总线时钟频率为60MHz时，延时时间为33.3ns
 
 //定义复位信号有效电平
 #define OLED_RST_VALID_LEVEL	GPIO_LEVEL_LOW		//有效电平为低

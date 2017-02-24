@@ -17,7 +17,7 @@
 //定义所使用的FTM模块
 #define MOTOR_FTM_MOD				FTM_MOD0					//FTM0
 //定义FTM模块时钟分频因子
-#define MOTOR_FTM_CLK_DIV			FTM_CLK_DIV_1				//1分频，即工作频率48MHz
+#define MOTOR_FTM_CLK_DIV			FTM_CLK_DIV_1				//1分频，即工作频率60MHz
 //定义FTM模块计数器模式
 #define MOTOR_FTM_COUNTER_MODE		FTM_COUNTER_MODE_UP			//向上计数
 //定义FTM模块计数器计数周期，单位μs
@@ -40,11 +40,10 @@
 //==========================================================================
 //函数名称: motor_init
 //函数返回: 无
-//参数说明: motor:电机号:
-//               MOTORx，x为电机号;
-//功能概要: 初始化电机，初始占空比为0，相应配置在motor.h中
+//参数说明: 无
+//功能概要: 初始化所有电机，初始占空比为0，相应配置在motor.h中
 //==========================================================================
-void motor_init(uint8 motor);
+void motor_init();
 
 //==========================================================================
 //函数名称: motor_set

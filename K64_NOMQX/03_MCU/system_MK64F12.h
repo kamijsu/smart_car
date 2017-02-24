@@ -123,9 +123,9 @@ extern "C" {
 #define MCG_MODE_PBE                   6U
 #define MCG_MODE_PEE                   7U
 
-/* 这里选择了时钟模式0，即内核时钟频率96MHz，总线时钟频率48MHz */
+/* 这里选择了时钟模式1，即内核时钟频率120MHz，总线时钟频率60MHz */
 #ifndef CLOCK_SETUP
-	#define CLOCK_SETUP                (0)
+	#define CLOCK_SETUP                (1)
 #endif
 
 /* Predefined clock setups

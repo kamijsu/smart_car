@@ -13,19 +13,25 @@ static const uint8 motor_pwm1_table[] = { MOTOR0_PWM1_CH, MOTOR1_PWM1_CH };
 //==========================================================================
 //函数名称: motor_init
 //函数返回: 无
-//参数说明: motor:电机号:
-//               MOTORx，x为电机号;
-//功能概要: 初始化电机，初始占空比为0，相应配置在motor.h中
+//参数说明: 无
+//功能概要: 初始化所有电机，初始占空比为0，相应配置在motor.h中
 //==========================================================================
-void motor_init(uint8 motor) {
+void motor_init() {
 	//初始化FTM模块
 	ftm_init(MOTOR_FTM_MOD, MOTOR_FTM_CLK_DIV, MOTOR_FTM_COUNTER_MODE,
 	MOTOR_FTM_COUNTER_PERIOD);
-	//初始化PWM0和PWM1
-	ftm_pwm_single_init(MOTOR_FTM_MOD, motor_pwm0_table[motor],
+	//初始化MOTOR0
+	ftm_pwm_single_init(MOTOR_FTM_MOD, motor_pwm0_table[MOTOR0],
 	MOTOR_FTM_PWM_MODE,
 	MOTOR_FTM_PWM_POL, 0);
-	ftm_pwm_single_init(MOTOR_FTM_MOD, motor_pwm1_table[motor],
+	ftm_pwm_single_init(MOTOR_FTM_MOD, motor_pwm1_table[MOTOR0],
+	MOTOR_FTM_PWM_MODE,
+	MOTOR_FTM_PWM_POL, 0);
+	//初始化MOTOR1
+	ftm_pwm_single_init(MOTOR_FTM_MOD, motor_pwm0_table[MOTOR1],
+	MOTOR_FTM_PWM_MODE,
+	MOTOR_FTM_PWM_POL, 0);
+	ftm_pwm_single_init(MOTOR_FTM_MOD, motor_pwm1_table[MOTOR1],
 	MOTOR_FTM_PWM_MODE,
 	MOTOR_FTM_PWM_POL, 0);
 }

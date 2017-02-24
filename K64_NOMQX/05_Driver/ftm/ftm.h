@@ -137,9 +137,9 @@
 //         counter_period:见备注
 //功能概要: 初始化FTM模块，默认未开启中断
 //备注: 当选择向上计数模式或上下计数模式时，counter_period为计数器计数周期，单位μs，
-//     当选择向上计数模式时，需满足48000/x*counter_period/1000<=65536，
-//     当选择上下计数模式时，需满足48000/x*counter_period/1000/2<=65535，
-//     48000为这里使用的总线时钟频率，单位kHz，x为FTM_CLK_DIV_x的x，
+//     当选择向上计数模式时，需满足60 * counter_period / x <= 65536，
+//     当选择上下计数模式时，需满足60 * counter_period / x / 2 <= 65535，
+//     60为这里使用的总线时钟频率，单位MHz，x为FTM_CLK_DIV_x的x，
 //     请注意counter_period的值，以防止计数精度丢失;
 //
 //     当选择正交解码模式时，counter_period无效，且此时clk_div代表计数器分频数，

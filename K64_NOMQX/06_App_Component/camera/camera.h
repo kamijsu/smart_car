@@ -47,7 +47,7 @@
 #define CAMERA_I2C_MOD		I2C_MOD0	//I2C0，SCL:B2，SDA:B3
 //定义I2C模块的乘数因子和时钟速率
 #define CAMERA_I2C_MUL		I2C_MUL_4	//乘数因子为4
-#define CAMERA_I2C_ICR		(0x05)		//总线时钟频率为48MHz，乘数因子为4时，波特率为400Kbps
+#define CAMERA_I2C_ICR		(0x0B)		//总线时钟频率为60MHz，乘数因子为4时，波特率为375Kbps
 //定义I2C模块的地址模式和地址
 #define CAMERA_I2C_ADDR_MODE	I2C_ADDR_MODE_BITS_7	//7位地址模式
 #define CAMERA_I2C_ADDR			(0x10)					//地址为0x10
