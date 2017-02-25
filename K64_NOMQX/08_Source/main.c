@@ -21,7 +21,11 @@ int main(void) {
 	uint8 dest[10240];
 	memset(dest, 0xFF, 10240);
 
+<<<<<<< HEAD
+	//2. ?????ж?
+=======
 	//2. 关总中断
+>>>>>>> dbf1daf9590aa52a72351a3460ccb5401b7f9674
 	DISABLE_INTERRUPTS;
 
 	//3. 初始化外设模块
@@ -54,9 +58,15 @@ int main(void) {
 	time0_flag.f_50ms = 0;
 	raw_img_done = false;
 
+<<<<<<< HEAD
+	//5. ???????ж?
+	pit_enable_int(PIT_CH0);   		//???pit?ж?
+	uart_enable_re_int(UART_USE);   //???uart1?????ж?
+=======
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
+>>>>>>> dbf1daf9590aa52a72351a3460ccb5401b7f9674
 	camera_enable_collect_done_int();
 	camera_enable_vsync_int();
 
@@ -86,7 +96,11 @@ int main(void) {
 
 //			custom_oled_update_temp();
 
+<<<<<<< HEAD
+//			uart_printf(1, "??????????ж?:%d\r\n", dma_get_major_int(0));
+=======
 //			uart_printf(1, "主循环完成中断:%d\r\n", dma_get_major_int(0));
+>>>>>>> dbf1daf9590aa52a72351a3460ccb5401b7f9674
 
 //			memset(src, 0xFF, 1024);
 

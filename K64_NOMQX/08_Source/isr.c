@@ -19,13 +19,14 @@ void UART1_RX_TX_IRQHandler() {
 	bool err = true;
 	static uint8 i = 0;
 	static uint8 buff[8] = {0};
-	static bool sel_flag = false; //??????λ
+	static bool sel_flag = false; //????????
 
 	DISABLE_INTERRUPTS;
 
 //	res = frame_framing();
 //	uart_send1(UART_MOD1, res);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	if (true == sel_flag)
 	{
@@ -44,6 +45,8 @@ void UART1_RX_TX_IRQHandler() {
 	}
 	else if (uart_re1_parity(UART_MOD1, &ch, &err))
 =======
+=======
+>>>>>>> dbf1daf9590aa52a72351a3460ccb5401b7f9674
 
 	if (uart_re1_parity(UART_MOD1, &ch, &err))
 >>>>>>> dbf1daf9590aa52a72351a3460ccb5401b7f9674
@@ -110,7 +113,11 @@ void DMA1_IRQHandler() {
 
 	if (dma_get_major_int(1)) {
 		dma_clear_major_int(1);
+<<<<<<< HEAD
+		uart_printf(1, "DMA1??????????\r\n");
+=======
 		uart_printf(1, "DMA1主循环完成！\r\n");
+>>>>>>> dbf1daf9590aa52a72351a3460ccb5401b7f9674
 
 	}
 
@@ -122,7 +129,11 @@ void DMA2_IRQHandler() {
 
 	if (dma_get_major_int(2)) {
 		dma_clear_major_int(2);
+<<<<<<< HEAD
+		uart_printf(1, "DMA2??????????\r\n");
+=======
 		uart_printf(1, "DMA2主循环完成！\r\n");
+>>>>>>> dbf1daf9590aa52a72351a3460ccb5401b7f9674
 
 	}
 
