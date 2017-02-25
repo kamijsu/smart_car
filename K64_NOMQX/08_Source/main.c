@@ -9,11 +9,17 @@ int main(void) {
 	//1. 声明主函数使用的变量
 	uint32 start, end;
 	uint32 i, j;
+	uint8 raw_img[CAMERA_RAW_IMG_BYTES];
+	uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH];
 
-	uint8 src[1024];
-	memset(src, 0x45, 1024);
-	uint8 dest[1024];
-	memset(dest, 0xFF, 1024);
+	uint8 src1[10240];
+	uint8 src[10240];
+	for (i = 0; i < 10240; i++) {
+		src[i] = i % 256;
+	}
+	uint8 dest1[10240];
+	uint8 dest[10240];
+	memset(dest, 0xFF, 10240);
 
 	//2. 关总中断
 	DISABLE_INTERRUPTS;
@@ -30,6 +36,7 @@ int main(void) {
 	temp_sensor_init();
 
 	oled_init();
+
 	menu_oled_display();
 //	custom_oled_display_init();
 
@@ -37,16 +44,21 @@ int main(void) {
 	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -28, (uint32) dest,
 	DMA_DATA_WIDTH_BYTE_1, 1, DMA_MODULO_DISABLED, -28, false);
 
-	dma_enable_req(0);
+//	custom_oled_display_init();
+
+
+	camera_init(raw_img);
 
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
+	raw_img_done = false;
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart1接收中断
-	dma_enable_major_int(0);
+	camera_enable_collect_done_int();
+	camera_enable_vsync_int();
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -54,8 +66,17 @@ int main(void) {
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-		if (time0_flag.f_50ms) {
+		if (raw_img_done && time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
+
+			camera_extract_raw_img(raw_img, (uint8*) img);
+
+			custom_oled_show_img(img);
+
+			vcan_send_raw_img(raw_img);
+
+			raw_img_done = false;
+			camera_enable_vsync_int();
 		}
 		if (time0_flag.f_1s) {
 			time0_flag.f_1s = 0;
@@ -64,6 +85,7 @@ int main(void) {
 			start = pit_get_time_us(1);
 
 //			custom_oled_update_temp();
+
 //			uart_printf(1, "主循环完成中断:%d\r\n", dma_get_major_int(0));
 
 //			memset(src, 0xFF, 1024);
@@ -76,6 +98,7 @@ int main(void) {
 //					uart_printf(1, "目标地址第%2d个字节:%X\r\n", i, dest[i]);
 				}
 			}
+
 
 			end = pit_get_time_us(1);
 //			uart_printf(UART_USE, "消耗时间：%dus\r\n", end - start);

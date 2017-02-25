@@ -17,12 +17,36 @@ void UART1_RX_TX_IRQHandler() {
 	FrameFramingResult res;
 	uint8 ch;
 	bool err = true;
+	static uint8 i = 0;
+	static uint8 buff[8] = {0};
+	static bool sel_flag = false; //??????λ
+
 	DISABLE_INTERRUPTS;
 
 //	res = frame_framing();
 //	uart_send1(UART_MOD1, res);
 
+<<<<<<< HEAD
+	if (true == sel_flag)
+	{
+		if (uart_re1(UART_MOD1, &ch))
+		{
+			buff[i++] = ch;
+			if (i > 2)
+			{
+				buff[i] = '\0';
+				menu_oled_modify(buff);
+				uart_printf(UART_MOD1, "%s", buff);
+				sel_flag = false;
+				i = 0;
+			}
+		}
+	}
+	else if (uart_re1_parity(UART_MOD1, &ch, &err))
+=======
+
 	if (uart_re1_parity(UART_MOD1, &ch, &err))
+>>>>>>> dbf1daf9590aa52a72351a3460ccb5401b7f9674
 	{
 		if (!err)
 		{
@@ -33,16 +57,28 @@ void UART1_RX_TX_IRQHandler() {
 			case 'l':
 				menu_oled_last_item(); break;
 			case 's':
-				menu_oled_select(); break;
+			{
+				menu_oled_select();
+				sel_flag = true;
+				break;
+			}
 			case 'o':
-				menu_oled_save(); break;
+			{
+				menu_oled_save();
+				sel_flag = false;
+				break;
+			}
 			case 'r':
 				menu_oled_reset(); break;
 			default: break;
 			}
+
+//			for (uint32 i = 0; i < sizeof(raw_img); i++){
+//				uart_printf(1, "%X ", raw_img[i]);
+//			}
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
-			uart_send1(UART_MOD1, ch);
+//			uart_send1(UART_MOD1, ch);
 //			oled_write_data(ch);
 		}
 
@@ -51,13 +87,43 @@ void UART1_RX_TX_IRQHandler() {
 	ENABLE_INTERRUPTS;
 }
 
+void PORTC_IRQHandler() {
+	DISABLE_INTERRUPTS;
+	if (camera_get_vsync_int()) {
+		camera_start_collecting();
+		camera_disable_vsync_int();
+		camera_clear_vsync_int();
+	}
+	ENABLE_INTERRUPTS;
+}
+
 void DMA0_IRQHandler() {
 	DISABLE_INTERRUPTS;
+	camera_stop_collecting();
+	camera_clear_collect_done_int();
+	raw_img_done = true;
+	ENABLE_INTERRUPTS;
+}
 
-	if (dma_get_major_int(0)) {
-		uart_printf(1, "主循环完成中断:%d\r\n", dma_get_major_int(0));
-		dma_clear_major_int(0);
-		uart_printf(1, "DMA0主循环完成！\r\n");
+void DMA1_IRQHandler() {
+	DISABLE_INTERRUPTS;
+
+	if (dma_get_major_int(1)) {
+		dma_clear_major_int(1);
+		uart_printf(1, "DMA1主循环完成！\r\n");
+
+	}
+
+	ENABLE_INTERRUPTS;
+}
+
+void DMA2_IRQHandler() {
+	DISABLE_INTERRUPTS;
+
+	if (dma_get_major_int(2)) {
+		dma_clear_major_int(2);
+		uart_printf(1, "DMA2主循环完成！\r\n");
+
 	}
 
 	ENABLE_INTERRUPTS;
