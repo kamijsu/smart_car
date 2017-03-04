@@ -27,27 +27,27 @@ void UART1_RX_TX_IRQHandler() {
 	{
 		if (!err)
 		{
-			switch (ch)
-			{
-			case 'n':
-				menu_oled_next_item(); break;
-			case 'l':
-				menu_oled_last_item(); break;
-			case 's':
-				menu_oled_select(); break;
-			case 'o':
-				menu_oled_save(); break;
-			case 'r':
-				menu_oled_reset(); break;
-			default: break;
-			}
+//			switch (ch)
+//			{
+//			case 'n':
+//				menu_oled_next_item(); break;
+//			case 'l':
+//				menu_oled_last_item(); break;
+//			case 's':
+//				menu_oled_select(); break;
+//			case 'o':
+//				menu_oled_save(); break;
+//			case 'r':
+//				menu_oled_reset(); break;
+//			default: break;
+//			}
 
 //			for (uint32 i = 0; i < sizeof(raw_img); i++){
 //				uart_printf(1, "%X ", raw_img[i]);
 //			}
 //			ch = spi_master_send(SPI_MOD2, SPI_CONFIG0, SPI_CS0, ch,
 //					SPI_CONT_DISABLE);
-//			uart_send1(UART_MOD1, ch);
+			uart_send1(UART_MOD1, ch);
 //			oled_write_data(ch);
 		}
 

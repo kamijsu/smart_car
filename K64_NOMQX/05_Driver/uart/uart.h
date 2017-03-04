@@ -19,7 +19,7 @@
 
 //设置各串口模块所用引脚组，通过更改宏定义的值以选择引脚组，引脚组前者为TX，后者为RX
 //UART0:  0=A2-A1;    1=A14-A15;  2=B17-B16;  3=D7-D6;
-#define UART_MOD0_SETUP		(1)
+#define UART_MOD0_SETUP		(3)
 //UART1:  0=C4-C3;    1=E0-E1;
 #define UART_MOD1_SETUP		(1)
 //UART2:  0=D3-D2;

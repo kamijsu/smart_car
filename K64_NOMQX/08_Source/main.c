@@ -38,7 +38,7 @@ int main(void) {
 	oled_init();
 
 //	menu_oled_display();
-//	custom_oled_display_init();
+	custom_oled_display_init();
 
 	camera_init(raw_img);
 
@@ -64,7 +64,7 @@ int main(void) {
 
 			camera_extract_raw_img(raw_img, (uint8*) img);
 
-			custom_oled_show_img(img);
+//			custom_oled_show_img(img);
 
 //			vcan_send_raw_img(raw_img);
 
@@ -77,7 +77,7 @@ int main(void) {
 
 			start = pit_get_time_us(1);
 
-//			custom_oled_update_temp();
+			custom_oled_update_temp();
 
 			end = pit_get_time_us(1);
 //			uart_printf(UART_USE, "ÏûºÄÊ±¼ä£º%dus\r\n", end - start);

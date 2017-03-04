@@ -28,10 +28,10 @@
 #define MOTOR_FTM_PWM_POL			FTM_PWM_POL_POSITIVE		//正极性，即占空比越大，高电平所占比例越高
 
 //定义电机所使用的PWM通道，每个电机使用两个通道，相应的引脚由ftm.h中的FTM_MODx_CHx_PIN决定
-#define MOTOR0_PWM0_CH				FTM_CH0		//FTM0_CH0	C1
-#define MOTOR0_PWM1_CH				FTM_CH1		//FTM0_CH1	C2
-#define MOTOR1_PWM0_CH				FTM_CH2		//FTM0_CH2	C3
-#define MOTOR1_PWM1_CH				FTM_CH3		//FTM0_CH3	C4
+#define MOTOR0_PWM0_CH				FTM_CH1		//FTM0_CH1	C2
+#define MOTOR0_PWM1_CH				FTM_CH0		//FTM0_CH0	C1
+#define MOTOR1_PWM0_CH				FTM_CH3		//FTM0_CH3	C4
+#define MOTOR1_PWM1_CH				FTM_CH2		//FTM0_CH2	C3
 
 //定义电机占空比上下限，当duty>=0时，PWM0占空比为|duty|，PWM1占空比为0，当duty<0时，PWM0占空比为0，PWM1占空比为|duty|
 #define MOTOR_DUTY_MAX				FTM_DUTY_MAX
