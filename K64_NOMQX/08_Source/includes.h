@@ -76,7 +76,7 @@ G_VAR_PREFIX CarFlag car_flag;
 #define RUN_COUNTER_MAX   3500000ul
 
 //定义使用的调试号
-#define UART_USE  UART_MOD1
+#define UART_USE  UART_MOD0
 
 /* 引脚
  * UART_USE:    PTE0   TX;                PTE1   RX

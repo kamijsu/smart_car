@@ -10,7 +10,7 @@
 #include "uart.h"
 
 //定义所使用的UART模块号，需要使能该模块，才可以使用本文件提供的函数
-#define VCAN_UART_MOD	UART_MOD1	//UART1
+#define VCAN_UART_MOD	UART_MOD0	//UART0
 
 //定义发送各图像的命令
 #define VCAN_CMD_IMG	(1)

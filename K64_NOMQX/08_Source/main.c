@@ -11,6 +11,7 @@ int main(void) {
 	uint32 i, j;
 	uint8 raw_img[CAMERA_RAW_IMG_BYTES];
 	uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH];
+	int32 duty = -2000;
 
 	uint8 src1[10240];
 	uint8 src[10240];
@@ -27,20 +28,23 @@ int main(void) {
 	//3. 初始化外设模块
 	light_init(LIGHT_BLUE, LIGHT_ON); //蓝灯初始化
 	uart_init(UART_USE, 115200, UART_PARITY_DISABLED, UART_STOP_BIT_1,
-	UART_BIT_ORDER_LSB); //uart1初始化
+	UART_BIT_ORDER_LSB); //uart0初始化
 
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 	pit_init(PIT_CH1, 71582);
 	rng_init();
 
-	temp_sensor_init();
+//	temp_sensor_init();
 
 	oled_init();
 
 //	menu_oled_display();
-	custom_oled_display_init();
+//	custom_oled_display_init();
 
 	camera_init(raw_img);
+	motor_init();
+	motor_set(0,duty);
+	motor_set(1,duty);
 
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
@@ -49,7 +53,7 @@ int main(void) {
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
-	uart_enable_re_int(UART_USE);   //使能uart1接收中断
+	uart_enable_re_int(UART_USE);   //使能uart0接收中断
 	camera_enable_collect_done_int();
 	camera_enable_vsync_int();
 
@@ -64,9 +68,9 @@ int main(void) {
 
 			camera_extract_raw_img(raw_img, (uint8*) img);
 
-//			custom_oled_show_img(img);
+			custom_oled_show_img(img);
 
-//			vcan_send_raw_img(raw_img);
+			vcan_send_raw_img(raw_img);
 
 			raw_img_done = false;
 			camera_enable_vsync_int();
@@ -76,8 +80,10 @@ int main(void) {
 			light_change(LIGHT_BLUE);
 
 			start = pit_get_time_us(1);
-
-			custom_oled_update_temp();
+//			duty*=-1;
+//			motor_set(0,duty);
+//				motor_set(1,duty);
+//			custom_oled_update_temp();
 
 			end = pit_get_time_us(1);
 //			uart_printf(UART_USE, "消耗时间：%dus\r\n", end - start);
