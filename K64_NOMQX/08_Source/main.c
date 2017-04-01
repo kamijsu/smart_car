@@ -11,7 +11,10 @@ int main(void) {
 	uint32 i, j;
 	uint8 raw_img[CAMERA_RAW_IMG_BYTES];
 	uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH];
-	int32 duty = -2000;
+	int32 duty = 2000;
+	FrameInfo info;
+	uint8 frame[263];
+	uint16 frame_len;
 
 	uint8 src1[10240];
 	uint8 src[10240];
@@ -27,14 +30,15 @@ int main(void) {
 
 	//3. 初始化外设模块
 	light_init(LIGHT_BLUE, LIGHT_ON); //蓝灯初始化
-	uart_init(UART_USE, 115200, UART_PARITY_DISABLED, UART_STOP_BIT_1,
+	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 	UART_BIT_ORDER_LSB); //uart0初始化
+	frame_init(3);
 
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 	pit_init(PIT_CH1, 71582);
 	rng_init();
 
-//	temp_sensor_init();
+	temp_sensor_init();
 
 	oled_init();
 
@@ -70,7 +74,7 @@ int main(void) {
 
 			custom_oled_show_img(img);
 
-			vcan_send_raw_img(raw_img);
+//			vcan_send_raw_img(raw_img);
 
 			raw_img_done = false;
 			camera_enable_vsync_int();
@@ -82,8 +86,14 @@ int main(void) {
 			start = pit_get_time_us(1);
 //			duty*=-1;
 //			motor_set(0,duty);
-//				motor_set(1,duty);
+//			motor_set(1,duty);
 //			custom_oled_update_temp();
+			info.src_addr = frame_get_local_addr();
+			info.dest_addr = 3;
+			info.type = 2;
+			info.len = 1;
+			frame_info_to_frame(&info,frame,&frame_len);
+			uart_sendN(UART_USE,frame,frame_len);
 
 			end = pit_get_time_us(1);
 //			uart_printf(UART_USE, "消耗时间：%dus\r\n", end - start);

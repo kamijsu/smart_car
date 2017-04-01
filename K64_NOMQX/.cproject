@@ -87,10 +87,6 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crypto&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/custom&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_bytes&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_cmd&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_data&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_string&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/menu&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/structs&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/vcan&quot;"/>
@@ -251,10 +247,6 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crypto&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/custom&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_bytes&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_cmd&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_data&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame/frame_string&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/menu&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/structs&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/vcan&quot;"/>
@@ -353,12 +345,6 @@
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1846219735;ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1846219735.;ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.375646145;ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.input.151033325">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.20534474;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.20534474.;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.715386481;ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1472635084">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.20534474;ilg.gnuarmeclipse.managedbuild.cross.config.elf.release.20534474.;ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.186539547;ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.input.1059821698">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 	</storageModule>

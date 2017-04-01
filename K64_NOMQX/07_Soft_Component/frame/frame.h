@@ -7,119 +7,132 @@
 #define _FRAME_H
 
 #include "common.h"
-#include "uart.h"
 
 //==========================================================================
-//说明: 帧格式: <帧头> <类型> <数据长度> <数据> <帧校验序列>;
+//说明: 帧格式: <帧头> <目的地址> <源地址> <类型> <数据长度> <数据> <帧校验序列>;
 //     字段                  字段长度                说明
 //     <帧头>       2字节                     表示帧开始传输
+//     <目的地址>    1字节                    表示帧的发送对象
+//     <源地址>      1字节                    表示帧的发送者
 //     <类型>       1字节                     表示该帧类型
 //     <数据长度>    1字节                    表示传输的数据字节数
 //     <数据>       <数据长度>      传输的数据，不能超过255字节
 //     <帧校验序列>  2字节                     采用CRC16校验，校验失败时，帧被丢弃，
-//                                 校验字段为<类型> <数据长度> <数据>
-//传输顺序: 帧头低字节-帧头高字节-类型-数据长度-数据低字节-数据高字节-FCS低字节-FCS高字节
+//                                 校验字段为<目的地址> <源地址> <类型>
+//                                 <数据长度> <数据>
+//传输顺序: 帧头低字节-帧头高字节-目的地址-源地址-类型-数据长度-
+//         数据低字节-数据高字节-FCS低字节-FCS高字节
 //备注: uint16型等超过1字节的数据，存储时高字节在高地址，而&取得的首地址为低地址，
 //     因此若数据为0xFEDA，传输顺序为0xDA-0xFE
 //==========================================================================
-
-//设置组帧通信协议所使用的UART模块号
-#define FRAME_UART_MOD		UART_MOD1	//Tx:E0 Rx:E1
-//设置组帧通信协议所使用的UART波特率
-#define FRAME_UART_BAUD		(9600)
-//设置组帧通信协议所使用的UART校验模式
-#define FRAME_UART_PARITY		UART_PARITY_DISABLED	//不启用校验
-//设置组帧通信协议所使用的UART停止位
-#define FRAME_UART_STOP_BIT		UART_STOP_BIT_1			//1位停止位
-//设置组帧通信协议所使用的UART位传输顺序
-#define FRAME_UART_BIT_ORDER	UART_BIT_ORDER_LSB		//最低有效位
 
 //定义帧头，为0xABFE
 #define FRAME_HEAD_HIGH		(0xAB)	//高字节
 #define FRAME_HEAD_LOW		(0xFE)	//低字节，先传输与接收
 
-//定义帧信息结构体，每个帧信息结构体占用257字节的RAM
+//定义帧信息结构体
 typedef struct {
+	uint8 dest_addr;	//目的地址
+	uint8 src_addr;		//源地址
 	uint8 type;			//帧类型
 	uint8 len;			//数据长度
 	uint8 data[255];	//数据
 } FrameInfo;
 
+//定义帧缓冲区数量，帧缓冲区号为[0, FRAME_BUFFER_NUM - 1]
+#define FRAME_BUFFER_NUM		(2)
 //定义帧缓冲区大小，即最多可以缓存 FRAME_BUFFER_SIZE 个帧信息结构体，缓冲区满时，接收到的字节被丢弃
-#define FRAME_BUFFER_SIZE	(5)
+#define FRAME_BUFFER_SIZE		(3)
+
+//定义广播地址
+#define FRAME_BROADCAST_ADDR	(0xFF)
 
 //定义组帧结果枚举类型
 typedef enum {
-	FramingNone,		//未接收到字节
-	FramingFull,		//帧缓冲区满，字节被丢弃
-	FramingInvalid,		//收到无效字节
-	FramingHeadLow,		//收到帧头低字节
-	FramingHeadHigh,	//收到帧头高字节
-	FramingType,		//收到帧类型
-	FramingLen,			//收到数据长度
-	FramingData,		//收到数据
-	FramingFCS,			//收到FCS低字节
-	FramingSuccess,		//收到FCS高字节，且校验成功
-	FramingFail			//收到FCS高字节，且校验失败，帧被丢弃
+	FramingInvalidBuffer,	//无效的帧缓冲区号
+	FramingFull,			//帧缓冲区满，字节被丢弃
+	FramingInvalidByte,		//收到无效字节
+	FramingHeadLow,			//收到帧头低字节
+	FramingHeadHigh,		//收到帧头高字节
+	FramingDestAddr,		//收到目的地址
+	FramingSrcAddr,			//收到源地址
+	FramingType,			//收到帧类型
+	FramingLen,				//收到数据长度
+	FramingData,			//收到数据
+	FramingFCS,				//收到FCS低字节
+	FramingFail,			//收到FCS高字节，校验失败，帧被丢弃
+	FramingOthers,			//收到FCS高字节，目标地址不为本机或广播地址，帧被丢弃
+	FramingSuccess			//收到FCS高字节，且该帧合法，被存放至帧缓冲区
 } FrameFramingResult;
 
 //==========================================================================
 //函数名称: frame_init
 //函数返回: 无
-//参数说明: 无
+//参数说明: addr:本机地址，不能与广播地址相同
 //功能概要: 使能组帧通信协议，相应配置在frame.h中
 //==========================================================================
-void frame_init();
+void frame_init(uint8 addr);
 
 //==========================================================================
-//函数名称: frame_enable_re_int
-//函数返回: 无
+//函数名称: frame_get_local_addr
+//函数返回: 本机地址
 //参数说明: 无
-//功能概要: 使能组帧通信协议接收中断，即相应的UART接收中断，通过组帧可以清除中断标志
+//功能概要: 获取本机地址
 //==========================================================================
-void frame_enable_re_int();
+uint8 frame_get_local_addr();
 
 //==========================================================================
-//函数名称: frame_disable_re_int
+//函数名称: frame_info_to_frame
 //函数返回: 无
-//参数说明: 无
-//功能概要: 关闭组帧通信协议接收中断，即相应的UART接收中断
+//参数说明: info:帧信息结构体地址
+//         frame:存储帧字节的首地址
+//         frame_len:存储帧字节长度的地址
+//功能概要: 将帧信息结构体转换为帧字节，自动添加帧头与帧校验序列
+//备注: 帧字节最大长度为263个字节，因此建议frame数组长度大于等于263
 //==========================================================================
-void frame_disable_re_int();
+void frame_info_to_frame(const FrameInfo* info, uint8* frame,
+		uint16* frame_len);
 
 //==========================================================================
-//函数名称: frame_send_info
-//函数返回: 无
-//参数说明: info:要发送的帧信息结构体
-//功能概要: 发送帧信息结构体，自动添加帧头与帧校验序列
+//函数名称: frame_frame_to_info
+//函数返回: true:转换成功; false:转换失败，非法帧字节
+//参数说明: frame:帧字节的首地址
+//         frame_len:帧字节长度
+//         info:存储帧信息结构体的地址
+//功能概要: 将帧字节转换为帧信息结构体，检验帧字节长度、帧头、帧校验序列
 //==========================================================================
-void frame_send_info(FrameInfo info);
+bool frame_frame_to_info(const uint8* frame, uint16 frame_len, FrameInfo* info);
 
 //==========================================================================
 //函数名称: frame_framing
 //函数返回: 组帧结果:
-//         FramingNone:    未接收到字节;
-//         FramingFull:    帧缓冲区满，字节被丢弃;
-//         FramingInvalid: 收到无效字节;
-//         FramingHeadLow: 收到帧头低字节;
-//         FramingHeadHigh:收到帧头高字节;
-//         FramingType:    收到帧类型;
-//         FramingLen:     收到数据长度;
-//         FramingData:    收到数据;
-//         FramingFCS:     收到FCS低字节;
-//         FramingSuccess: 收到FCS高字节，且校验成功;
-//         FramingFail:    收到FCS高字节，且校验失败，帧被丢弃;
-//参数说明: 无
-//功能概要: 从UART接收缓冲区中读取一个字节数据，并进行组帧，组的帧存至帧缓冲区中
+//         FramingInvalidBuffer:无效的帧缓冲区号;
+//         FramingFull:         帧缓冲区满，字节被丢弃;
+//         FramingInvalidByte:  收到无效字节;
+//         FramingHeadLow:      收到帧头低字节;
+//         FramingHeadHigh:     收到帧头高字节;
+//         FramingDestAddr:     收到目的地址;
+//         FramingSrcAddr:      收到源地址;
+//         FramingType:         收到帧类型;
+//         FramingLen:          收到数据长度;
+//         FramingData:         收到数据;
+//         FramingFCS:          收到FCS低字节;
+//         FramingFail:         收到FCS高字节，校验失败，帧被丢弃;
+//         FramingOthers:       收到FCS高字节，目标地址不为本机或广播地址，帧被丢弃;
+//         FramingSuccess:      收到FCS高字节，且该帧合法，被存放至帧缓冲区；
+//参数说明: buffer:帧缓冲区号，取值范围为[0, FRAME_BUFFER_NUM - 1]
+//         byte:接收到的字节
+//功能概要: 在指定的帧缓冲区中，放入接收到的字节进行组帧
 //==========================================================================
-FrameFramingResult frame_framing();
+FrameFramingResult frame_framing(uint8 buffer, uint8 byte);
 
 //==========================================================================
 //函数名称: frame_get_info
 //函数返回: true:获取成功; false:获取失败
-//参数说明: info:存储帧信息结构体的地址
-//功能概要: 帧缓冲区不为空时，取出最先存储的一帧
+//参数说明: buffer:帧缓冲区号，取值范围为[0, FRAME_BUFFER_NUM - 1]
+//         info:存储帧信息结构体的地址
+//功能概要: 指定帧缓冲区不为空时，取出最先存储的一帧
 //==========================================================================
-bool frame_get_info(FrameInfo* info);
+bool frame_get_info(uint8 buffer, FrameInfo* info);
 
 #endif

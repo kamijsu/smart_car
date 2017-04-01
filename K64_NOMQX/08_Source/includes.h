@@ -31,10 +31,6 @@
 #include "crc.h"
 #include "crc16_modbus.h"
 #include "frame.h"
-#include "frame_string.h"
-#include "frame_cmd.h"
-#include "frame_data.h"
-#include "frame_bytes.h"
 #include <math.h>
 #include "rng.h"
 #include "arm_math.h"

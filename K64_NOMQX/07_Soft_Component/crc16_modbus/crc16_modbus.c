@@ -59,7 +59,7 @@ static const uint8 crc16_low_table[] = { 0x00, 0xC0, 0xC1, 0x01, 0xC3, 0x03,
 //         len:校验数据的字节数
 //功能概要: 校验一定长度的数据，返回生成的16位CRC校验码
 //==========================================================================
-uint16 crc16_modbus_block(uint8* data, uint32 len) {
+uint16 crc16_modbus_block(const uint8* data, uint32 len) {
 	uint8 crc_high, crc_low;	//高、低CRC字节
 	uint8 index;	//CRC循环中的索引
 

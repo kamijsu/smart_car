@@ -125,7 +125,7 @@ extern "C" {
 
 /* 这里选择了时钟模式1，即内核时钟频率120MHz，总线时钟频率60MHz */
 #ifndef CLOCK_SETUP
-	#define CLOCK_SETUP                (1)
+	#define CLOCK_SETUP                (0)
 #endif
 
 /* Predefined clock setups
