@@ -11,10 +11,8 @@ int main(void) {
 	uint32 i, j;
 	uint8 raw_img[CAMERA_RAW_IMG_BYTES];
 	uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH];
-	int32 duty = 2000;
-	FrameInfo info;
-	uint8 frame[263];
-	uint16 frame_len;
+	int32 duty = 1000;
+	float speed_l, speed_r;
 
 	uint8 src1[10240];
 	uint8 src[10240];
@@ -30,9 +28,10 @@ int main(void) {
 
 	//3. 初始化外设模块
 	light_init(LIGHT_BLUE, LIGHT_ON); //蓝灯初始化
-	uart_init(UART_USE, 9600, UART_PARITY_DISABLED, UART_STOP_BIT_1,
+	uart_init(UART_USE, 115200, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 	UART_BIT_ORDER_LSB); //uart0初始化
-	frame_init(3);
+
+
 
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 	pit_init(PIT_CH1, 71582);
@@ -43,12 +42,15 @@ int main(void) {
 	oled_init();
 
 //	menu_oled_display();
-//	custom_oled_display_init();
+	custom_oled_display_init();
 
-	camera_init(raw_img);
+	encoder_init(ENCODER0);		//初始化左编码器
+		encoder_init(ENCODER1);		//初始化右编码器
+
+//	camera_init(raw_img);
 	motor_init();
-	motor_set(0,duty);
-	motor_set(1,duty);
+	motor_set(0, duty);
+	motor_set(1, duty);
 
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
@@ -58,8 +60,8 @@ int main(void) {
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart0接收中断
-	camera_enable_collect_done_int();
-	camera_enable_vsync_int();
+//	camera_enable_collect_done_int();
+//	camera_enable_vsync_int();
 
 	//6. 开总中断
 	ENABLE_INTERRUPTS;
@@ -67,17 +69,26 @@ int main(void) {
 	//进入主循环
 	//主循环开始==================================================================
 	for (;;) {
-		if (raw_img_done && time0_flag.f_50ms) {
-			time0_flag.f_50ms = 0;
+		if (raw_img_done) {
 
-			camera_extract_raw_img(raw_img, (uint8*) img);
-
-			custom_oled_show_img(img);
+//			camera_extract_raw_img(raw_img, (uint8*) img);
+//
+//			custom_oled_show_img(img);
 
 //			vcan_send_raw_img(raw_img);
 
-			raw_img_done = false;
-			camera_enable_vsync_int();
+//			raw_img_done = false;
+//			camera_enable_vsync_int();
+		}
+		if (time0_flag.f_50ms) {
+			time0_flag.f_50ms = 0;
+
+			speed_l = encoder_get_speed(ENCODER0);
+			speed_r = encoder_get_speed(ENCODER1);
+
+			oled_printf(0, 2, "speed_l:%.2f ", speed_l);
+			oled_printf(0, 4, "speed_r:%.2f ", speed_r);
+
 		}
 		if (time0_flag.f_1s) {
 			time0_flag.f_1s = 0;
@@ -87,13 +98,7 @@ int main(void) {
 //			duty*=-1;
 //			motor_set(0,duty);
 //			motor_set(1,duty);
-//			custom_oled_update_temp();
-			info.src_addr = frame_get_local_addr();
-			info.dest_addr = 3;
-			info.type = 2;
-			info.len = 1;
-			frame_info_to_frame(&info,frame,&frame_len);
-			uart_sendN(UART_USE,frame,frame_len);
+			custom_oled_update_temp();
 
 			end = pit_get_time_us(1);
 //			uart_printf(UART_USE, "消耗时间：%dus\r\n", end - start);

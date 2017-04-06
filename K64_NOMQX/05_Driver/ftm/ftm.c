@@ -81,6 +81,7 @@ void ftm_init(uint8 mod, uint8 clk_div, uint8 counter_mode,
 		break;
 	case FTM_MOD2:
 		REG_SET_MASK(SIM_SCGC3, SIM_SCGC3_FTM2_MASK);
+		REG_SET_MASK(SIM_SCGC6, SIM_SCGC6_FTM2_MASK);
 		break;
 	case FTM_MOD3:
 		REG_SET_MASK(SIM_SCGC3, SIM_SCGC3_FTM3_MASK);

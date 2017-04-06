@@ -34,8 +34,8 @@
 #define MOTOR1_PWM1_CH				FTM_CH2		//FTM0_CH2	C3
 
 //定义电机占空比上下限，当duty>=0时，PWM0占空比为|duty|，PWM1占空比为0，当duty<0时，PWM0占空比为0，PWM1占空比为|duty|
-#define MOTOR_DUTY_MAX				FTM_DUTY_MAX
-#define MOTOR_DUTY_MIN				(-FTM_DUTY_MAX)
+#define MOTOR_DUTY_MAX				(FTM_DUTY_MAX * 0.98f)
+#define MOTOR_DUTY_MIN				(-(FTM_DUTY_MAX * 0.98f))
 
 //==========================================================================
 //函数名称: motor_init
@@ -50,7 +50,7 @@ void motor_init();
 //函数返回: 无
 //参数说明: motor:电机号:
 //               MOTORx，x为电机号;
-//         duty:占空比，范围[MOTOR_DUTY_MIN(-10000),MOTOR_DUTY_MAX(10000)]
+//         duty:占空比，范围[MOTOR_DUTY_MIN(-9800),MOTOR_DUTY_MAX(9800)]
 //功能概要: 设置电机的占空比，将在下一个计数周期更新
 //备注: 当duty>=0时，PWM0占空比为|duty|，PWM1占空比为0，
 //     当duty<0时，PWM0占空比为0，PWM1占空比为|duty|，
