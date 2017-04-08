@@ -7,21 +7,14 @@
 
 int main(void) {
 	//1. 声明主函数使用的变量
-	uint32 start, end;
-	uint32 i, j;
+
 	uint8 raw_img[CAMERA_RAW_IMG_BYTES];
 	uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH];
 	int32 duty = 1000;
 	float speed_l, speed_r;
-
-	uint8 src1[10240];
-	uint8 src[10240];
-	for (i = 0; i < 10240; i++) {
-		src[i] = i % 256;
-	}
-	uint8 dest1[10240];
-	uint8 dest[10240];
-	memset(dest, 0xFF, 10240);
+	uint32 start, end;
+	uint32 i, j;
+	float angle, angle_speed;
 
 	//2. 关总中断
 	DISABLE_INTERRUPTS;
@@ -31,13 +24,13 @@ int main(void) {
 	uart_init(UART_USE, 115200, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 	UART_BIT_ORDER_LSB); //uart0初始化
 
-
-
 	pit_init(PIT_CH0, 5);  //pit0初始化，周期5ms
 	pit_init(PIT_CH1, 71582);
 	rng_init();
 
 	temp_sensor_init();
+
+	gyro_acce_init();
 
 	oled_init();
 
@@ -45,7 +38,7 @@ int main(void) {
 	custom_oled_display_init();
 
 	encoder_init(ENCODER0);		//初始化左编码器
-		encoder_init(ENCODER1);		//初始化右编码器
+	encoder_init(ENCODER1);		//初始化右编码器
 
 //	camera_init(raw_img);
 	motor_init();
@@ -55,6 +48,7 @@ int main(void) {
 	//4. 给有关变量赋初值
 	time0_flag.f_1s = 0;
 	time0_flag.f_50ms = 0;
+	time0_flag.f_5ms = 0;
 	raw_img_done = false;
 
 	//5. 使能模块中断
@@ -80,28 +74,33 @@ int main(void) {
 //			raw_img_done = false;
 //			camera_enable_vsync_int();
 		}
+		if (time0_flag.f_5ms) {
+			time0_flag.f_5ms = 0;
+
+			start = pit_get_time_us(1);
+			gyro_acce_get_phy(&angle, &angle_speed);
+			end = pit_get_time_us(1);
+			oled_printf(0, 4, "angle:%4.2f  ", angle);
+			oled_printf(0, 6, "speed:%4.2f  ", angle_speed);
+
+
+			oled_printf(0, 2, "time:%d", end-start);
+
+		}
 		if (time0_flag.f_50ms) {
 			time0_flag.f_50ms = 0;
 
 			speed_l = encoder_get_speed(ENCODER0);
 			speed_r = encoder_get_speed(ENCODER1);
 
-			oled_printf(0, 2, "speed_l:%.2f ", speed_l);
-			oled_printf(0, 4, "speed_r:%.2f ", speed_r);
+//			oled_printf(0, 2, "speed:%4.2f %4.2f", speed_l, speed_r);
 
 		}
 		if (time0_flag.f_1s) {
 			time0_flag.f_1s = 0;
 			light_change(LIGHT_BLUE);
 
-			start = pit_get_time_us(1);
-//			duty*=-1;
-//			motor_set(0,duty);
-//			motor_set(1,duty);
 			custom_oled_update_temp();
-
-			end = pit_get_time_us(1);
-//			uart_printf(UART_USE, "消耗时间：%dus\r\n", end - start);
 
 		}
 

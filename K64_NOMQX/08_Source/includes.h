@@ -19,7 +19,7 @@
 #include "uart.h"
 //#include "ems.h"
 #include "encoder.h"
-//#include "gyro_acce.h"
+#include "gyro_acce.h"
 #include "light.h"
 #include "motor.h"
 #include "reed_switch.h"
