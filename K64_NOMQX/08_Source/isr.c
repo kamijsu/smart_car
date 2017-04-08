@@ -22,11 +22,8 @@ void UART1_RX_TX_IRQHandler() {
 //	res = frame_framing();
 //	uart_send1(UART_MOD1, res);
 
-
-	if (uart_re1_parity(UART_MOD1, &ch, &err))
-	{
-		if (!err)
-		{
+	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
+		if (!err) {
 //			switch (ch)
 //			{
 //			case 'n':
@@ -51,6 +48,27 @@ void UART1_RX_TX_IRQHandler() {
 //			oled_write_data(ch);
 		}
 
+	}
+
+	ENABLE_INTERRUPTS;
+}
+
+void PORTA_IRQHandler() {
+	static uint32 i = 0;
+	uint8 key;
+
+	DISABLE_INTERRUPTS;
+
+	oled_printf(0, 4, "time:%d", i++);
+
+	if (keyboard_get_int()) {
+
+		if (keyboard_read(&key)) {
+			oled_printf(0, 2, "key:%c   ", key);
+		} else {
+			oled_printf(0, 2, "key:null");
+		}
+		keyboard_clear_int();
 	}
 
 	ENABLE_INTERRUPTS;

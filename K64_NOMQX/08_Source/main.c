@@ -34,6 +34,8 @@ int main(void) {
 
 	oled_init();
 
+	keyboard_init();
+
 //	menu_oled_display();
 	custom_oled_display_init();
 
@@ -54,6 +56,7 @@ int main(void) {
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能pit中断
 	uart_enable_re_int(UART_USE);   //使能uart0接收中断
+	keyboard_enable_int();
 //	camera_enable_collect_done_int();
 //	camera_enable_vsync_int();
 
@@ -80,11 +83,11 @@ int main(void) {
 			start = pit_get_time_us(1);
 			gyro_acce_get_phy(&angle, &angle_speed);
 			end = pit_get_time_us(1);
-			oled_printf(0, 4, "angle:%4.2f  ", angle);
-			oled_printf(0, 6, "speed:%4.2f  ", angle_speed);
+//			oled_printf(0, 4, "angle:%4.2f  ", angle);
+//			oled_printf(0, 6, "speed:%4.2f  ", angle_speed);
 
 
-			oled_printf(0, 2, "time:%d", end-start);
+//			oled_printf(0, 2, "time:%d", end-start);
 
 		}
 		if (time0_flag.f_50ms) {
