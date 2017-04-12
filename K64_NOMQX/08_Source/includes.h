@@ -25,7 +25,6 @@
 #include "motor.h"
 #include "reed_switch.h"
 #include "control.h"
-#include "structs.h"
 #include "visual_scope.h"
 #include "ftm.h"
 #include "temp_sensor.h"
@@ -46,6 +45,7 @@
 #include "camera.h"
 #include "vcan.h"
 #include "menu.h"
+#include "time.h"
 
 //防止全局变量重复声明的前缀处理方法，并且添加volatile前缀，
 //因为全局变量会被多个.c文件使用，若不使用volatile前缀，则不会每次去变量所在地址读值，
@@ -57,20 +57,8 @@
 #define G_VAR_PREFIX extern volatile	//其他文件中使用全局变量自动加“extern”前缀
 #endif
 
-G_VAR_PREFIX bool raw_img_done;
-
 //定义全局变量
-//时间标志参数
-G_VAR_PREFIX TimeFlag time0_flag;
-
-//编码器脉冲计数器
-G_VAR_PREFIX EncoderCounter encoder_counter;
-
-//小车标志参数
-G_VAR_PREFIX CarFlag car_flag;
-
-//定义小灯闪烁频率
-#define RUN_COUNTER_MAX   3500000ul
+G_VAR_PREFIX bool raw_img_done;
 
 //定义使用的调试号
 #define UART_USE  UART_MOD0

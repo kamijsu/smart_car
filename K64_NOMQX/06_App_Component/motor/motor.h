@@ -35,7 +35,7 @@
 
 //定义电机占空比上下限，当duty>=0时，PWM0占空比为|duty|，PWM1占空比为0，当duty<0时，PWM0占空比为0，PWM1占空比为|duty|
 #define MOTOR_DUTY_MAX				(FTM_DUTY_MAX * 0.98f)
-#define MOTOR_DUTY_MIN				(-(FTM_DUTY_MAX * 0.98f))
+#define MOTOR_DUTY_MIN				(-MOTOR_DUTY_MAX)
 
 //==========================================================================
 //函数名称: motor_init

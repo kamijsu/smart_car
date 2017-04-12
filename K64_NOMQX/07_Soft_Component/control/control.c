@@ -1,112 +1,139 @@
-////==============================================================
-////文件名称：control.h
-////功能概要：PID控制源文件
-////版权所有：苏州大学飞思卡尔嵌入式中心(sumcu.suda.edu.cn)
-////==============================================================
-//
-//#include "control.h"
-//
-////==============================================================
-////函数名称：control_angle
-////函数返回：角度控制模块对电机的PWM值
-////参数说明：angle:小车的倾角，单位°
-////         angle_speed:小车的角速度，单位°/s
-////		   angle_p,angle_i,angle_d:角度控制的PID值，0即为不使用，i暂未使用
-////功能概要：车模直立控制函数。根据车模角度和角速度计算车模电机的控制量
-////==============================================================
-//int16_t control_angle(float angle, float angle_speed, float angle_p,
-//		float angle_i, float angle_d)
-//{
-//	static float last_angle_speed;
-//	float angle_P_value, angle_D_value;
-//	float f_value;
-//	int16_t angle_PWM;
-//
-//	//增量式PID控制计算P调节量
-//	angle_P_value = angle * angle_p;
-//
-//	//增量式PID控制计算D调节量
-//	angle_D_value = (angle_speed * 0.7 + last_angle_speed * 0.3) * angle_d;	//使D控制更加平滑
-//
-//	f_value = angle_P_value + angle_D_value;
-//
-//	last_angle_speed = angle_speed;
-//
-//	//对角度控制限幅
-//	if (f_value > ANGLE_PWM_MAX)
-//		f_value = ANGLE_PWM_MAX;
-//	else if (f_value < ANGLE_PWM_MIN)
-//		f_value = ANGLE_PWM_MIN;
-//
-//	angle_PWM = (int16_t) (f_value * CONTROL_PWM_MAX);
-//
-//	return angle_PWM;
-//}
-//
-////============================================================================
-////函数名称：control_speed
-////函数返回：速度控制模块对电机的PWM值
-////参数说明：speed_phy:小车的物理速度，单位m/s
-////		   aim_speed:小车的目标物理速度，单位m/s
-////		   speed_p,speed_i,speed_d:速度控制的PID值，0即为不使用
-////功能概要：车模速度控制函数。根据车模速度和目标速度计算车模电机的控制量
-////============================================================================
-//int16_t control_speed(float speed_phy, float aim_speed, float speed_p,
-//		float speed_i, float speed_d)
-//{
-//	static float speed_err, speed_I_value = 0;  //静态变量存储中间变量
-//	float last_speed_err, speed_EC;
-//	float speed_P_value, speed_D_value, KI;
-//	float f_value;
-//	int16_t speed_PWM;
-//
-//	last_speed_err = speed_err;				//将上一次的偏差保存
-//
-//	speed_err = speed_phy - aim_speed;		//计算新的偏差值
-//
-//	speed_EC = speed_err - last_speed_err; 	//计算新的偏差变化值
-//
-//	//增量式PID控制计算P调节量
-//	speed_P_value = (speed_err * 0.9 + last_speed_err * 0.1) * speed_p;	//使P控制更加平滑
-//
-//	//增量式PID控制计算I调节量
-//	KI = speed_err * SPEED_CONTROL_PERIOD / 1000 * speed_i;
-//
-//	speed_I_value += KI;
-//
-//	//对积分控制限幅
-//	if (speed_I_value < SPEED_PWM_MIN)
-//	{
-//		speed_I_value = SPEED_PWM_MIN;
-//	}
-//	else if (speed_I_value > SPEED_PWM_MAX)
-//	{
-//		speed_I_value = SPEED_PWM_MAX;
-//
-//	}
-//
-//	//增量式PID控制计算D调节量
-//	speed_D_value = speed_EC / SPEED_CONTROL_PERIOD * 1000 * speed_d;
-//
-//	f_value = (speed_P_value + speed_I_value + speed_D_value);
-//
-//	//对速度控制限幅
-//	if (f_value < SPEED_PWM_MIN)
-//	{
-//		f_value = SPEED_PWM_MIN;
-//	}
-//	else if (f_value > SPEED_PWM_MAX)
-//	{
-//		f_value = SPEED_PWM_MAX;
-//
-//	}
-//
-//	speed_PWM = (int16_t) (f_value * CONTROL_PWM_MAX);
-//
-//	return speed_PWM;
-//
-//}
-//
+//==========================================================================
+//文件名称：control.c
+//功能概要：小车控制软件程序源文件
+//==========================================================================
+
+#include "control.h"
+#include "motor.h"
+
+//==============================================================
+//函数名称：control_angle_pid
+//函数返回：无
+//参数说明：angle:角度控制模块参数的地址
+//功能概要：根据当前角度和角速度，进行角度PID控制(未用I)，
+//         计算目标PWM值并重置PWM周期计数器，自动记录上次角速度
+//备注: P值:使角度接近目标角度，与PWM值正相关
+//     D值:使角速度接近0，即抑制角度变化，与PWM值正相关
+//==============================================================
+void control_angle_pid(ControlAngle* angle) {
+	static const float angle_speed_weight = 0.7f;		//当前角速度权重
+	static const float last_angle_speed_weight = 0.3f;	//上次角速度权重
+
+	float p_val, d_val;	//P值和D值
+	float pid_val;		//PID值
+
+	//计算P值
+	p_val = (angle->angle - angle->target_angle) * angle->pid.p;
+	//计算D值，使用上次角速度可以使D控制更加平滑
+	d_val = (angle->angle_speed * angle_speed_weight
+			+ angle->last_angle_speed * last_angle_speed_weight) * angle->pid.d;
+
+	//记录上次角速度
+	angle->last_angle_speed = angle->angle_speed;
+
+	//计算PID值
+	pid_val = p_val + d_val;
+	//对PID值进行限幅
+	if (pid_val > CONTROL_ANGLE_PID_VAL_MAX) {
+		pid_val = CONTROL_ANGLE_PID_VAL_MAX;
+	} else if (pid_val < CONTROL_ANGLE_PID_VAL_MIN) {
+		pid_val = CONTROL_ANGLE_PID_VAL_MIN;
+	}
+
+	//计算目标PWM值
+	angle->pwm.target_pwm = pid_val * CONTROL_PID_PWM_RATIO;
+	//重置PWM周期计数器
+	angle->pwm.period_counter = 0;
+}
+
+//==============================================================
+//函数名称：control_speed_pid
+//函数返回：无
+//参数说明：speed:速度控制模块参数的地址
+//功能概要：根据当前左轮和右轮速度，进行速度PID控制，
+//         计算目标PWM值并重置PWM周期计数器，
+//         自动记录上次速度差值和距离误差
+//备注: P值:使速度接近目标速度，与PWM值正相关
+//     I值:使距离误差接近0，即加快速度变化，与PWM值正相关
+//     D值:使加速度接近0，即抑制速度变化，与PWM值正相关
+//==============================================================
+void control_speed_pid(ControlSpeed* speed) {
+	static const float speed_err_weight = 0.9f;			//当前速度差值权重
+	static const float last_speed_err_weight = 0.1f;	//上次速度差值权重
+
+	float speed_err;	//当前速度差值
+	float p_val, i_val, d_val;	//P值，I值，D值
+	float pid_val;		//PID值
+
+	//计算当前速度差值
+	speed_err = (speed->left_speed + speed->right_speed) / 2
+			- speed->target_speed;
+
+	//计算P值，使用上次速度差值可以使P控制更加平滑
+	p_val = (speed_err * speed_err_weight
+			+ speed->last_speed_err * last_speed_err_weight) * speed->pid.p;
+
+	//计算距离误差
+	speed->distance_err += (speed_err * CONTROL_SPEED_PERIOD);
+	//计算I值
+	i_val = speed->distance_err * speed->pid.i;
+
+	//计算D值
+	d_val = (speed_err - speed->last_speed_err) / CONTROL_SPEED_PERIOD
+			* speed->pid.d;
+
+	//记录上次速度差值
+	speed->last_speed_err = speed_err;
+
+	//计算PID值
+	pid_val = p_val + i_val + d_val;
+	//对PID值进行限幅
+	if (pid_val > CONTROL_SPEED_PID_VAL_MAX) {
+		pid_val = CONTROL_SPEED_PID_VAL_MAX;
+	} else if (pid_val < CONTROL_SPEED_PID_VAL_MIN) {
+		pid_val = CONTROL_SPEED_PID_VAL_MIN;
+	}
+
+	//计算目标PWM值
+	speed->pwm.target_pwm = pid_val * CONTROL_PID_PWM_RATIO;
+	//重置PWM周期计数器
+	speed->pwm.period_counter = 0;
+}
+
+//===========================================================================
+//函数名称：control_update_output_pwm
+//函数返回：无
+//参数说明：pwm:PWM参数的地址
+//功能概要：更新输出的PWM值，这种方式可以使输出的PWM值平滑地变化至目标PWM值
+//===========================================================================
+void control_update_output_pwm(ControlPWM* pwm) {
+	int16 pwm_err;	//PWM差值
+
+	//计算PWM差值
+	pwm_err = pwm->target_pwm - pwm->output_pwm;
+	//更新PWM周期计数器
+	++pwm->period_counter;
+	//更新本次输出的PWM值
+	pwm->output_pwm = pwm_err * pwm->period_counter / pwm->period_num
+			+ pwm->output_pwm;
+}
+
+//===========================================================================
+//函数名称：control_update_motor_pwm
+//函数返回：无
+//参数说明：car:小车参数的地址
+//功能概要：更新并设置电机输出的PWM值
+//===========================================================================
+void control_update_motor_pwm(ControlCar* car) {
+	//更新左右电机输出的PWM值
+	car->left_motor_pwm = car->angle.pwm.output_pwm + car->speed.pwm.output_pwm;
+	car->right_motor_pwm = car->angle.pwm.output_pwm
+			+ car->speed.pwm.output_pwm;
+	//设置电机的占空比
+	motor_set(MOTOR0, car->left_motor_pwm);
+	motor_set(MOTOR1, car->right_motor_pwm);
+}
+
 ////===========================================================================
 ////函数名称：control_turn
 ////函数返回：转向控制模块对电机的PWM值
@@ -114,8 +141,7 @@
 ////		   turn_p,turn_i,turn_d:转向控制的PID值，0即为不使用，i暂未使用
 ////功能概要：车模转向控制函数。根据电磁传感器采集的电压值计算车模电机的控制量
 ////===========================================================================
-//int16_t control_turn(float *EMS_V, float turn_p, float turn_i, float turn_d)
-//{
+//int16_t control_turn(float *EMS_V, float turn_p, float turn_i, float turn_d) {
 //	//上次内外电磁传感器比例电压差
 //	static float last_error_out = 0;
 //	static float last_error_in = 0;
@@ -155,92 +181,4 @@
 //	turn_PWM = (int16_t) (f_value * CONTROL_PWM_MAX);
 //
 //	return turn_PWM;
-//}
-//
-////===========================================================================
-////函数名称：control_angle_PWM_out
-////函数返回：角度控制模块平滑输出的PWM值
-////参数说明：new_angle_PWM:新计算出的角度PWM值
-////		   last_angle_PWM:上次的角度PWM值
-////		   period_count:周期计数器
-////功能概要：使角度控制模块可以平滑输出PWM值
-////===========================================================================
-//int16_t control_angle_PWM_out(int16_t new_angle_PWM, int16_t last_angle_PWM,
-//		uint8_t period_count)
-//{
-//	int16_t PWM_err;
-//	int16_t angle_PWM;
-//	PWM_err = new_angle_PWM - last_angle_PWM;
-//	angle_PWM = PWM_err * (period_count) / ANGLE_TIME + last_angle_PWM;
-//	return angle_PWM;
-//}
-//
-////===========================================================================
-////函数名称：control_speed_PWM_out
-////函数返回：速度控制模块平滑输出的PWM值
-////参数说明：new_speed_PWM:新计算出的速度PWM值
-////		   last_speed_PWM:上次的速度PWM值
-////		   period_count:周期计数器
-////功能概要：使速度控制模块可以平滑输出PWM值
-////===========================================================================
-//int16_t control_speed_PWM_out(int16_t new_speed_PWM, int16_t last_speed_PWM,
-//		uint8_t period_count)
-//{
-//	int16_t PWM_err;
-//	int16_t speed_PWM;
-//	PWM_err = new_speed_PWM - last_speed_PWM;
-//	speed_PWM = PWM_err * (period_count) / SPEED_TIME + last_speed_PWM;
-//	return speed_PWM;
-//}
-//
-////===========================================================================
-////函数名称：control_turn_PWM_out
-////函数返回：转向控制模块平滑输出的PWM值
-////参数说明：new_turn_PWM:新计算出的转向PWM值
-////		   last_turn_PWM:上次的转向PWM值
-////		   period_count:周期计数器
-////功能概要：使转向控制模块可以平滑输出PWM值
-////===========================================================================
-//int16_t control_turn_PWM_out(int16_t new_turn_PWM, int16_t last_turn_PWM,
-//		uint8_t period_count)
-//{
-//	int16_t PWM_err;
-//	int16_t turn_PWM;
-//	PWM_err = new_turn_PWM - last_turn_PWM;
-//	turn_PWM = PWM_err * (period_count) / TURN_TIME + last_turn_PWM;
-//	return turn_PWM;
-//}
-//
-////===========================================================================
-////函数名称：control_motor_output
-////函数返回：对电机输出的PWM的平均值
-////参数说明：angle_PWM:角度PWM值
-////		   speed_PWM:速度PWM值
-////		   turn_PWM:转向PWM值
-////功能概要：根据角度、速度、转向控制模块对电机输出PWM值
-////===========================================================================
-//int16_t control_motor_output(int16_t angle_PWM, int16_t speed_PWM,
-//		int16_t turn_PWM)
-//{
-//	int32_t left_motor_PWM, right_motor_PWM;
-//
-//	left_motor_PWM = angle_PWM + speed_PWM + turn_PWM;
-//	right_motor_PWM = angle_PWM + speed_PWM - turn_PWM;
-//
-//	motor_set(MOTOR1, left_motor_PWM);
-//	motor_set(MOTOR2, right_motor_PWM);
-//
-//	return ((left_motor_PWM + right_motor_PWM) / 2);
-//}
-//
-////===========================================================================
-////函数名称：control_stop
-////函数返回：无
-////参数说明：无
-////功能概要：停车
-////===========================================================================
-//void control_stop(void)
-//{
-//	motor_set(MOTOR1, 0);
-//	motor_set(MOTOR2, 0);
 //}
