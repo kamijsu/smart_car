@@ -17,7 +17,6 @@
 #include "gpio.h"
 #include "pit.h"
 #include "uart.h"
-//#include "ems.h"
 #include "encoder.h"
 #include "keyboard.h"
 #include "gyro_acce.h"
