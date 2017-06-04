@@ -87,6 +87,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crypto&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/custom&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/img_deal&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/menu&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/time&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/vcan&quot;"/>
@@ -249,6 +250,7 @@
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/crypto&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/custom&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/frame&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/img_deal&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/menu&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/time&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/07_Soft_Component/vcan&quot;"/>
