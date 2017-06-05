@@ -230,7 +230,7 @@ static const uint8 camera_reg_init_table[][2] = {
 	{ CAMERA_REG_BDMStep,   0x03 },
 	{ CAMERA_REG_SDE,       0x04 },
 	{ CAMERA_REG_BRIGHT,    0x00 },
-	{ CAMERA_REG_CNST,      0x80 },	//这个寄存器调节阈值
+	{ CAMERA_REG_CNST,      0x38 },	//这个寄存器调节阈值，值越小画面越暗
 	{ CAMERA_REG_SIGN,      0x06 },
 	{ CAMERA_REG_UVADJ0,    0x11 },
 	{ CAMERA_REG_UVADJ1,    0x02 }

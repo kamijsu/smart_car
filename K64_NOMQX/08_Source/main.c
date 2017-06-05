@@ -8,10 +8,9 @@
 int main(void) {
 	//1. 声明主函数使用的变量
 
-	uint8 raw_img[CAMERA_RAW_IMG_BYTES];	//原始图像
-	uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH];	//解压后图像数据
 	uint32 start, end;	//开始和结束时间值变量
 	uint32 i, j;
+	int16 returnBuff[6];
 
 	ControlCar car;	//小车参数
 
@@ -42,7 +41,7 @@ int main(void) {
 	encoder_init(ENCODER0);		//初始化左编码器
 	encoder_init(ENCODER1);		//初始化右编码器
 
-	camera_init(raw_img);	//初始化摄像头
+	camera_init(car.turn.raw_img);	//初始化摄像头
 
 	motor_init();		//初始化电机
 
@@ -66,16 +65,23 @@ int main(void) {
 	car.speed.pwm.target_pwm = 0;
 	car.speed.pwm.output_pwm = 0;
 	car.speed.pwm.period_num = 10;
+	car.turn.pwm.target_pwm = 0;
+	car.turn.pwm.output_pwm = 0;
+	car.turn.pwm.period_num = 5;
+	car.turn.last_mid_err = 0;
 
 	//0m/s时pid参数
-	car.angle.target_angle = 6.0f;
+	car.angle.target_angle = 1.5f;
 	car.angle.pid.p = 0.2f;
 	car.angle.pid.d = 0.0003f;
 
-	car.speed.target_speed = 0;
+	car.speed.target_speed = 0.3;
 	car.speed.pid.p = 2;
 	car.speed.pid.i = 0.5f;
 	car.speed.pid.d = 0;
+
+	car.turn.pid.p = 0.0010f;
+	car.turn.pid.d = 0.0002f;
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能PIT0中断
@@ -95,9 +101,20 @@ int main(void) {
 			//重新开始计时
 			time_restart_timer(2);
 			//解压原始图像
-			camera_extract_raw_img(raw_img, (uint8*) img);
+			camera_extract_raw_img(car.turn.raw_img, (uint8*) car.turn.img);
+
+			deal_image(car.turn.img, car.turn.returnBuff);
+
+			get_image_midpoint(car.turn.returnBuff, &car.turn.midpoint);
+
+			control_turn_pid(&car.turn);
+//			oled_printf(0, 0, "%d", car.turn.returnBuff[0]);
+//			oled_printf(0, 2, "%d", car.turn.returnBuff[1]);
+//			oled_printf(0, 4, "%d", car.turn.returnBuff[2]);
+			oled_printf(0, 6, "%4.1f", car.turn.midpoint);
+
 			//显示图像
-			custom_oled_show_img(img);
+			custom_oled_show_img(car.turn.img);
 			//发送图像至PC
 //			vcan_send_raw_img(raw_img);
 			//重置图像完成标志
@@ -123,6 +140,9 @@ int main(void) {
 
 			//更新速度控制模块的输出PWM值
 			control_update_output_pwm(&car.speed.pwm);
+
+			//更新方向控制模块的输出PWM值
+			control_update_output_pwm(&car.turn.pwm);
 
 			//更新电机输出的PWM值
 			control_update_motor_pwm(&car);

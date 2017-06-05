@@ -5,6 +5,7 @@
  *      Author: Administrator
  */
 #include "common.h"
+#include "camera.h"
 
 #ifndef _IMG_DEAL_H_
 #define _IMG_DEAL_H_
@@ -33,7 +34,7 @@ void deal_image(uint8 Image[IMG_HEIGHT][IMG_WIDTH],int16 returnBuff[6]);
 //参数说明：无
 //功能概要：找出近远两行的中心
 //====================================================================
-void get_image_midpoint(int16 returnBuff[6],int16 midpoint);
+void get_image_midpoint(int16 returnBuff[6],float* midpoint);
 //===========================================================================
 //函数名称：deal_ccd_line
 //函数返回：转向PWM值

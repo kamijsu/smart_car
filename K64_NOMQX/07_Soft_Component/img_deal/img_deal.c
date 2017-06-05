@@ -107,32 +107,38 @@ void deal_image(uint8 Image[IMG_HEIGHT][IMG_WIDTH],int16 returnBuff[6])
 //参数说明：无
 //功能概要：找出近远两行的中心
 //====================================================================
-void get_image_midpoint(int16 returnBuff[6],int16* midpoint)
+void get_image_midpoint(int16 returnBuff[6],float* midpoint)
 {
-	static int16 last_midpoint;
-	if(returnBuff[3]==IMG_WIDTH)//近处的线全黑
+	static float last_midpoint = 40.0f;
+	if(returnBuff[5]==0)//近处的线全黑
 	{
-		midpoint=last_midpoint;
+		*midpoint=last_midpoint;
 	}
 	else
 	{
-		if(returnBuff[4]==IMG_WIDTH)//中间线全黑
+		if(returnBuff[4]==0)//中间线全黑
 		{
-			midpoint=returnBuff[0];
+			*midpoint=returnBuff[2];
 		}
-		else if(returnBuff[4]==0)//中间线全白
+		else if(returnBuff[4]==IMG_WIDTH)//中间线全白
 		{
 
-			midpoint=(int16)(0.7*returnBuff[0]+0.3*returnBuff[2]);
+			*midpoint=(int16)(0.7f*returnBuff[2]+0.3f*returnBuff[0]);
 		}
 		else
 		{
-			midpoint=(int16)(0.6*returnBuff[0]+0.4*returnBuff[1]);
+			*midpoint=(int16)(0.6f*returnBuff[2]+0.4f*returnBuff[1]);
 		}
 
 	}
-	last_midpoint=midpoint;
+	last_midpoint=*midpoint;
 }
+
+
+static inline bool find_left_edge(uint8* img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH], uint8 line){
+
+}
+
 //===========================================================================
 //函数名称：deal_ccd_line
 //函数返回：转向PWM值

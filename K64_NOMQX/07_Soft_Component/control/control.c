@@ -100,6 +100,27 @@ void control_speed_pid(ControlSpeed* speed) {
 	speed->pwm.period_counter = 0;
 }
 
+void control_turn_pid(ControlTurn* turn) {
+	float mid_err;
+
+	float p_val, d_val;
+	float pid_val;
+
+	mid_err = turn->midpoint - 40;
+	//计算P值
+	p_val = mid_err * turn->pid.p;
+
+	d_val = (turn->last_mid_err - mid_err) * turn->pid.d;
+
+	turn->last_mid_err = mid_err;
+
+	//计算PID值
+	pid_val = p_val + d_val;
+
+	turn->pwm.target_pwm = pid_val * CONTROL_PID_PWM_RATIO;
+	turn->pwm.period_counter = 0;
+}
+
 //===========================================================================
 //函数名称：control_update_output_pwm
 //函数返回：无
@@ -126,9 +147,10 @@ void control_update_output_pwm(ControlPWM* pwm) {
 //===========================================================================
 void control_update_motor_pwm(ControlCar* car) {
 	//更新左右电机输出的PWM值
-	car->left_motor_pwm = car->angle.pwm.output_pwm + car->speed.pwm.output_pwm;
-	car->right_motor_pwm = car->angle.pwm.output_pwm
-			+ car->speed.pwm.output_pwm;
+	car->left_motor_pwm = car->angle.pwm.output_pwm + car->speed.pwm.output_pwm
+			+ car->turn.pwm.output_pwm;
+	car->right_motor_pwm = car->angle.pwm.output_pwm + car->speed.pwm.output_pwm
+			- car->turn.pwm.output_pwm;
 	//设置电机的占空比
 	motor_set(MOTOR0, car->left_motor_pwm);
 	motor_set(MOTOR1, car->right_motor_pwm);

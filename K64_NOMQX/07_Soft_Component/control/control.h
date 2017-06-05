@@ -9,6 +9,7 @@
 #include "common.h"
 #include "ftm.h"
 #include "encoder.h"
+#include "camera.h"
 
 //定义PID参数结构体
 typedef struct {
@@ -46,10 +47,22 @@ typedef struct {
 	ControlPWM pwm;		//PWM参数，需初始化
 } ControlSpeed, *ControlSpeedPtr;
 
+//定义方向控制模块参数
+typedef struct {
+	uint8 raw_img[CAMERA_RAW_IMG_BYTES];	//原始图像
+	uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH];	//解压后图像数据
+	int16 returnBuff[6];
+	float midpoint;
+	float last_mid_err;	//需初始化
+	ControlPID pid;		//PID参数，需初始化
+	ControlPWM pwm;		//PWM参数，需初始化
+} ControlTurn, *ControlTurnPtr;
+
 //定义小车参数
 typedef struct {
 	ControlAngle angle;	//角度控制参数
 	ControlSpeed speed;	//速度控制参数
+	ControlTurn turn;	//方向控制参数
 	int16 left_motor_pwm;	//左电机输出PWM值
 	int16 right_motor_pwm;	//右电机输出PWM值
 } ControlCar, *ControlCarPtr;
@@ -91,6 +104,8 @@ void control_angle_pid(ControlAngle* angle);
 //     D值:使加速度接近0，即抑制速度变化，与PWM值正相关
 //==============================================================
 void control_speed_pid(ControlSpeed* speed);
+
+void control_turn_pid(ControlTurn* turn);
 
 //===========================================================================
 //函数名称：control_update_output_pwm
