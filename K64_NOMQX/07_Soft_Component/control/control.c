@@ -15,7 +15,7 @@
 //备注: P值:使角度接近目标角度，与PWM值正相关
 //     D值:使角速度接近0，即抑制角度变化，与PWM值正相关
 //==============================================================
-void control_angle_pid(ControlAngle* angle) {
+void control_angle_pid(ParamAngle* angle) {
 	static const float angle_speed_weight = 0.7f;		//当前角速度权重
 	static const float last_angle_speed_weight = 0.3f;	//上次角速度权重
 
@@ -57,7 +57,7 @@ void control_angle_pid(ControlAngle* angle) {
 //     I值:使距离误差接近0，即加快速度变化，与PWM值正相关
 //     D值:使加速度接近0，即抑制速度变化，与PWM值正相关
 //==============================================================
-void control_speed_pid(ControlSpeed* speed) {
+void control_speed_pid(ParamSpeed* speed) {
 	static const float speed_err_weight = 0.9f;			//当前速度差值权重
 	static const float last_speed_err_weight = 0.1f;	//上次速度差值权重
 
@@ -100,7 +100,7 @@ void control_speed_pid(ControlSpeed* speed) {
 	speed->pwm.period_counter = 0;
 }
 
-void control_turn_pid(ControlTurn* turn) {
+void control_turn_pid(ParamTurn* turn) {
 	float mid_err;
 
 	float p_val, d_val;
@@ -127,7 +127,7 @@ void control_turn_pid(ControlTurn* turn) {
 //参数说明：pwm:PWM参数的地址
 //功能概要：更新输出的PWM值，这种方式可以使输出的PWM值平滑地变化至目标PWM值
 //===========================================================================
-void control_update_output_pwm(ControlPWM* pwm) {
+void control_update_output_pwm(ParamPWM* pwm) {
 	int16 pwm_err;	//PWM差值
 
 	//计算PWM差值
@@ -145,7 +145,7 @@ void control_update_output_pwm(ControlPWM* pwm) {
 //参数说明：car:小车参数的地址
 //功能概要：更新并设置电机输出的PWM值
 //===========================================================================
-void control_update_motor_pwm(ControlCar* car) {
+void control_update_motor_pwm(ParamCar* car) {
 	//更新左右电机输出的PWM值
 	car->left_motor_pwm = car->angle.pwm.output_pwm + car->speed.pwm.output_pwm
 			+ car->turn.pwm.output_pwm;

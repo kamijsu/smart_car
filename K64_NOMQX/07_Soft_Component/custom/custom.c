@@ -7,6 +7,8 @@
 #include "oled.h"
 #include "temp_sensor.h"
 #include "camera.h"
+#include "frame.h"
+#include <string.h>
 
 //"温度"的字模数据，纵向取模，字节倒序;
 //汉字大小为16*16，前32字节为"温度"上半部分，后32字节为"温度"下半部分
@@ -141,4 +143,98 @@ void custom_oled_show_img(uint8 img[60][80]) {
 			oled_write_data(byte);
 		}
 	}
+}
+
+//==========================================================================
+//函数名称: custom_send_param_to_host
+//函数返回: 无
+//参数说明: car:小车参数的地址
+//功能概要: 发送小车参数至上位机
+//备注: 组帧发送
+//==========================================================================
+void custom_send_param_to_host(ParamCar* car) {
+	FrameInfo info;		//帧信息结构体
+	uint8 frame[253];	//帧字节
+	uint16 frame_len;	//帧字节数
+
+	//设置目的地址、源地址、类型、长度
+	info.dest_addr = CUSTOM_HOST_ADDR;
+	info.src_addr = frame_get_local_addr();
+	info.type = CUSTOM_FRAME_TYPE_PARAM;
+	info.len = sizeof(float) * 16 + sizeof(int16) * 5;
+	//设置发送的数据
+	memcpy(info.data, &car->angle.angle, sizeof(float));
+	memcpy(info.data + sizeof(float), &car->angle.angle_speed, sizeof(float));
+	memcpy(info.data + sizeof(float) * 2, &car->angle.last_angle_speed,
+			sizeof(float));
+	memcpy(info.data + sizeof(float) * 3, &car->angle.target_angle,
+			sizeof(float));
+	memcpy(info.data + sizeof(float) * 4, &car->angle.pid.p, sizeof(float));
+	memcpy(info.data + sizeof(float) * 5, &car->angle.pid.d, sizeof(float));
+	memcpy(info.data + sizeof(float) * 6, &car->angle.pwm.target_pwm,
+			sizeof(int16));
+	memcpy(info.data + sizeof(float) * 6 + sizeof(int16),
+			&car->speed.left_speed, sizeof(float));
+	memcpy(info.data + sizeof(float) * 7 + sizeof(int16),
+			&car->speed.right_speed, sizeof(float));
+	memcpy(info.data + sizeof(float) * 8 + sizeof(int16),
+			&car->speed.target_speed, sizeof(float));
+	memcpy(info.data + sizeof(float) * 9 + sizeof(int16),
+			&car->speed.last_speed_err, sizeof(float));
+	memcpy(info.data + sizeof(float) * 10 + sizeof(int16),
+			&car->speed.distance_err, sizeof(float));
+	memcpy(info.data + sizeof(float) * 11 + sizeof(int16), &car->speed.pid.p,
+			sizeof(float));
+	memcpy(info.data + sizeof(float) * 12 + sizeof(int16), &car->speed.pid.i,
+			sizeof(float));
+	memcpy(info.data + sizeof(float) * 13 + sizeof(int16), &car->speed.pid.d,
+			sizeof(float));
+	memcpy(info.data + sizeof(float) * 14 + sizeof(int16),
+			&car->speed.pwm.target_pwm, sizeof(int16));
+	memcpy(info.data + sizeof(float) * 14 + sizeof(int16) * 2, &car->turn.pid.p,
+			sizeof(float));
+	memcpy(info.data + sizeof(float) * 15 + sizeof(int16) * 2, &car->turn.pid.d,
+			sizeof(float));
+	memcpy(info.data + sizeof(float) * 16 + sizeof(int16) * 2,
+			&car->turn.pwm.target_pwm, sizeof(int16));
+	memcpy(info.data + sizeof(float) * 16 + sizeof(int16) * 3,
+			&car->left_motor_pwm, sizeof(int16));
+	memcpy(info.data + sizeof(float) * 16 + sizeof(int16) * 4,
+			&car->right_motor_pwm, sizeof(int16));
+	frame_info_to_frame(&info, frame, &frame_len);
+	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
+}
+
+//==========================================================================
+//函数名称: custom_send_raw_img_to_host
+//函数返回: 无
+//参数说明: raw_img:600个字节的原始图片首地址
+//功能概要: 发送原始图片至上位机
+//备注: 组帧发送，共3帧
+//==========================================================================
+void custom_send_raw_img_to_host(uint8 raw_img[600]) {
+	FrameInfo info;		//帧信息结构体
+	uint8 frame[253];	//帧字节
+	uint16 frame_len;	//帧字节数
+
+	//设置目的地址、源地址、长度
+	info.dest_addr = CUSTOM_HOST_ADDR;
+	info.src_addr = frame_get_local_addr();
+	info.len = 200;
+
+	//发送图片帧0
+	info.type = CUSTOM_FRAME_TYPE_RAW_IMG0;
+	memcpy(info.data, raw_img, 200);
+	frame_info_to_frame(&info, frame, &frame_len);
+	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
+	//发送图片帧1
+	info.type = CUSTOM_FRAME_TYPE_RAW_IMG1;
+	memcpy(info.data, raw_img + 200, 200);
+	frame_info_to_frame(&info, frame, &frame_len);
+	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
+	//发送图片帧2
+	info.type = CUSTOM_FRAME_TYPE_RAW_IMG2;
+	memcpy(info.data, raw_img + 400, 200);
+	frame_info_to_frame(&info, frame, &frame_len);
+	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
 }

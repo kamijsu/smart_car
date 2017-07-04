@@ -7,6 +7,20 @@
 #define _CUSTOM_H
 
 #include "common.h"
+#include "uart.h"
+#include "param.h"
+
+//定义所使用的UART模块号，需要使能该模块，才可以使用本文件提供的函数
+#define CUSTOM_UART_MOD	UART_MOD0	//UART0
+
+//定义主机地址，为帧的目的地址
+#define CUSTOM_HOST_ADDR	(255)
+//定义小车参数帧类型
+#define CUSTOM_FRAME_TYPE_PARAM	(1)
+//定义原始图像帧类型，共用3帧
+#define CUSTOM_FRAME_TYPE_RAW_IMG0	(2)
+#define CUSTOM_FRAME_TYPE_RAW_IMG1	(3)
+#define CUSTOM_FRAME_TYPE_RAW_IMG2	(4)
 
 //==========================================================================
 //函数名称: custom_oled_display_init
@@ -34,5 +48,23 @@ void custom_oled_update_temp();
 //     显示一幅图像需1ms
 //==========================================================================
 void custom_oled_show_img(uint8 img[60][80]);
+
+//==========================================================================
+//函数名称: custom_send_param_to_host
+//函数返回: 无
+//参数说明: car:小车参数的地址
+//功能概要: 发送小车参数至上位机
+//备注: 组帧发送
+//==========================================================================
+void custom_send_param_to_host(ParamCar* car);
+
+//==========================================================================
+//函数名称: custom_send_raw_img_to_host
+//函数返回: 无
+//参数说明: raw_img:600个字节的原始图片首地址
+//功能概要: 发送原始图片至上位机
+//备注: 组帧发送，共3帧
+//==========================================================================
+void custom_send_raw_img_to_host(uint8 raw_img[600]);
 
 #endif

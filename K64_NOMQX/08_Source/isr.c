@@ -8,37 +8,21 @@
 #include "includes.h"
 
 //==========================================================================
-//函数名称：UART1_RX_TX_IRQHandler
+//函数名称：UART0_RX_TX_IRQHandler
 //参数说明：无
 //函数返回：无
 //功能概要：UART1中断服务函数
 //==========================================================================
-void UART1_RX_TX_IRQHandler() {
+void UART0_RX_TX_IRQHandler() {
 	FrameFramingResult res;
 	uint8 ch;
-	bool err = true;
+	bool err;
 	DISABLE_INTERRUPTS;
 
-	if (uart_re1_parity(UART_MOD1, &ch, &err)) {
+	if (uart_re1_parity(UART_MOD0, &ch, &err)) {
 		if (!err) {
-//			switch (ch)
-//			{
-//			case 'n':
-//				menu_oled_next_item(); break;
-//			case 'l':
-//				menu_oled_last_item(); break;
-//			case 's':
-//				menu_oled_select(); break;
-//			case 'o':
-//				menu_oled_save(); break;
-//			case 'r':
-//				menu_oled_reset(); break;
-//			default: break;
-//			}
-
-			uart_send1(UART_MOD1, ch);
+			frame_framing(0, ch);
 		}
-
 	}
 
 	ENABLE_INTERRUPTS;

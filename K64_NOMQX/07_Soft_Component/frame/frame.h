@@ -40,7 +40,7 @@ typedef struct {
 } FrameInfo;
 
 //定义帧缓冲区数量，帧缓冲区号为[0, FRAME_BUFFER_NUM - 1]
-#define FRAME_BUFFER_NUM		(2)
+#define FRAME_BUFFER_NUM		(1)
 //定义帧缓冲区大小，即最多可以缓存 FRAME_BUFFER_SIZE 个帧信息结构体，缓冲区满时，接收到的字节被丢弃
 #define FRAME_BUFFER_SIZE		(3)
 
