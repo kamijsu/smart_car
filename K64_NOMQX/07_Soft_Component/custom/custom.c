@@ -146,15 +146,46 @@ void custom_oled_show_img(uint8 img[60][80]) {
 }
 
 //==========================================================================
+//函数名称: custom_send_string_to_host
+//函数返回: true:发送成功; false:发送失败，即字符串长度大于等于255个字节
+//参数说明: str:字符串的首地址
+//功能概要: 发送字符串至上位机
+//备注: 组帧发送
+//==========================================================================
+bool custom_send_string_to_host(const uint8* str) {
+	FrameInfo info;		//帧信息结构体
+	uint8 frame[263];	//帧字节
+	uint16 frame_len;	//帧字节数
+	uint32 str_len;		//字符串长度
+
+	str_len = strlen(str);
+	//判断字符串长度是否合法
+	if (str_len >= 255) {
+		return false;
+	}
+	//设置目的地址、源地址、类型、长度
+	info.dest_addr = CUSTOM_HOST_ADDR;
+	info.src_addr = frame_get_local_addr();
+	info.type = CUSTOM_FRAME_TYPE_STRING;
+	info.len = str_len;
+	//拷贝字符串
+	strcpy(info.data, str);
+	//发送字符串帧
+	frame_info_to_frame(&info, frame, &frame_len);
+	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
+	return true;
+}
+
+//==========================================================================
 //函数名称: custom_send_param_to_host
 //函数返回: 无
 //参数说明: car:小车参数的地址
 //功能概要: 发送小车参数至上位机
 //备注: 组帧发送
 //==========================================================================
-void custom_send_param_to_host(ParamCar* car) {
+void custom_send_param_to_host(const ParamCar* car) {
 	FrameInfo info;		//帧信息结构体
-	uint8 frame[253];	//帧字节
+	uint8 frame[263];	//帧字节
 	uint16 frame_len;	//帧字节数
 
 	//设置目的地址、源地址、类型、长度
@@ -201,6 +232,7 @@ void custom_send_param_to_host(ParamCar* car) {
 			&car->left_motor_pwm, sizeof(int16));
 	memcpy(info.data + sizeof(float) * 16 + sizeof(int16) * 4,
 			&car->right_motor_pwm, sizeof(int16));
+	//发送帧
 	frame_info_to_frame(&info, frame, &frame_len);
 	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
 }
@@ -212,9 +244,9 @@ void custom_send_param_to_host(ParamCar* car) {
 //功能概要: 发送原始图片至上位机
 //备注: 组帧发送，共3帧
 //==========================================================================
-void custom_send_raw_img_to_host(uint8 raw_img[600]) {
+void custom_send_raw_img_to_host(const uint8 raw_img[600]) {
 	FrameInfo info;		//帧信息结构体
-	uint8 frame[253];	//帧字节
+	uint8 frame[263];	//帧字节
 	uint16 frame_len;	//帧字节数
 
 	//设置目的地址、源地址、长度
@@ -235,6 +267,77 @@ void custom_send_raw_img_to_host(uint8 raw_img[600]) {
 	//发送图片帧2
 	info.type = CUSTOM_FRAME_TYPE_RAW_IMG2;
 	memcpy(info.data, raw_img + 400, 200);
+	frame_info_to_frame(&info, frame, &frame_len);
+	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
+}
+
+//==========================================================================
+//函数名称: custom_send_mid_points_to_host
+//函数返回: 无
+//参数说明: mid_points:60个字节的中点数组的首地址
+//         has_mid_points:60个字节的是否有中点数组的首地址
+//功能概要: 发送中点信息至上位机
+//备注: 组帧发送
+//==========================================================================
+void custom_send_mid_points_to_host(const uint8 mid_points[60],
+		const bool has_mid_points[60]) {
+	FrameInfo info;		//帧信息结构体
+	uint8 frame[263];	//帧字节
+	uint16 frame_len;	//帧字节数
+	uint8 i;
+
+	//设置目的地址、源地址、类型、长度
+	info.dest_addr = CUSTOM_HOST_ADDR;
+	info.src_addr = frame_get_local_addr();
+	info.type = CUSTOM_FRAME_TYPE_MID_POINT;
+	info.len = 0;
+	//设置发送的数据，每个中点占两个字节，第一个为行号，第二个为列号
+	for (i = 0; i < 60; ++i) {
+		if (has_mid_points[i]) {
+			info.data[info.len++] = i;
+			info.data[info.len++] = mid_points[i];
+		}
+	}
+	//发送帧
+	frame_info_to_frame(&info, frame, &frame_len);
+	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
+}
+
+//==========================================================================
+//函数名称: custom_send_edges_to_host
+//函数返回: 无
+//参数说明: left_edges:60个字节的左边缘数组的首地址
+//         has_left_edges:60个字节的是否有左边缘数组的首地址
+//         right_edges:60个字节的右边缘数组的首地址
+//         has_right_edges:60个字节的是否有右边缘数组的首地址
+//功能概要: 发送边缘信息至上位机
+//备注: 组帧发送
+//==========================================================================
+void custom_send_edges_to_host(const uint8 left_edges[60],
+		const bool has_left_edges[60], const uint8 right_edges[60],
+		const bool has_right_edges[60]) {
+	FrameInfo info;		//帧信息结构体
+	uint8 frame[263];	//帧字节
+	uint16 frame_len;	//帧字节数
+	uint8 i;
+
+	//设置目的地址、源地址、类型、长度
+	info.dest_addr = CUSTOM_HOST_ADDR;
+	info.src_addr = frame_get_local_addr();
+	info.type = CUSTOM_FRAME_TYPE_EDGE;
+	info.len = 0;
+	//设置发送的数据，每个边缘点占两个字节，第一个为行号，第二个为列号
+	for (i = 0; i < 60; ++i) {
+		if (has_left_edges[i]) {
+			info.data[info.len++] = i;
+			info.data[info.len++] = left_edges[i];
+		}
+		if (has_right_edges[i]) {
+			info.data[info.len++] = i;
+			info.data[info.len++] = right_edges[i];
+		}
+	}
+	//发送帧
 	frame_info_to_frame(&info, frame, &frame_len);
 	uart_sendN(CUSTOM_UART_MOD, frame, frame_len);
 }

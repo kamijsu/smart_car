@@ -15,12 +15,18 @@
 
 //定义主机地址，为帧的目的地址
 #define CUSTOM_HOST_ADDR	(255)
+//定义字符串帧类型
+#define CUSTOM_FRAME_TYPE_STRING	(0)
 //定义小车参数帧类型
 #define CUSTOM_FRAME_TYPE_PARAM	(1)
 //定义原始图像帧类型，共用3帧
 #define CUSTOM_FRAME_TYPE_RAW_IMG0	(2)
 #define CUSTOM_FRAME_TYPE_RAW_IMG1	(3)
 #define CUSTOM_FRAME_TYPE_RAW_IMG2	(4)
+//定义中点帧类型
+#define CUSTOM_FRAME_TYPE_MID_POINT	(5)
+//定义边缘帧类型
+#define CUSTOM_FRAME_TYPE_EDGE		(6)
 
 //==========================================================================
 //函数名称: custom_oled_display_init
@@ -50,13 +56,22 @@ void custom_oled_update_temp();
 void custom_oled_show_img(uint8 img[60][80]);
 
 //==========================================================================
+//函数名称: custom_send_string_to_host
+//函数返回: true:发送成功; false:发送失败，即字符串长度大于等于255个字节
+//参数说明: str:字符串的首地址
+//功能概要: 发送字符串至上位机
+//备注: 组帧发送
+//==========================================================================
+bool custom_send_string_to_host(const uint8* str);
+
+//==========================================================================
 //函数名称: custom_send_param_to_host
 //函数返回: 无
 //参数说明: car:小车参数的地址
 //功能概要: 发送小车参数至上位机
 //备注: 组帧发送
 //==========================================================================
-void custom_send_param_to_host(ParamCar* car);
+void custom_send_param_to_host(const ParamCar* car);
 
 //==========================================================================
 //函数名称: custom_send_raw_img_to_host
@@ -65,6 +80,31 @@ void custom_send_param_to_host(ParamCar* car);
 //功能概要: 发送原始图片至上位机
 //备注: 组帧发送，共3帧
 //==========================================================================
-void custom_send_raw_img_to_host(uint8 raw_img[600]);
+void custom_send_raw_img_to_host(const uint8 raw_img[600]);
+
+//==========================================================================
+//函数名称: custom_send_mid_points_to_host
+//函数返回: 无
+//参数说明: mid_points:60个字节的中点数组的首地址
+//         has_mid_points:60个字节的是否有中点数组的首地址
+//功能概要: 发送中点信息至上位机
+//备注: 组帧发送
+//==========================================================================
+void custom_send_mid_points_to_host(const uint8 mid_points[60],
+		const bool has_mid_points[60]);
+
+//==========================================================================
+//函数名称: custom_send_edges_to_host
+//函数返回: 无
+//参数说明: left_edges:60个字节的左边缘数组的首地址
+//         has_left_edges:60个字节的是否有左边缘数组的首地址
+//         right_edges:60个字节的右边缘数组的首地址
+//         has_right_edges:60个字节的是否有右边缘数组的首地址
+//功能概要: 发送边缘信息至上位机
+//备注: 组帧发送
+//==========================================================================
+void custom_send_edges_to_host(const uint8 left_edges[60],
+		const bool has_left_edges[60], const uint8 right_edges[60],
+		const bool has_right_edges[60]);
 
 #endif

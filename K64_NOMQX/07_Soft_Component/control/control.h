@@ -49,6 +49,15 @@ void control_angle_pid(ParamAngle* angle);
 //==============================================================
 void control_speed_pid(ParamSpeed* speed);
 
+bool control_find_mid_points(
+		const uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH],
+		uint8 mid_points[CAMERA_IMG_HEIGHT],
+		bool has_mid_points[CAMERA_IMG_HEIGHT],
+		uint8 left_edges[CAMERA_IMG_HEIGHT],
+		bool has_left_edges[CAMERA_IMG_HEIGHT],
+		uint8 right_edges[CAMERA_IMG_HEIGHT],
+		bool has_right_edges[CAMERA_IMG_HEIGHT]);
+
 void control_turn_pid(ParamTurn* turn);
 
 //===========================================================================

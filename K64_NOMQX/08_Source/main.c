@@ -12,10 +12,25 @@ int main(void) {
 	uint32 i, j;
 	int16 returnBuff[6];
 	FrameInfo info;
-	uint8 frame[253];
+	uint8 frame[263];
 	uint16 frame_len;
-	bool can_send_raw_img;
+	bool can_send_img;
+	bool img_copy_done;
 	uint8 raw_img_copy[CAMERA_RAW_IMG_BYTES];
+
+	uint8 mid_points[CAMERA_IMG_HEIGHT];
+	bool has_mid_points[CAMERA_IMG_HEIGHT];
+	uint8 left_edges[CAMERA_IMG_HEIGHT];
+	bool has_left_edges[CAMERA_IMG_HEIGHT];
+	uint8 right_edges[CAMERA_IMG_HEIGHT];
+	bool has_right_edges[CAMERA_IMG_HEIGHT];
+
+	uint8 mid_points_copy[CAMERA_IMG_HEIGHT];
+	bool has_mid_points_copy[CAMERA_IMG_HEIGHT];
+	uint8 left_edges_copy[CAMERA_IMG_HEIGHT];
+	bool has_left_edges_copy[CAMERA_IMG_HEIGHT];
+	uint8 right_edges_copy[CAMERA_IMG_HEIGHT];
+	bool has_right_edges_copy[CAMERA_IMG_HEIGHT];
 
 	ParamCar car;	//小车参数
 
@@ -60,7 +75,8 @@ int main(void) {
 
 	//4. 给有关变量赋初值
 	raw_img_done = false;
-	can_send_raw_img = false;
+	can_send_img = false;
+	img_copy_done = false;
 	//初始化小车参数
 	car.angle.angle = 0;
 	car.angle.last_angle_speed = 0;
@@ -82,7 +98,7 @@ int main(void) {
 	car.angle.pid.p = 0.2f;
 	car.angle.pid.d = 0.0003f;
 
-	car.speed.target_speed = 0.3f;
+	car.speed.target_speed = 0.0f;
 	car.speed.pid.p = 2;
 	car.speed.pid.i = 0.5f;
 	car.speed.pid.d = 0;
@@ -116,6 +132,9 @@ int main(void) {
 
 			get_image_midpoint(car.turn.returnBuff, &car.turn.midpoint);
 
+			control_find_mid_points(car.turn.img, mid_points, has_mid_points,
+					left_edges, has_left_edges, right_edges, has_right_edges);
+
 			control_turn_pid(&car.turn);
 //			oled_printf(0, 0, "%d", car.turn.returnBuff[0]);
 //			oled_printf(0, 2, "%d", car.turn.returnBuff[1]);
@@ -125,9 +144,16 @@ int main(void) {
 			//显示图像
 			custom_oled_show_img(car.turn.img);
 			//拷贝原始图像，以供发送
-			if (!can_send_raw_img) {
-				can_send_raw_img = true;
+			if (can_send_img && !img_copy_done) {
+				img_copy_done = true;
 				memcpy(raw_img_copy, car.turn.raw_img, CAMERA_RAW_IMG_BYTES);
+				memcpy(mid_points_copy, mid_points, CAMERA_IMG_HEIGHT);
+				memcpy(has_mid_points_copy, has_mid_points, CAMERA_IMG_HEIGHT);
+				memcpy(left_edges_copy, left_edges, CAMERA_IMG_HEIGHT);
+				memcpy(has_left_edges_copy, has_left_edges, CAMERA_IMG_HEIGHT);
+				memcpy(right_edges_copy, right_edges, CAMERA_IMG_HEIGHT);
+				memcpy(has_right_edges_copy, has_right_edges,
+				CAMERA_IMG_HEIGHT);
 			}
 
 			//发送图像至PC
@@ -201,8 +227,12 @@ int main(void) {
 			//7ms
 			custom_send_param_to_host(&car);
 			//若可以发送原始图像，则发送至上位机
-			if (can_send_raw_img) {
-				can_send_raw_img = false;
+			if (can_send_img && img_copy_done) {
+				img_copy_done = false;
+				custom_send_mid_points_to_host(mid_points_copy,
+						has_mid_points_copy);
+				custom_send_edges_to_host(left_edges_copy, has_left_edges_copy,
+						right_edges_copy, has_right_edges_copy);
 				//54ms
 				custom_send_raw_img_to_host(raw_img_copy);
 			}
@@ -210,9 +240,12 @@ int main(void) {
 		}
 		if (frame_get_info(0, &info)) {
 			switch (info.type) {
-			case 0:
+			case 0:	//字符串帧
 				frame_info_to_frame(&info, frame, &frame_len);
 				uart_sendN(UART_USE, frame, frame_len);
+				break;
+			case 7:	//设置是否发送图像
+				can_send_img = info.data[0] == 1 ? true : false;
 				break;
 			}
 		}
