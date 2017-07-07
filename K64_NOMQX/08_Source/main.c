@@ -14,23 +14,15 @@ int main(void) {
 	FrameInfo info;
 	uint8 frame[263];
 	uint16 frame_len;
+	bool can_send_param;
 	bool can_send_img;
 	bool img_copy_done;
 	uint8 raw_img_copy[CAMERA_RAW_IMG_BYTES];
 
-	uint8 mid_points[CAMERA_IMG_HEIGHT];
-	bool has_mid_points[CAMERA_IMG_HEIGHT];
-	uint8 left_edges[CAMERA_IMG_HEIGHT];
-	bool has_left_edges[CAMERA_IMG_HEIGHT];
-	uint8 right_edges[CAMERA_IMG_HEIGHT];
-	bool has_right_edges[CAMERA_IMG_HEIGHT];
-
-	uint8 mid_points_copy[CAMERA_IMG_HEIGHT];
-	bool has_mid_points_copy[CAMERA_IMG_HEIGHT];
-	uint8 left_edges_copy[CAMERA_IMG_HEIGHT];
-	bool has_left_edges_copy[CAMERA_IMG_HEIGHT];
-	uint8 right_edges_copy[CAMERA_IMG_HEIGHT];
-	bool has_right_edges_copy[CAMERA_IMG_HEIGHT];
+	int16 mid_points_copy[CAMERA_IMG_HEIGHT];
+	int16 left_edges_copy[CAMERA_IMG_HEIGHT];
+	int16 right_edges_copy[CAMERA_IMG_HEIGHT];
+	bool valid_row_copy[CAMERA_IMG_HEIGHT];
 
 	ParamCar car;	//小车参数
 
@@ -75,6 +67,7 @@ int main(void) {
 
 	//4. 给有关变量赋初值
 	raw_img_done = false;
+	can_send_param = true;
 	can_send_img = false;
 	img_copy_done = false;
 	//初始化小车参数
@@ -105,8 +98,8 @@ int main(void) {
 
 //	car.turn.pid.p = 0;
 //	car.turn.pid.d = 0;
-	car.turn.pid.p = 0.0010f;
-	car.turn.pid.d = 0.0002f;
+	car.turn.pid.p = 0.005f;
+	car.turn.pid.d = 0.000f;
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能PIT0中断
@@ -128,38 +121,46 @@ int main(void) {
 			//解压原始图像
 			camera_extract_raw_img(car.turn.raw_img, (uint8*) car.turn.img);
 
-			deal_image(car.turn.img, car.turn.returnBuff);
+			//deal_image(car.turn.img, car.turn.returnBuff);
 
-			get_image_midpoint(car.turn.returnBuff, &car.turn.midpoint);
+			//get_image_midpoint(car.turn.returnBuff, &car.turn.midpoint);
 
-			control_find_mid_points(car.turn.img, mid_points, has_mid_points,
-					left_edges, has_left_edges, right_edges, has_right_edges);
+			start = pit_get_time_us(1);
+
+			control_find_mid_points(&car.turn);
+
+			control_cal_avg_mid_point(&car.turn);
+
+			end = pit_get_time_us(1);
+			oled_printf(0, 0, "%.2f", car.turn.avg_mid_point);
+			oled_printf(0, 2, "%d", end - start);
 
 			control_turn_pid(&car.turn);
 //			oled_printf(0, 0, "%d", car.turn.returnBuff[0]);
 //			oled_printf(0, 2, "%d", car.turn.returnBuff[1]);
 //			oled_printf(0, 4, "%d", car.turn.returnBuff[2]);
-			oled_printf(0, 6, "%4.1f", car.turn.midpoint);
+//			oled_printf(0, 6, "%4.1f", car.turn.midpoint);
 
 			//显示图像
 			custom_oled_show_img(car.turn.img);
 			//拷贝原始图像，以供发送
 			if (can_send_img && !img_copy_done) {
 				img_copy_done = true;
-				memcpy(raw_img_copy, car.turn.raw_img, CAMERA_RAW_IMG_BYTES);
-				memcpy(mid_points_copy, mid_points, CAMERA_IMG_HEIGHT);
-				memcpy(has_mid_points_copy, has_mid_points, CAMERA_IMG_HEIGHT);
-				memcpy(left_edges_copy, left_edges, CAMERA_IMG_HEIGHT);
-				memcpy(has_left_edges_copy, has_left_edges, CAMERA_IMG_HEIGHT);
-				memcpy(right_edges_copy, right_edges, CAMERA_IMG_HEIGHT);
-				memcpy(has_right_edges_copy, has_right_edges,
-				CAMERA_IMG_HEIGHT);
+				memcpy(raw_img_copy, car.turn.raw_img,
+						sizeof(uint8) * CAMERA_RAW_IMG_BYTES);
+				memcpy(mid_points_copy, car.turn.mid_points,
+						sizeof(int16) * CAMERA_IMG_HEIGHT);
+				memcpy(left_edges_copy, car.turn.left_edges,
+						sizeof(int16) * CAMERA_IMG_HEIGHT);
+				memcpy(right_edges_copy, car.turn.right_edges,
+						sizeof(int16) * CAMERA_IMG_HEIGHT);
+				memcpy(valid_row_copy, car.turn.valid_row,
+						sizeof(bool) * CAMERA_IMG_HEIGHT);
 			}
 
 			//发送图像至PC
 //			vcan_send_raw_img(car.turn.raw_img);	//52ms
 
-//			oled_printf(0, 2, "%d", end - start);
 			//重置图像完成标志
 			raw_img_done = false;
 			//允许接收场中断
@@ -224,15 +225,17 @@ int main(void) {
 			//重新开始计时
 			time_restart_timer(4);
 
-			//7ms
-			custom_send_param_to_host(&car);
-			//若可以发送原始图像，则发送至上位机
+			//若可以发送参数，则发送至上位机
+			if (can_send_param) {
+				//7ms
+				custom_send_param_to_host(&car);
+			}
+			//若可以发送图像，则发送至上位机
 			if (can_send_img && img_copy_done) {
 				img_copy_done = false;
-				custom_send_mid_points_to_host(mid_points_copy,
-						has_mid_points_copy);
-				custom_send_edges_to_host(left_edges_copy, has_left_edges_copy,
-						right_edges_copy, has_right_edges_copy);
+				custom_send_mid_points_to_host(mid_points_copy, valid_row_copy);
+				custom_send_edges_to_host(left_edges_copy, right_edges_copy,
+						valid_row_copy);
 				//54ms
 				custom_send_raw_img_to_host(raw_img_copy);
 			}
@@ -246,6 +249,9 @@ int main(void) {
 				break;
 			case 7:	//设置是否发送图像
 				can_send_img = info.data[0] == 1 ? true : false;
+				break;
+			case 8:	//设置是否发送参数
+				can_send_param = info.data[0] == 1 ? true : false;
 				break;
 			}
 		}

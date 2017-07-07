@@ -6,10 +6,13 @@
 #include "control.h"
 #include "motor.h"
 #include "camera.h"
+#include <string.h>
 
 //定义内部宏
 #define IS_WHITE(pixel)	(pixel == CAMERA_EXTRACT_WHITE_VAL)	//像素点是否为白
 #define IS_BLACK(pixel)	(pixel == CAMERA_EXTRACT_BLACK_VAL)	//像素点是否为黑
+#define MAX(a, b)	((a) > (b) ? (a) : (b))		//获取最大值
+#define MIN(a, b)	((a) < (b) ? (a) : (b))		//获取最小值
 
 //==============================================================
 //函数名称：control_angle_pid
@@ -106,13 +109,17 @@ void control_speed_pid(ParamSpeed* speed) {
 }
 
 static inline bool control_find_left_edge(
-		const uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH], const uint8 row,
-		const uint8 start_col, uint8* edge_col) {
-	uint8 i;
+		uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH], const int16 row,
+		int16 start_col, int16 end_col, int16* edge_col) {
+	int16 col;
 
-	for (i = start_col; i > 0; --i) {
-		if (IS_WHITE(img[row][i]) && IS_BLACK(img[row][i - 1])) {
-			*edge_col = i;
+	start_col = MIN(start_col, CAMERA_IMG_WIDTH - 1);
+	end_col = MAX(end_col, 2);
+
+	for (col = start_col; col >= end_col; --col) {
+		if (IS_BLACK(img[row][col - 1]) && IS_BLACK(img[row][col - 2])
+		&& IS_WHITE(img[row][col])) {
+			*edge_col = col;
 			return true;
 		}
 	}
@@ -120,76 +127,154 @@ static inline bool control_find_left_edge(
 }
 
 static inline bool control_find_right_edge(
-		const uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH], const uint8 row,
-		const uint8 start_col, uint8* edge_col) {
-	uint8 i;
+		uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH], const int16 row,
+		int16 start_col, int16 end_col, int16* edge_col) {
+	int16 col;
 
-	for (i = start_col; i < CAMERA_IMG_WIDTH; ++i) {
-		if (IS_WHITE(img[row][i]) && IS_BLACK(img[row][i + 1])) {
-			*edge_col = i;
+	start_col = MAX(start_col, 0);
+	end_col = MIN(end_col, CAMERA_IMG_WIDTH - 3);
+
+	for (col = start_col; col <= end_col; ++col) {
+		if (IS_BLACK(img[row][col + 1]) && IS_BLACK(img[row][col + 2])
+		&& IS_WHITE(img[row][col])) {
+			*edge_col = col;
 			return true;
 		}
 	}
 	return false;
 }
 
-static inline void control_cal_mid_point(const uint8 row,
-		const uint8 left_edges[CAMERA_IMG_HEIGHT],
-		const bool has_left_edges[CAMERA_IMG_HEIGHT],
-		const uint8 right_edges[CAMERA_IMG_HEIGHT],
-		const bool has_right_edges[CAMERA_IMG_HEIGHT],
-		uint8 mid_points[CAMERA_IMG_HEIGHT],
-		bool has_mid_points[CAMERA_IMG_HEIGHT]) {
-	has_mid_points[row] = true;
-	if (has_left_edges[row] && has_right_edges[row]) {
-		mid_points[row] = (left_edges[row] + right_edges[row]) >> 1;
-	} else if (has_left_edges[row] && !has_right_edges[row]) {
-		mid_points[row] = (left_edges[row] + CAMERA_IMG_WIDTH) >> 1;
-	} else if (!has_left_edges[row] && has_right_edges[row]) {
-		mid_points[row] = right_edges[row] >> 1;
-	} else {
-		mid_points[row] = mid_points[row + 1];
+static inline int16 control_find_next_point(
+		const int16 points[CAMERA_IMG_HEIGHT], const int16 next_row) {
+	int32 sum_x, sum_y, sum_xy, sum_xx;
+	int32 x, y;
+	float avg_x, avg_y, avg_xy, avg_xx;
+	float param_a, param_b;
+	int32 i;
+	float tmp;
+
+	sum_x = 0;
+	sum_y = 0;
+	sum_xy = 0;
+	sum_xx = 0;
+
+	for (i = 1; i <= CONTROL_BASE_ROW_NUM; ++i) {
+		x = next_row + i;
+		y = points[x];
+		sum_x += x;
+		sum_y += y;
+		sum_xy += x * y;
+		sum_xx += x * x;
 	}
+	avg_x = sum_x * 1.0f / CONTROL_BASE_ROW_NUM;
+	avg_y = sum_y * 1.0f / CONTROL_BASE_ROW_NUM;
+	avg_xy = sum_xy * 1.0f / CONTROL_BASE_ROW_NUM;
+	avg_xx = sum_xx * 1.0f / CONTROL_BASE_ROW_NUM;
+	tmp = avg_xx - avg_x * avg_x;
+	param_b = tmp == 0 ? 0 : (avg_xy - avg_x * avg_y) / tmp;
+	param_a = avg_y - param_b * avg_x;
+	return (int16) (param_a + param_b * next_row + 0.5f);
 }
 
-bool control_find_mid_points(
-		const uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH],
-		uint8 mid_points[CAMERA_IMG_HEIGHT],
-		bool has_mid_points[CAMERA_IMG_HEIGHT],
-		uint8 left_edges[CAMERA_IMG_HEIGHT],
-		bool has_left_edges[CAMERA_IMG_HEIGHT],
-		uint8 right_edges[CAMERA_IMG_HEIGHT],
-		bool has_right_edges[CAMERA_IMG_HEIGHT]) {
-	uint8 row;
-	uint8 valid_row_num;
-	uint16 valid_mid_point_sum;
-	uint8 valid_mid_point;
-	memset(has_mid_points, false, CAMERA_IMG_HEIGHT);
-	memset(has_left_edges, false, CAMERA_IMG_HEIGHT);
-	memset(has_right_edges, false, CAMERA_IMG_HEIGHT);
-	valid_row_num = 0;
-	valid_mid_point_sum = 0;
-	for (row = CAMERA_IMG_HEIGHT - 1; row > CAMERA_IMG_HEIGHT - 6; --row) {
-		has_left_edges[row] = control_find_left_edge(img, row,
-		CAMERA_IMG_WIDTH - 1, left_edges + row);
-		has_right_edges[row] = control_find_right_edge(img, row, 0,
-				right_edges + row);
-		if (has_left_edges[row] || has_right_edges[row]) {
-			++valid_row_num;
-			control_cal_mid_point(row, left_edges, has_left_edges, right_edges,
-					has_right_edges, mid_points, has_mid_points);
-			valid_mid_point_sum += mid_points[row];
+void control_find_mid_points(ParamTurn* turn) {
+	int16 row;
+	bool has_left_edge, has_right_edge;
+	int16 next_left_edge;
+	int16 next_right_edge;
+
+	for (row = CAMERA_IMG_HEIGHT - 1;
+			row > CAMERA_IMG_HEIGHT - 1 - CONTROL_BASE_ROW_NUM; --row) {
+		has_left_edge = control_find_left_edge(turn->img, row,
+		CAMERA_IMG_WIDTH >> 1, 0, turn->left_edges + row);
+		has_right_edge = control_find_right_edge(turn->img, row,
+		CAMERA_IMG_WIDTH >> 1, CAMERA_IMG_WIDTH, turn->right_edges + row);
+		if (!has_left_edge) {
+			turn->left_edges[row] = 0;
 		}
+		if (!has_right_edge) {
+			turn->right_edges[row] = CAMERA_IMG_WIDTH - 1;
+		}
+		turn->valid_row[row] = true;
+		turn->mid_points[row] = (turn->left_edges[row] + turn->right_edges[row])
+				>> 1;
 	}
-	if (valid_row_num < 3) {
-		return false;
+
+	for (row = CAMERA_IMG_HEIGHT - 1 - CONTROL_BASE_ROW_NUM; row >= 0; --row) {
+		next_left_edge = control_find_next_point(turn->left_edges, row);
+		next_right_edge = control_find_next_point(turn->right_edges, row);
+
+		has_left_edge = control_find_left_edge(turn->img, row,
+				next_left_edge + CONTROL_EDGE_RANGE,
+				next_left_edge - CONTROL_EDGE_RANGE, turn->left_edges + row);
+
+		has_right_edge = control_find_right_edge(turn->img, row,
+				next_right_edge - CONTROL_EDGE_RANGE,
+				next_right_edge + CONTROL_EDGE_RANGE, turn->right_edges + row);
+
+		if (!has_left_edge) {
+			turn->left_edges[row] = next_left_edge;
+		}
+
+		if (!has_right_edge) {
+			turn->right_edges[row] = next_right_edge;
+		}
+
+		turn->valid_row[row] = true;
+
+		if (turn->left_edges[row] > 0) {
+			if (turn->right_edges[row] < CAMERA_IMG_WIDTH - 1) {
+				turn->mid_points[row] = (turn->left_edges[row]
+						+ turn->right_edges[row]) >> 1;
+			} else {
+				turn->mid_points[row] = turn->mid_points[row + 1]
+						+ (turn->left_edges[row] - turn->left_edges[row + 1]);
+			}
+		} else {
+			if (turn->right_edges[row] < CAMERA_IMG_WIDTH - 1) {
+				turn->mid_points[row] = turn->mid_points[row + 1]
+						+ (turn->right_edges[row] - turn->right_edges[row + 1]);
+			} else {
+				turn->mid_points[row] = control_find_next_point(
+						turn->mid_points, row);
+			}
+		}
+
+		if (turn->mid_points[row] <= 0) {
+			turn->mid_points[row] = 0;
+			memset(turn->valid_row, false, sizeof(bool) * row);
+			break;
+		} else if (turn->mid_points[row] >= CAMERA_IMG_WIDTH - 1) {
+			turn->mid_points[row] = CAMERA_IMG_WIDTH - 1;
+			memset(turn->valid_row, false, sizeof(bool) * row);
+			break;
+		}
+
 	}
-	valid_mid_point = valid_mid_point_sum / valid_row_num;
-	for (row = CAMERA_IMG_HEIGHT - 1; row > CAMERA_IMG_HEIGHT - 6; --row) {
-		mid_points[row] = valid_mid_point;
-		has_mid_points[row] = true;
+
+}
+
+void control_cal_avg_mid_point(ParamTurn* turn) {
+	static const uint8 weight[CAMERA_IMG_HEIGHT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1,	//10
+			2, 2, 2, 2, 2, 2, 2, 2, 2, 2, //20
+			5, 5, 5, 5, 5, 5, 5, 5, 5, 5, //30
+			13, 13, 13, 13, 13, 13, 13, 13, 13, 13, //40
+			8, 8, 8, 8, 8, 8, 8, 8, 8, 8, //50
+			3, 3, 3, 3, 3, 3, 3, 3, 3, 3 //60
+			};
+
+	int32 val_sum;
+	int32 weight_sum;
+	int16 i;
+
+	val_sum = 0;
+	weight_sum = 0;
+	for (i = CAMERA_IMG_HEIGHT - 1; i >= 0 && turn->valid_row[i]; --i) {
+		val_sum += weight[i] * turn->mid_points[i];
+		weight_sum += weight[i];
 	}
-	return true;
+
+	turn->avg_mid_point = val_sum * 1.0f / weight_sum;
 }
 
 void control_turn_pid(ParamTurn* turn) {
@@ -198,7 +283,7 @@ void control_turn_pid(ParamTurn* turn) {
 	float p_val, d_val;
 	float pid_val;
 
-	mid_err = turn->midpoint - 40;
+	mid_err = turn->avg_mid_point - (CAMERA_IMG_WIDTH >> 1);
 	//计算P值
 	p_val = mid_err * turn->pid.p;
 

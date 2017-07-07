@@ -76,7 +76,7 @@ void custom_oled_update_temp() {
 //函数返回: 无
 //参数说明: img:宽*高为80*60的图像首地址
 //功能概要: 在OLED上显示一幅80*60的二值化图像
-//备注: 显示的起始位置为第24列，第1页的第4行;
+//备注: 显示的起始位置为第48列，第1页的第4行;
 //     图像上方的4行被设置为全暗，但中间2列被设置为亮，用于指示图像的中心线;
 //     显示一幅图像需1ms
 //==========================================================================
@@ -87,7 +87,7 @@ void custom_oled_show_img(uint8 img[60][80]) {
 
 	//显示图像的最低4行，显示于OLED最低页的高4行
 	//设置当前地址为起始列
-	oled_set_pos(24, 0);
+	oled_set_pos(48, 0);
 	//显示前39列
 	for (i = 0; i < 39; i++) {
 		//默认全暗
@@ -130,7 +130,7 @@ void custom_oled_show_img(uint8 img[60][80]) {
 		//计算行偏移量
 		offset = 8 * i + 4;
 		//设置当前地址为起始列
-		oled_set_pos(24, i + 1);
+		oled_set_pos(48, i + 1);
 		//显示该页的80列图像
 		for (j = 0; j < 80; j++) {
 			byte = 0;
@@ -275,16 +275,16 @@ void custom_send_raw_img_to_host(const uint8 raw_img[600]) {
 //函数名称: custom_send_mid_points_to_host
 //函数返回: 无
 //参数说明: mid_points:60个字节的中点数组的首地址
-//         has_mid_points:60个字节的是否有中点数组的首地址
+//         valid_row:60个字节的该行是否有效数组的首地址
 //功能概要: 发送中点信息至上位机
 //备注: 组帧发送
 //==========================================================================
-void custom_send_mid_points_to_host(const uint8 mid_points[60],
-		const bool has_mid_points[60]) {
+void custom_send_mid_points_to_host(const int16 mid_points[60],
+		const bool valid_row[60]) {
 	FrameInfo info;		//帧信息结构体
 	uint8 frame[263];	//帧字节
 	uint16 frame_len;	//帧字节数
-	uint8 i;
+	int8 i;
 
 	//设置目的地址、源地址、类型、长度
 	info.dest_addr = CUSTOM_HOST_ADDR;
@@ -292,10 +292,12 @@ void custom_send_mid_points_to_host(const uint8 mid_points[60],
 	info.type = CUSTOM_FRAME_TYPE_MID_POINT;
 	info.len = 0;
 	//设置发送的数据，每个中点占两个字节，第一个为行号，第二个为列号
-	for (i = 0; i < 60; ++i) {
-		if (has_mid_points[i]) {
+	for (i = 59; i >= 0; --i) {
+		if (valid_row[i]) {
 			info.data[info.len++] = i;
 			info.data[info.len++] = mid_points[i];
+		} else {
+			break;
 		}
 	}
 	//发送帧
@@ -307,19 +309,17 @@ void custom_send_mid_points_to_host(const uint8 mid_points[60],
 //函数名称: custom_send_edges_to_host
 //函数返回: 无
 //参数说明: left_edges:60个字节的左边缘数组的首地址
-//         has_left_edges:60个字节的是否有左边缘数组的首地址
 //         right_edges:60个字节的右边缘数组的首地址
-//         has_right_edges:60个字节的是否有右边缘数组的首地址
+//         valid_row:60个字节的该行是否有效数组的首地址
 //功能概要: 发送边缘信息至上位机
 //备注: 组帧发送
 //==========================================================================
-void custom_send_edges_to_host(const uint8 left_edges[60],
-		const bool has_left_edges[60], const uint8 right_edges[60],
-		const bool has_right_edges[60]) {
+void custom_send_edges_to_host(const int16 left_edges[60],
+		const int16 right_edges[60], const bool valid_row[60]) {
 	FrameInfo info;		//帧信息结构体
 	uint8 frame[263];	//帧字节
 	uint16 frame_len;	//帧字节数
-	uint8 i;
+	int8 i;
 
 	//设置目的地址、源地址、类型、长度
 	info.dest_addr = CUSTOM_HOST_ADDR;
@@ -327,14 +327,18 @@ void custom_send_edges_to_host(const uint8 left_edges[60],
 	info.type = CUSTOM_FRAME_TYPE_EDGE;
 	info.len = 0;
 	//设置发送的数据，每个边缘点占两个字节，第一个为行号，第二个为列号
-	for (i = 0; i < 60; ++i) {
-		if (has_left_edges[i]) {
-			info.data[info.len++] = i;
-			info.data[info.len++] = left_edges[i];
-		}
-		if (has_right_edges[i]) {
-			info.data[info.len++] = i;
-			info.data[info.len++] = right_edges[i];
+	for (i = 59; i >= 0; --i) {
+		if (valid_row[i]) {
+			if (left_edges[i] >= 0 && left_edges[i] < CAMERA_IMG_WIDTH) {
+				info.data[info.len++] = i;
+				info.data[info.len++] = left_edges[i];
+			}
+			if (right_edges[i] >= 0 && right_edges[i] < CAMERA_IMG_WIDTH) {
+				info.data[info.len++] = i;
+				info.data[info.len++] = right_edges[i];
+			}
+		} else {
+			break;
 		}
 	}
 	//发送帧

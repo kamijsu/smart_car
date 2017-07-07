@@ -25,6 +25,9 @@
 //定义速度控制周期，单位s，用于计算距离和加速度
 #define CONTROL_SPEED_PERIOD 	(ENCODER_PERIOD / 1000.0f)
 
+#define CONTROL_BASE_ROW_NUM	(5)
+#define CONTROL_EDGE_RANGE		(5)
+
 //==============================================================
 //函数名称：control_angle_pid
 //函数返回：无
@@ -49,14 +52,9 @@ void control_angle_pid(ParamAngle* angle);
 //==============================================================
 void control_speed_pid(ParamSpeed* speed);
 
-bool control_find_mid_points(
-		const uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH],
-		uint8 mid_points[CAMERA_IMG_HEIGHT],
-		bool has_mid_points[CAMERA_IMG_HEIGHT],
-		uint8 left_edges[CAMERA_IMG_HEIGHT],
-		bool has_left_edges[CAMERA_IMG_HEIGHT],
-		uint8 right_edges[CAMERA_IMG_HEIGHT],
-		bool has_right_edges[CAMERA_IMG_HEIGHT]);
+void control_find_mid_points(ParamTurn* turn);
+
+void control_cal_avg_mid_point(ParamTurn* turn);
 
 void control_turn_pid(ParamTurn* turn);
 

@@ -49,7 +49,7 @@ void custom_oled_update_temp();
 //函数返回: 无
 //参数说明: img:宽*高为80*60的图像首地址
 //功能概要: 在OLED上显示一幅80*60的二值化图像
-//备注: 显示的起始位置为第24列，第1页的第4行;
+//备注: 显示的起始位置为第48列，第1页的第4行;
 //     图像上方的4行被设置为全暗，但中间2列被设置为亮，用于指示图像的中心线;
 //     显示一幅图像需1ms
 //==========================================================================
@@ -86,25 +86,23 @@ void custom_send_raw_img_to_host(const uint8 raw_img[600]);
 //函数名称: custom_send_mid_points_to_host
 //函数返回: 无
 //参数说明: mid_points:60个字节的中点数组的首地址
-//         has_mid_points:60个字节的是否有中点数组的首地址
+//         valid_row:60个字节的该行是否有效数组的首地址
 //功能概要: 发送中点信息至上位机
 //备注: 组帧发送
 //==========================================================================
-void custom_send_mid_points_to_host(const uint8 mid_points[60],
-		const bool has_mid_points[60]);
+void custom_send_mid_points_to_host(const int16 mid_points[60],
+		const bool valid_row[60]);
 
 //==========================================================================
 //函数名称: custom_send_edges_to_host
 //函数返回: 无
 //参数说明: left_edges:60个字节的左边缘数组的首地址
-//         has_left_edges:60个字节的是否有左边缘数组的首地址
 //         right_edges:60个字节的右边缘数组的首地址
-//         has_right_edges:60个字节的是否有右边缘数组的首地址
+//         valid_row:60个字节的该行是否有效数组的首地址
 //功能概要: 发送边缘信息至上位机
 //备注: 组帧发送
 //==========================================================================
-void custom_send_edges_to_host(const uint8 left_edges[60],
-		const bool has_left_edges[60], const uint8 right_edges[60],
-		const bool has_right_edges[60]);
+void custom_send_edges_to_host(const int16 left_edges[60],
+		const int16 right_edges[60], const bool valid_row[60]);
 
 #endif
