@@ -9,6 +9,10 @@
 #include "common.h"
 #include "camera.h"
 
+#define PARAM_FLASH_SECTOR (20) //flash中存放参数的扇区号
+#define PARAM_FLASH_OFFSET (0)  //flash中存放参数的扇区内偏移地址
+#define PARAM_FLASH_NUM	   (40) //flash中参数的字节数
+
 //定义PID参数结构体
 typedef struct {
 	float p;	//比例控制
@@ -69,5 +73,36 @@ typedef struct {
 	int16 left_motor_pwm;	//左电机输出PWM值
 	int16 right_motor_pwm;	//右电机输出PWM值
 } ParamCar, *ParamCarPtr;
+
+//==========================================================================
+//函数名称: param_init
+//函数返回: 无
+//参数说明: param：存储参数值的首地址
+//功能概要: 参数初始化，初始化不需要从flash中读的参数
+//==========================================================================
+void param_init(ParamCarPtr param);
+
+//==========================================================================
+//函数名称: param_get
+//函数返回: 无
+//参数说明: param：存储参数值的首地址
+//         mode：选择第mode套参数
+//功能概要: 从flash中读取所有参数值，第PARAM_FLASH_SECTOR + mode号扇区的
+//         偏移PARAM_FLASH_OFFSET开始，存放第mode套参数，
+//         每套参数长度PARAM_FLASH_NUM字节
+//==========================================================================
+void param_get(ParamCarPtr param, uint8 mode);
+
+//==========================================================================
+//函数名称: param_update
+//函数返回: 无
+//参数说明: param：存储参数值的首地址
+//         mode：选择第mode套参数
+//功能概要: 更新参数值，将缓冲区中修改过的参数保存到flash中
+//         第PARAM_FLASH_SECTOR + mode号扇区的
+//         偏移PARAM_FLASH_OFFSET开始，存放第mode套参数，
+//         每套参数长度PARAM_FLASH_NUM字节
+//==========================================================================
+void param_update(ParamCarPtr param, uint8 mode);
 
 #endif

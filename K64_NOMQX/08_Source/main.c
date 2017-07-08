@@ -34,7 +34,7 @@ int main(void) {
 	uart_init(UART_USE, 115200, UART_PARITY_DISABLED, UART_STOP_BIT_1,
 	UART_BIT_ORDER_LSB); //UART0初始化
 
-	temp_sensor_init();	//初始化温度传感器
+//	temp_sensor_init();	//初始化温度传感器
 
 	gyro_acce_init();	//初始化陀螺仪加速度传感器
 
@@ -44,9 +44,10 @@ int main(void) {
 	pit_init(PIT_CH1, 71582);	//PIT1初始化，做为调试用
 
 	keyboard_init();	//初始化键盘
-
-//	menu_oled_display();
-//	custom_oled_display_init();
+	param_init(&car);	//初始化参数
+	param_get(&car, 0);	//获取第0套参数
+	//初始化菜单显示，根据输入的mode，选择读入存放在相应flash位置的参数
+	menu_init(&car);
 
 	encoder_init(ENCODER0);		//初始化左编码器
 	encoder_init(ENCODER1);		//初始化右编码器
@@ -67,39 +68,22 @@ int main(void) {
 
 	//4. 给有关变量赋初值
 	raw_img_done = false;
-	can_send_param = true;
+	can_send_param = false;
 	can_send_img = false;
 	img_copy_done = false;
-	//初始化小车参数
-	car.angle.angle = 0;
-	car.angle.last_angle_speed = 0;
-	car.angle.pwm.target_pwm = 0;
-	car.angle.pwm.output_pwm = 0;
-	car.angle.pwm.period_num = 1;
-	car.speed.last_speed_err = 0;
-	car.speed.distance_err = 0;
-	car.speed.pwm.target_pwm = 0;
-	car.speed.pwm.output_pwm = 0;
-	car.speed.pwm.period_num = 10;
-	car.turn.pwm.target_pwm = 0;
-	car.turn.pwm.output_pwm = 0;
-	car.turn.pwm.period_num = 5;
-	car.turn.last_mid_err = 0;
 
 	//0m/s时pid参数
-	car.angle.target_angle = 1.5f;
-	car.angle.pid.p = 0.2f;
-	car.angle.pid.d = 0.0003f;
-
-	car.speed.target_speed = 0.0f;
-	car.speed.pid.p = 2;
-	car.speed.pid.i = 0.5f;
-	car.speed.pid.d = 0;
-
-//	car.turn.pid.p = 0;
-//	car.turn.pid.d = 0;
-	car.turn.pid.p = 0.005f;
-	car.turn.pid.d = 0.000f;
+//	car.angle.target_angle = 1.5f;
+//	car.angle.pid.p = 0.2f;
+//	car.angle.pid.d = 0.0003f;
+//
+//	car.speed.target_speed = 0.0f;
+//	car.speed.pid.p = 2;
+//	car.speed.pid.i = 0.5f;
+//	car.speed.pid.d = 0;
+//
+//	car.turn.pid.p = 0.005f;
+//	car.turn.pid.d = 0.000f;
 
 	//5. 使能模块中断
 	pit_enable_int(PIT_CH0);   		//使能PIT0中断
@@ -132,8 +116,6 @@ int main(void) {
 			control_cal_avg_mid_point(&car.turn);
 
 			end = pit_get_time_us(1);
-			oled_printf(0, 0, "%.2f", car.turn.avg_mid_point);
-			oled_printf(0, 2, "%d", end - start);
 
 			control_turn_pid(&car.turn);
 //			oled_printf(0, 0, "%d", car.turn.returnBuff[0]);
@@ -142,7 +124,12 @@ int main(void) {
 //			oled_printf(0, 6, "%4.1f", car.turn.midpoint);
 
 			//显示图像
-			custom_oled_show_img(car.turn.img);
+			if (menu_can_show_img()) {
+				oled_printf(0, 6, "%.2f", car.angle.angle);
+				oled_printf(0, 0, "%.2f", car.turn.avg_mid_point);
+				oled_printf(0, 2, "%d", end - start);
+				custom_oled_show_img(car.turn.img);
+			}
 			//拷贝原始图像，以供发送
 			if (can_send_img && !img_copy_done) {
 				img_copy_done = true;

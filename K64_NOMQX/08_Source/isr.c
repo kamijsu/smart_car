@@ -39,24 +39,11 @@ void PORTA_IRQHandler() {
 	uint8 key;
 
 	DISABLE_INTERRUPTS;
-
-	//显示总的按键次数
-	oled_printf(0, 4, "time:%d", i++);
-
-	//键盘中断
 	if (keyboard_get_int()) {
-		//读取按键
-		if (keyboard_read(&key)) {
-			//显示按键
-			oled_printf(0, 2, "key:%c   ", key);
-		} else {
-			//显示读取失败
-			oled_printf(0, 2, "key:null");
-		}
-		//清除按键中断
+		if (keyboard_read(&key))
+			menu_accept(key);
 		keyboard_clear_int();
 	}
-
 	ENABLE_INTERRUPTS;
 }
 
