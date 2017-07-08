@@ -75,10 +75,13 @@ void menu_accept(uint8 ch) {
 		break;
 	}
 	case 'B': // backspace
-		if (menu.interface == MODIFY)
+		if (menu.interface == MODIFY) {
 			if (menu.pos != 0)
 				menu.buf[--menu.pos] = '\0';
-		menu_display();
+			menu_display();
+		} else if (menu.interface == IMAGE) {
+			param_ptr->speed.distance_err = 0;
+		}
 		break;
 	case 'C': // cancel
 		menu_toggle();

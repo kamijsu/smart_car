@@ -254,13 +254,13 @@ void control_find_mid_points(ParamTurn* turn) {
 }
 
 void control_cal_avg_mid_point(ParamTurn* turn) {
-	static const uint8 weight[CAMERA_IMG_HEIGHT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1,	//10
-			2, 2, 2, 2, 2, 2, 2, 2, 2, 2, //20
+	static const uint8 weight[CAMERA_IMG_HEIGHT] = { 1, 1, 1, 1, 1, 2, 2, 2, 2,
+			2,	//10
+			2, 2, 3, 3, 3, 3, 3, 3, 3, 3, //20
 			5, 5, 5, 5, 5, 5, 5, 5, 5, 5, //30
-			13, 13, 13, 13, 13, 13, 13, 13, 13, 13, //40
-			8, 8, 8, 8, 8, 8, 8, 8, 8, 8, //50
-			3, 3, 3, 3, 3, 3, 3, 3, 3, 3 //60
+			8, 8, 8, 8, 8, 8, 13, 13, 13, 13, //40
+			13, 13, 13, 13, 13, 13, 8, 8, 8, 8, //50
+			5, 5, 5, 5, 5, 5, 5, 5, 5, 5 //60
 			};
 
 	int32 val_sum;
