@@ -12,7 +12,7 @@
 
 #define MENU_MAX_ROW	(OLED_PAGE_NUM / 2) //一个字符占用2页
 #define MENU_BUF_SIZE  	(8) //缓冲区大小
-#define MENU_PARAM_NUM	(9) //参数个数
+#define MENU_PARAM_CNT	PARAM_FLASH_CNT //参数个数
 
 //==========================================================================
 //函数名称: menu_init

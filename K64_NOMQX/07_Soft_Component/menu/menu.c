@@ -21,7 +21,7 @@ typedef struct {
 	uint8 select_index;         // OLED选择标志索引
 	uint8 mode;                 // 第几套参数
 	Interface interface;             // 菜单当前状态
-	Item param_read[MENU_PARAM_NUM]; // 参数
+	Item param_read[MENU_PARAM_CNT]; // 参数
 } Menu;
 
 static Menu menu;
@@ -120,16 +120,19 @@ bool menu_can_show_img() {
 void menu_get(uint8 mode) {
 	//flash中读取参数放入param_ptr指向的区域
 	param_get(param_ptr, menu.mode);
-	Item param_read[] = { { "TgtAgl", param_ptr->angle.target_angle }, {
-			"AglPidP", param_ptr->angle.pid.p }, { "AglPidD",
-			param_ptr->angle.pid.d }, { "TgtS", param_ptr->speed.target_speed },
-			{ "SPidP", param_ptr->speed.pid.p }, { "SPidI",
-					param_ptr->speed.pid.i },
-			{ "SPidD", param_ptr->speed.pid.d }, { "TurnPidP",
-					param_ptr->turn.pid.p },
-			{ "TurnPidD", param_ptr->turn.pid.d } };
+	Item param_read[] = {
+			{ "TgtAgl", param_ptr->angle.target_angle },
+			{"AglPidP", param_ptr->angle.pid.p },
+			{ "AglPidD", param_ptr->angle.pid.d },
+			{ "TgtS", param_ptr->speed.target_speed },
+			{ "SPidP", param_ptr->speed.pid.p },
+			{ "SPidI", param_ptr->speed.pid.i },
+			{ "SPidD", param_ptr->speed.pid.d },
+			{ "TurnPidP", param_ptr->turn.pid.p },
+			{ "TurnPidD", param_ptr->turn.pid.d },
+			{ "TurnTMdP", param_ptr->turn.target_mid_point } };
 	//复制到menu的param_read数组
-	memcpy(menu.param_read, param_read, sizeof(Item) * MENU_PARAM_NUM);
+	memcpy(menu.param_read, param_read, sizeof(Item) * MENU_PARAM_CNT);
 }
 
 //==========================================================================
@@ -154,7 +157,7 @@ void menu_display() {
 		break;
 	case READ:
 		cur_idx = menu.start_index; //OLED当前可写参数值索引
-		for (i = 0; i < MENU_MAX_ROW && cur_idx < MENU_PARAM_NUM; i++) {
+		for (i = 0; i < MENU_MAX_ROW && cur_idx < MENU_PARAM_CNT; i++) {
 			oled_clear_page(i * 2);
 			//输出参数名和参数值
 			oled_printf(0, i * 2, " %-8s %.4f", menu.param_read[cur_idx].name,
@@ -181,7 +184,7 @@ void menu_display() {
 //功能概要: 移动到菜单下一选项
 //==========================================================================
 static void menu_next(void) {
-	if (menu.interface == READ && menu.select_index < MENU_PARAM_NUM - 1) {
+	if (menu.interface == READ && menu.select_index < MENU_PARAM_CNT - 1) {
 		menu.select_index += 1;
 		if (menu.select_index - menu.start_index >= MENU_MAX_ROW)
 			menu.start_index += 1;
@@ -227,6 +230,7 @@ static void menu_save(void) {
 	param_ptr->speed.pid.d = menu.param_read[6].value;
 	param_ptr->turn.pid.p = menu.param_read[7].value;
 	param_ptr->turn.pid.d = menu.param_read[8].value;
+	param_ptr->turn.target_mid_point = menu.param_read[9].value;
 	//更新到flash中
 	param_update(param_ptr, menu.mode);
 	//重置到参数读取状态

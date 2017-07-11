@@ -26,7 +26,7 @@
 #define CONTROL_SPEED_PERIOD 	(ENCODER_PERIOD / 1000.0f)
 
 #define CONTROL_BASE_ROW_NUM	(5)
-#define CONTROL_EDGE_RANGE		(5)
+#define CONTROL_EDGE_RANGE		(3)
 
 //==============================================================
 //函数名称：control_angle_pid
@@ -56,6 +56,8 @@ void control_find_mid_points(ParamTurn* turn);
 
 void control_cal_avg_mid_point(ParamTurn* turn);
 
+void control_cal_slope(ParamTurn* turn);
+
 void control_turn_pid(ParamTurn* turn);
 
 //===========================================================================
@@ -73,5 +75,13 @@ void control_update_output_pwm(ParamPWM* pwm);
 //功能概要：更新并设置电机输出的PWM值
 //===========================================================================
 void control_update_motor_pwm(ParamCar* car);
+
+//===========================================================================
+//函数名称：control_stop_car
+//函数返回：无
+//参数说明：无
+//功能概要：设置电机输出的PWM值为0
+//===========================================================================
+void control_stop_car();
 
 #endif

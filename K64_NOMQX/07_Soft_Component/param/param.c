@@ -18,6 +18,7 @@ typedef struct {
 
 	float turn_pid_p;
 	float turn_pid_d;
+	float target_mid_point;
 } ParamInFlash;
 typedef union {
 	ParamInFlash param;
@@ -47,6 +48,7 @@ void param_init(ParamCarPtr param) {
 	param->turn.pwm.output_pwm = 0;
 	param->turn.pwm.period_num = 5;
 	param->turn.last_mid_err = 0;
+	param->turn.last_slope = 0;
 }
 
 //==========================================================================
@@ -75,6 +77,7 @@ void param_get(ParamCarPtr param, uint8 mode) {
 
 	param->turn.pid.p = param_union.param.turn_pid_p;
 	param->turn.pid.d = param_union.param.turn_pid_d;
+	param->turn.target_mid_point = param_union.param.target_mid_point;
 }
 
 //==========================================================================
@@ -99,6 +102,7 @@ void param_update(ParamCarPtr param, uint8 mode) {
 
 	param_union.param.turn_pid_p = param->turn.pid.p;
 	param_union.param.turn_pid_d = param->turn.pid.d;
+	param_union.param.target_mid_point = param->turn.target_mid_point;
 
 	//¹Ø±Õ×ÜÖÐ¶Ï
 	DISABLE_INTERRUPTS;

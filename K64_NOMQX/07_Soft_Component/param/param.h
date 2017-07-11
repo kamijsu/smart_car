@@ -11,7 +11,8 @@
 
 #define PARAM_FLASH_SECTOR (20) //flash中存放参数的扇区号
 #define PARAM_FLASH_OFFSET (0)  //flash中存放参数的扇区内偏移地址
-#define PARAM_FLASH_NUM	   (40) //flash中参数的字节数
+#define PARAM_FLASH_CNT    (10)  //flash中参数个数
+#define PARAM_FLASH_NUM	   PARAM_FLASH_CNT * 4 + 4 * (PARAM_FLASH_CNT % 2) //flash中参数的字节数
 
 //定义PID参数结构体
 typedef struct {
@@ -57,9 +58,10 @@ typedef struct {
 	int16 left_edges[CAMERA_IMG_HEIGHT];
 	int16 right_edges[CAMERA_IMG_HEIGHT];
 	bool valid_row[CAMERA_IMG_HEIGHT];
+	float target_mid_point;
 	float avg_mid_point;
-	int16 returnBuff[6];
-	float midpoint;
+	float slope;
+	float last_slope;
 	float last_mid_err;	//需初始化
 	ParamPID pid;		//PID参数，需初始化
 	ParamPWM pwm;		//PWM参数，需初始化

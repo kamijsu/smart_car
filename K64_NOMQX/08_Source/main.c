@@ -5,6 +5,8 @@
 
 #include "includes.h"   //包含总头文件
 
+#define ABS(x) ((x) > 0 ? (x) : -(x))
+
 int main(void) {
 	//1. 声明主函数使用的变量
 
@@ -18,6 +20,7 @@ int main(void) {
 	bool can_send_img;
 	bool img_copy_done;
 	uint8 raw_img_copy[CAMERA_RAW_IMG_BYTES];
+	bool stop_car;
 
 	int16 mid_points_copy[CAMERA_IMG_HEIGHT];
 	int16 left_edges_copy[CAMERA_IMG_HEIGHT];
@@ -71,6 +74,7 @@ int main(void) {
 	can_send_param = false;
 	can_send_img = false;
 	img_copy_done = false;
+	stop_car = false;
 
 	//0m/s时pid参数
 //	car.angle.target_angle = 1.5f;
@@ -114,6 +118,7 @@ int main(void) {
 			control_find_mid_points(&car.turn);
 
 			control_cal_avg_mid_point(&car.turn);
+//			control_cal_slope(&car.turn);
 
 			end = pit_get_time_us(1);
 
@@ -127,6 +132,7 @@ int main(void) {
 			if (menu_can_show_img()) {
 				oled_printf(0, 6, "%.2f", car.angle.angle);
 				oled_printf(0, 0, "%.2f", car.turn.avg_mid_point);
+//				oled_printf(0, 0, "%.2f", car.turn.slope);
 				oled_printf(0, 2, "%d", end - start);
 				custom_oled_show_img(car.turn.img);
 			}
@@ -173,8 +179,12 @@ int main(void) {
 			//更新方向控制模块的输出PWM值
 			control_update_output_pwm(&car.turn.pwm);
 
-			//更新电机输出的PWM值
-			control_update_motor_pwm(&car);
+			if (stop_car) {
+				control_stop_car();
+			} else {
+				//更新电机输出的PWM值
+				control_update_motor_pwm(&car);
+			}
 
 //			oled_printf(0,0,"agl:%4.2f ",car.angle.angle);
 //			oled_printf(0,2,"agl_speed:%4.2f",car.angle.angle_speed);
@@ -191,6 +201,10 @@ int main(void) {
 			//获取左右轮速度
 			car.speed.left_speed = encoder_get_speed(ENCODER0);
 			car.speed.right_speed = encoder_get_speed(ENCODER1);
+
+			if (ABS(car.speed.left_speed) + ABS(car.speed.right_speed) >= 10) {
+				stop_car = true;
+			}
 
 			//更新速度控制模块的目标PWM值
 			control_speed_pid(&car.speed);
@@ -231,14 +245,28 @@ int main(void) {
 		if (frame_get_info(0, &info)) {
 			switch (info.type) {
 			case 0:	//字符串帧
-				frame_info_to_frame(&info, frame, &frame_len);
-				uart_sendN(UART_USE, frame, frame_len);
+//				frame_info_to_frame(&info, frame, &frame_len);
+//				uart_sendN(UART_USE, frame, frame_len);
+				info.data[info.len] = '\0';
+				int tmp;
+				sscanf(info.data + 1, "%d", &tmp);
+				if (info.data[0] == 'l') {
+					car.left_motor_pwm = tmp;
+				} else {
+					car.right_motor_pwm = tmp;
+				}
+				motor_set(MOTOR0, car.left_motor_pwm);
+				motor_set(MOTOR1, car.right_motor_pwm);
+
 				break;
 			case 7:	//设置是否发送图像
 				can_send_img = info.data[0] == 1 ? true : false;
 				break;
 			case 8:	//设置是否发送参数
 				can_send_param = info.data[0] == 1 ? true : false;
+				break;
+			case 9:	//设置是否停车
+				stop_car = info.data[0] == 1 ? true : false;
 				break;
 			}
 		}

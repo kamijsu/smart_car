@@ -66,8 +66,8 @@ void control_angle_pid(ParamAngle* angle) {
 //     D值:使加速度接近0，即抑制速度变化，与PWM值正相关
 //==============================================================
 void control_speed_pid(ParamSpeed* speed) {
-	static const float speed_err_weight = 0.9f;			//当前速度差值权重
-	static const float last_speed_err_weight = 0.1f;	//上次速度差值权重
+	static const float speed_err_weight = 0.7f;			//当前速度差值权重
+	static const float last_speed_err_weight = 0.3f;	//上次速度差值权重
 
 	float speed_err;	//当前速度差值
 	float p_val, i_val, d_val;	//P值，I值，D值
@@ -83,6 +83,14 @@ void control_speed_pid(ParamSpeed* speed) {
 
 	//计算距离误差
 	speed->distance_err += (speed_err * CONTROL_SPEED_PERIOD);
+
+	//距离误差限幅
+	if (speed->distance_err > 2) {
+		speed->distance_err = 2;
+	} else if (speed->distance_err < -2) {
+		speed->distance_err = -2;
+	}
+
 	//计算I值
 	i_val = speed->distance_err * speed->pid.i;
 
@@ -144,6 +152,24 @@ static inline bool control_find_right_edge(
 	return false;
 }
 
+static inline bool control_find_down_edge(
+		uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH], const int16 col,
+		int16 start_row, int16 end_row, int16* edge_row) {
+	int16 row;
+
+	start_row = MIN(start_row, CAMERA_IMG_HEIGHT - 1);
+	end_row = MAX(end_row, 2);
+
+	for (row = start_row; row <= end_row; --row) {
+		if (IS_BLACK(
+				img[row - 1][col]) && IS_BLACK(img[row - 2][col] && IS_WHITE(img[row][col]))) {
+			*edge_row = row;
+			return true;
+		}
+	}
+	return false;
+}
+
 static inline int16 control_find_next_point(
 		const int16 points[CAMERA_IMG_HEIGHT], const int16 next_row) {
 	int32 sum_x, sum_y, sum_xy, sum_xx;
@@ -176,11 +202,32 @@ static inline int16 control_find_next_point(
 	return (int16) (param_a + param_b * next_row + 0.5f);
 }
 
+//向右斜率为正，向左斜率为负
+static inline float control_cal_vertical_slope(
+		const int16 points[CAMERA_IMG_HEIGHT], const int16 row) {
+	return 1.0f / (points[row] - points[row + 1]);
+}
+
+//向上斜率为正，向下斜率为负
+static inline float control_cal_left_horizontal_slope(
+		const int16 points[CAMERA_IMG_WIDTH], const int16 col) {
+	return (points[col] - points[col - 1]);
+}
+
+//向上斜率为正，向下斜率为负
+static inline float control_cal_right_horizontal_slope(
+		const int16 points[CAMERA_IMG_WIDTH], const int16 col) {
+	return (points[col] - points[col + 1]);
+}
+
 void control_find_mid_points(ParamTurn* turn) {
 	int16 row;
 	bool has_left_edge, has_right_edge;
 	int16 next_left_edge;
 	int16 next_right_edge;
+	int16 has_no_edge_row_num;
+
+	has_no_edge_row_num = 0;
 
 	for (row = CAMERA_IMG_HEIGHT - 1;
 			row > CAMERA_IMG_HEIGHT - 1 - CONTROL_BASE_ROW_NUM; --row) {
@@ -200,26 +247,41 @@ void control_find_mid_points(ParamTurn* turn) {
 	}
 
 	for (row = CAMERA_IMG_HEIGHT - 1 - CONTROL_BASE_ROW_NUM; row >= 0; --row) {
-		next_left_edge = control_find_next_point(turn->left_edges, row);
-		next_right_edge = control_find_next_point(turn->right_edges, row);
+//		next_left_edge = control_find_next_point(turn->left_edges, row);
+//		next_right_edge = control_find_next_point(turn->right_edges, row);
 
 		has_left_edge = control_find_left_edge(turn->img, row,
-				next_left_edge + CONTROL_EDGE_RANGE,
-				next_left_edge - CONTROL_EDGE_RANGE, turn->left_edges + row);
+				turn->mid_points[row + 1], 0, turn->left_edges + row);
 
 		has_right_edge = control_find_right_edge(turn->img, row,
-				next_right_edge - CONTROL_EDGE_RANGE,
-				next_right_edge + CONTROL_EDGE_RANGE, turn->right_edges + row);
+				turn->mid_points[row + 1],
+				CAMERA_IMG_WIDTH, turn->right_edges + row);
+
+		turn->valid_row[row] = true;
+
+//		if (!has_left_edge && !has_right_edge) {
+//			turn->left_edges[row] = turn->left_edges[row + 1];
+//			turn->right_edges[row] = turn->right_edges[row + 1];
+//			turn->mid_points[row] = control_find_next_point(turn->mid_points,
+//					row);
+//			++has_no_edge_row_num;
+////			turn->mid_points[row] = turn->mid_points[row + 1];
+//		} else {
+//		if (!has_left_edge) {
+//			turn->left_edges[row] = next_left_edge;
+//		}
+//
+//		if (!has_right_edge) {
+//			turn->right_edges[row] = next_right_edge;
+//		}
 
 		if (!has_left_edge) {
-			turn->left_edges[row] = next_left_edge;
+			turn->left_edges[row] = 0;
 		}
 
 		if (!has_right_edge) {
-			turn->right_edges[row] = next_right_edge;
+			turn->right_edges[row] = CAMERA_IMG_WIDTH - 1;
 		}
-
-		turn->valid_row[row] = true;
 
 		if (turn->left_edges[row] > 0) {
 			if (turn->right_edges[row] < CAMERA_IMG_WIDTH - 1) {
@@ -238,6 +300,7 @@ void control_find_mid_points(ParamTurn* turn) {
 						turn->mid_points, row);
 			}
 		}
+//		}
 
 		if (turn->mid_points[row] <= 0) {
 			turn->mid_points[row] = 0;
@@ -254,13 +317,13 @@ void control_find_mid_points(ParamTurn* turn) {
 }
 
 void control_cal_avg_mid_point(ParamTurn* turn) {
-	static const uint8 weight[CAMERA_IMG_HEIGHT] = { 1, 1, 1, 1, 1, 2, 2, 2, 2,
-			2,	//10
-			2, 2, 3, 3, 3, 3, 3, 3, 3, 3, //20
-			5, 5, 5, 5, 5, 5, 5, 5, 5, 5, //30
-			8, 8, 8, 8, 8, 8, 13, 13, 13, 13, //40
-			13, 13, 13, 13, 13, 13, 8, 8, 8, 8, //50
-			5, 5, 5, 5, 5, 5, 5, 5, 5, 5 //60
+	static const uint8 weight[CAMERA_IMG_HEIGHT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1,	//10
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //20
+			3, 3, 3, 3, 3, 3, 3, 3, 3, 3, //30
+			5, 5, 5, 5, 5, 5, 5, 5, 5, 5, //40
+			13, 13, 13, 13, 13, 13, 13, 13, 13, 13, //50
+			21, 21, 21, 21, 21, 21, 21, 21, 21, 21 //60
 			};
 
 	int32 val_sum;
@@ -277,19 +340,59 @@ void control_cal_avg_mid_point(ParamTurn* turn) {
 	turn->avg_mid_point = val_sum * 1.0f / weight_sum;
 }
 
+void control_cal_slope(ParamTurn* turn) {
+	int32 sum_x, sum_y, sum_xy, sum_xx;
+	int32 x, y;
+	int32 x_num;
+	float avg_x, avg_y, avg_xy, avg_xx;
+	float tmp;
+
+	sum_x = 0;
+	sum_y = 0;
+	sum_xy = 0;
+	sum_xx = 0;
+	x_num = 0;
+
+	for (x = CAMERA_IMG_HEIGHT - 1; x >= 0 && turn->valid_row[x]; --x) {
+		y = turn->mid_points[x];
+		sum_x += x;
+		sum_y += y;
+		sum_xy += x * y;
+		sum_xx += x * x;
+		++x_num;
+	}
+	avg_x = sum_x * 1.0f / x_num;
+	avg_y = sum_y * 1.0f / x_num;
+	avg_xy = sum_xy * 1.0f / x_num;
+	avg_xx = sum_xx * 1.0f / x_num;
+	tmp = avg_xx - avg_x * avg_x;
+	turn->slope = tmp == 0 ? 0 : (avg_xy - avg_x * avg_y) / tmp;
+}
+
 void control_turn_pid(ParamTurn* turn) {
+	static const float mid_err_weight = 0.7f;		//当前中点差值权重
+	static const float last_mid_err_weight = 0.3f;	//上次中点差值权重
+
 	float mid_err;
 
 	float p_val, d_val;
 	float pid_val;
 
-	mid_err = turn->avg_mid_point - (CAMERA_IMG_WIDTH >> 1);
+	mid_err = turn->avg_mid_point - turn->target_mid_point;
 	//计算P值
-	p_val = mid_err * turn->pid.p;
+	p_val =
+			(mid_err * mid_err_weight + turn->last_mid_err * last_mid_err_weight)
+					* turn->pid.p;
 
-	d_val = (turn->last_mid_err - mid_err) * turn->pid.d;
+	d_val = (mid_err - turn->last_mid_err) * turn->pid.d;
 
 	turn->last_mid_err = mid_err;
+
+//	p_val = -turn->slope * turn->pid.p;
+//
+//	d_val = (turn->slope - turn->last_slope) * turn->pid.d;
+//
+//	turn->last_slope = turn->slope;
 
 	//计算PID值
 	pid_val = p_val + d_val;
@@ -331,6 +434,18 @@ void control_update_motor_pwm(ParamCar* car) {
 	//设置电机的占空比
 	motor_set(MOTOR0, car->left_motor_pwm);
 	motor_set(MOTOR1, car->right_motor_pwm);
+}
+
+//===========================================================================
+//函数名称：control_stop_car
+//函数返回：无
+//参数说明：无
+//功能概要：设置电机输出的PWM值为0
+//===========================================================================
+void control_stop_car() {
+	//设置电机的占空比为0
+	motor_set(MOTOR0, 0);
+	motor_set(MOTOR1, 0);
 }
 
 ////===========================================================================
