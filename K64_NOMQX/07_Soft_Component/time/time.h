@@ -9,7 +9,7 @@
 #include "common.h"
 
 //定义计时器通道的数量，计时器通道号为[0, TIME_TIMER_CH_NUM - 1]
-#define TIME_TIMER_CH_NUM		(5)
+#define TIME_TIMER_CH_NUM		(6)
 
 //==========================================================================
 //函数名称: time_init

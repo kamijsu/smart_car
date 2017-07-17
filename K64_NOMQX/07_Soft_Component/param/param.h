@@ -54,15 +54,13 @@ typedef struct {
 typedef struct {
 	uint8 raw_img[CAMERA_RAW_IMG_BYTES];	//原始图像
 	uint8 img[CAMERA_IMG_HEIGHT][CAMERA_IMG_WIDTH];	//解压后图像数据
-	int16 mid_points[CAMERA_IMG_HEIGHT];
-	int16 left_edges[CAMERA_IMG_HEIGHT];
-	int16 right_edges[CAMERA_IMG_HEIGHT];
-	bool valid_row[CAMERA_IMG_HEIGHT];
-	float target_mid_point;
-	float avg_mid_point;
-	float slope;
-	float last_slope;
-	float last_mid_err;	//需初始化
+	int16 mid_points[CAMERA_IMG_HEIGHT];	//每行的中点所在列数数组
+	int16 left_edges[CAMERA_IMG_HEIGHT];	//每行的左边缘所在列数数组
+	int16 right_edges[CAMERA_IMG_HEIGHT];	//每行的右边缘所在列数数组
+	bool valid_row[CAMERA_IMG_HEIGHT];		//该行是否有效数组
+	float target_mid_point;	//目标中点值
+	float avg_mid_point;	//有效行中点加权平均值
+	float last_mid_err;	//上次中点误差，需初始化
 	ParamPID pid;		//PID参数，需初始化
 	ParamPWM pwm;		//PWM参数，需初始化
 } ParamTurn, *ParamTurnPtr;

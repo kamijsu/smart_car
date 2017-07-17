@@ -122,7 +122,7 @@ void menu_get(uint8 mode) {
 	param_get(param_ptr, menu.mode);
 	Item param_read[] = {
 			{ "TgtAgl", param_ptr->angle.target_angle },
-			{"AglPidP", param_ptr->angle.pid.p },
+			{ "AglPidP", param_ptr->angle.pid.p },
 			{ "AglPidD", param_ptr->angle.pid.d },
 			{ "TgtS", param_ptr->speed.target_speed },
 			{ "SPidP", param_ptr->speed.pid.p },
@@ -184,7 +184,7 @@ void menu_display() {
 //功能概要: 移动到菜单下一选项
 //==========================================================================
 static void menu_next(void) {
-	if (menu.interface == READ && menu.select_index < MENU_PARAM_CNT - 1) {
+	if (menu.select_index < MENU_PARAM_CNT - 1) {
 		menu.select_index += 1;
 		if (menu.select_index - menu.start_index >= MENU_MAX_ROW)
 			menu.start_index += 1;

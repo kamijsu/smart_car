@@ -45,7 +45,6 @@
 #include "vcan.h"
 #include "menu.h"
 #include "time.h"
-#include "img_deal.h"
 #include "param.h"
 
 //防止全局变量重复声明的前缀处理方法，并且添加volatile前缀，
@@ -63,21 +62,5 @@ G_VAR_PREFIX bool raw_img_done;
 
 //定义使用的调试号
 #define UART_USE  UART_MOD0
-
-/* 引脚
- * UART_USE:    PTE0   TX;                PTE1   RX
- * 串口接线:		white  RX;                green  TX
- * MOTOR1:      PTC1(purple) PWM1;        PTC2(grey)    PWM2
- * MOTOR2:      PTC3(purple) PWM3;        PTC4(grey)    PWM4
- * gyro_acce:   PTE24(green) X轴角速度(AR2); PTE25(blue)   Z轴加速度(Zout)
- * SPEED1:		PTD0(black);       5V(brown);       GND(blue)
- * SPEED2:		PTD1(white);       5V(brown);       GND(blue)
- * REED_SWITCH_INPUT  PTD2;
- * REED_SWITCH_OUTPUT PTD3;
- * EMS_CH0:		PTB0(green)  OUTA
- * EMS_CH1:		PTB1(blue)   OUTC
- * EMS_CH2:		PTB2(green)  OUTB
- * EMS_CH3:		PTB3(blue)   OUTD
- * */
 
 #endif

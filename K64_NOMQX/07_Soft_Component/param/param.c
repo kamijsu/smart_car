@@ -6,6 +6,7 @@
 #include "param.h"
 #include "flash.h"
 
+//定义存储在flash中的结构体类型
 typedef struct {
 	float angle_target_angle;
 	float angle_pid_p;
@@ -20,17 +21,21 @@ typedef struct {
 	float turn_pid_d;
 	float target_mid_point;
 } ParamInFlash;
+
+//定义字节和结构体转换的联合体
 typedef union {
 	ParamInFlash param;
 	uint8 param_bytes[PARAM_FLASH_NUM];
 } ParamUnion;
+
+//声明一个静态联合体
 static ParamUnion param_union;
 
 //==========================================================================
 //函数名称: param_init
 //函数返回: 无
 //参数说明: param：存储参数值的首地址
-//功能概要: 参数初始化，从flash中读取所有参数值
+//功能概要: 参数初始化，初始化不需要从flash中读的参数
 //==========================================================================
 void param_init(ParamCarPtr param) {
 	//初始化小车参数
@@ -48,7 +53,6 @@ void param_init(ParamCarPtr param) {
 	param->turn.pwm.output_pwm = 0;
 	param->turn.pwm.period_num = 5;
 	param->turn.last_mid_err = 0;
-	param->turn.last_slope = 0;
 }
 
 //==========================================================================
@@ -66,7 +70,7 @@ void param_get(ParamCarPtr param, uint8 mode) {
 	PARAM_FLASH_SECTOR + mode,
 	PARAM_FLASH_OFFSET,
 	PARAM_FLASH_NUM, param_union.param_bytes);
-	//0m/s时pid参数，以下从flash读
+	//复制到内存中
 	param->angle.target_angle = param_union.param.angle_target_angle;
 	param->angle.pid.p = param_union.param.angle_pid_p;
 	param->angle.pid.d = param_union.param.angle_pid_d;
@@ -106,11 +110,13 @@ void param_update(ParamCarPtr param, uint8 mode) {
 
 	//关闭总中断
 	DISABLE_INTERRUPTS;
+	//擦除扇区
 	flash_erase_sector(FLASH_BLK_DFLASH, PARAM_FLASH_SECTOR + mode);
 	//将缓冲区的参数值保存到flash中
 	flash_write(FLASH_BLK_DFLASH,
 	PARAM_FLASH_SECTOR + mode,
 	PARAM_FLASH_OFFSET,
 	PARAM_FLASH_NUM, param_union.param_bytes);
+	//开启总中断
 	ENABLE_INTERRUPTS;
 }

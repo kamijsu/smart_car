@@ -14,12 +14,13 @@
 //功能概要：UART1中断服务函数
 //==========================================================================
 void UART0_RX_TX_IRQHandler() {
-	FrameFramingResult res;
 	uint8 ch;
 	bool err;
 	DISABLE_INTERRUPTS;
 
+	//接收一个字节数据
 	if (uart_re1_parity(UART_MOD0, &ch, &err)) {
+		//校验正确时，加入0通道组帧
 		if (!err) {
 			frame_framing(0, ch);
 		}
@@ -35,15 +36,21 @@ void UART0_RX_TX_IRQHandler() {
 //功能概要：PORTA中断服务函数
 //==========================================================================
 void PORTA_IRQHandler() {
-	static uint32 i = 0;
 	uint8 key;
 
 	DISABLE_INTERRUPTS;
+
+	//若发生键盘中断
 	if (keyboard_get_int()) {
-		if (keyboard_read(&key))
+		//读取键盘字符
+		if (keyboard_read(&key)) {
+			//将字符输入菜单中
 			menu_accept(key);
+		}
+		//清除键盘中断标志
 		keyboard_clear_int();
 	}
+
 	ENABLE_INTERRUPTS;
 }
 
@@ -96,26 +103,6 @@ void PIT0_IRQHandler() {
 	pit_clear_int(PIT_CH0); //清标志
 
 	time_update(5);	//增加5ms时间
-
-	ENABLE_INTERRUPTS; //恢复原总中断设置情况
-}
-
-//============================================================================
-//函数名称：PORTD_IRQHandler
-//函数参数：
-//函数返回：无
-//功能概要：PORTD端口中断服务函数
-//============================================================================
-void PORTD_IRQHandler() {
-	uint8_t n;    //引脚号
-
-	DISABLE_INTERRUPTS; //关中断
-
-	if (reed_switch_get_int()) {
-		reed_switch_clear_int();
-		reed_switch_disable_int();
-		uart_send_string(UART_USE, "产生中断！\n");
-	}
 
 	ENABLE_INTERRUPTS; //恢复原总中断设置情况
 }
